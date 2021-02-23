@@ -10,4 +10,5 @@ test:
     - apt-get update -qy
     - apt-get install -y python3-dev python3-pip
     - python3 -m pip install -r requirements-dev.txt
-    - python manage.py test
+    - python3 manage.py test
+    - python3 scram/functional_tests.py
