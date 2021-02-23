@@ -15,8 +15,8 @@ builder_image:
 
   script:
     - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:latest .
-    - docker push $IMAGE_NAME:latest
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag scram:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
 
 test:
   stage: test
