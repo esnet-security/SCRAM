@@ -1,3 +1,6 @@
+include:
+  - template: Dependency-Scanning.gitlab-ci.yml
+
 stages:
   - builder_image
   - test
@@ -27,3 +30,7 @@ test:
     # - export DATABASE_URL=postgres://postgres:@postgres:5432/python-test-app
     - python3 manage.py test
     - python3 scram/functional_tests.py
+
+gemnasium-dependency_scanning:
+  variables:
+    PIP_REQUIREMENTS_FILE: requirements-dev.txt
