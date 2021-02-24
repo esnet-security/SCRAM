@@ -23,7 +23,7 @@ builder_image:
 
 test:
   stage: test
-  image: ${CI_REGISTRY_IMAGE}/scram:latest
+  image: ${CI_REGISTRY_IMAGE}:latest
   script:
     # this configures Django application to use attached postgres database that is run on `postgres` host
     # - export DATABASE_URL=postgres://postgres:@postgres:5432/python-test-app
