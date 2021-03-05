@@ -2,34 +2,40 @@ include:
   - template: Dependency-Scanning.gitlab-ci.yml
 
 stages:
-  - builder_image
+  - lint
   - test
 
-builder_image:
-  stage: builder_image
-  image: docker:19.03.12
-  services:
-    - docker:19.03.12-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
+variables:
+  POSTGRES_USER: 'scram'
+  POSTGRES_PASSWORD: ''
+  POSTGRES_DB: 'test_scram'
+  POSTGRES_HOST_AUTH_METHOD: trust
+  CELERY_BROKER_URL: 'redis://redis:6379/0'
 
+flake8:
+  stage: lint
+  image: python:3.8-alpine
   before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
+    - pip install -q flake8
   script:
-    - docker pull $CI_REGISTRY_IMAGE:latest || true
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
+    - flake8
 
-test:
+pytest:
   stage: test
-  image: ${CI_REGISTRY_IMAGE}:latest
+  variables:
+    SHARED_PATH: $CI_PROJECT_DIR
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  before_script:
+    - ls -la .
+    - docker-compose -f local.yml build
+    # Ensure celerybeat does not crash due to non-existent tables
+    - docker-compose -f local.yml run --rm django python manage.py migrate
+    - docker-compose -f local.yml up -d
   script:
-    # this configures Django application to use attached postgres database that is run on `postgres` host
-    # - export DATABASE_URL=postgres://postgres:@postgres:5432/python-test-app
-    - python3 manage.py test
-    - python3 scram/functional_tests.py
+    - docker-compose -f local.yml run django pytest
 
 gemnasium-dependency_scanning:
   variables:
-    PIP_REQUIREMENTS_FILE: requirements-dev.txt
+    PIP_REQUIREMENTS_FILE: requirements/base.txt
