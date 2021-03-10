@@ -10,7 +10,7 @@ services:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
-    container_name: scram_django
+    container_name: django
     depends_on:
       - postgres
     env_file:
@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: scram_production_postgres
-    container_name: scram_postgres
+    container_name: postgres
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
       - local_postgres_data_backups:/backups:z
@@ -34,7 +34,7 @@ services:
 
   docs:
     image: scram_local_docs
-    container_name: scram_docs
+    container_name: docs
     build:
       context: .
       dockerfile: ./compose/local/docs/Dockerfile
@@ -55,7 +55,7 @@ services:
   celeryworker:
     <<: *django
     image: scram_local_celeryworker
-    container_name: scram_celeryworker
+    container_name: celeryworker
     depends_on:
       - redis
       - postgres
@@ -66,7 +66,7 @@ services:
   celerybeat:
     <<: *django
     image: scram_local_celerybeat
-    container_name: scram_celerybeat
+    container_name: celerybeat
     depends_on:
       - redis
       - postgres
@@ -77,7 +77,7 @@ services:
   flower:
     <<: *django
     image: scram_local_flower
-    container_name: scram_flower
+    container_name: flower
     ports:
       - "5555:5555"
     command: /start-flower
