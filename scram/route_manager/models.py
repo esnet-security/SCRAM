@@ -1,3 +1,7 @@
-# from django.db import models
+from django.db import models
+from netfields import InetAddressField
 
-# Create your models here.
+
+class IPAddress(models.Model):
+    """ Our base IP model """
+    ip = InetAddressField()
