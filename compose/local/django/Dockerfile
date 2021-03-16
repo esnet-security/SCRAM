@@ -39,6 +39,5 @@ RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
 WORKDIR /app
-COPY . /app
 
 ENTRYPOINT ["/entrypoint"]

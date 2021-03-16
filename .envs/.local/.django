@@ -12,6 +12,3 @@ REDIS_URL=redis://redis:6379/0
 # Flower
 CELERY_FLOWER_USER=debug
 CELERY_FLOWER_PASSWORD=debug
-
-DATABASE_URL=postgres://debug:debug@127.0.0.1:5432/asencis
-

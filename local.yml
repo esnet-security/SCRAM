@@ -10,11 +10,10 @@ services:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
-    container_name: django
     depends_on:
       - postgres
     volumes:
-      - .:/app:z
+      - $CI_PROJECT_DIR:/app:z
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
@@ -27,7 +26,6 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: scram_production_postgres
-    container_name: postgres
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
       - local_postgres_data_backups:/backups:z
@@ -36,28 +34,25 @@ services:
 
   docs:
     image: scram_local_docs
-    container_name: docs
     build:
       context: .
       dockerfile: ./compose/local/docs/Dockerfile
     env_file:
       - ./.envs/.local/.django
     volumes:
-      - ./docs:/docs:z
-      - ./config:/app/config:z
-      - ./scram:/app/scram:z
+      - $CI_PROJECT_DIR/docs:/docs:z
+      - $CI_PROJECT_DIR/config:/app/config:z
+      - $CI_PROJECT_DIR/scram:/app/scram:z
     ports:
       - "7000:7000"
     command: /start-docs
 
   redis:
     image: redis:5.0
-    container_name: scram_redis
 
   celeryworker:
     <<: *django
     image: scram_local_celeryworker
-    container_name: celeryworker
     depends_on:
       - redis
       - postgres
@@ -68,7 +63,6 @@ services:
   celerybeat:
     <<: *django
     image: scram_local_celerybeat
-    container_name: celerybeat
     depends_on:
       - redis
       - postgres
@@ -79,7 +73,6 @@ services:
   flower:
     <<: *django
     image: scram_local_flower
-    container_name: flower
     ports:
       - "5555:5555"
     command: /start-flower
