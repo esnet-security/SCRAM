@@ -1,5 +1,3 @@
-import pytest
-
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -38,7 +36,10 @@ class TestUnauthenticatedAccess(APITestCase):
     def setUp(self):
         self.url = reverse('route_manager:ipaddress_rest_api')
 
-    def test_unauthenticated_users_have_no_access(self):
+    def test_unauthenticated_users_have_no_create_access(self):
         response = self.client.post(self.url, {'ip': '1.2.3.4'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_unauthenticated_users_have_no_list_access(self):
+        response = self.client.get(self.url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
