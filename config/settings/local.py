@@ -66,3 +66,7 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
+
+REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES': (
+    'rest_framework.permissions.IsAdminUser', ),
+}

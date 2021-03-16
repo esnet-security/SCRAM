@@ -11,9 +11,10 @@ from scram.route_manager import views
 
 urlpatterns = [
     path("", views.home_page, name="home"),
-    path(
-        "about/", TemplateView.as_view(template_name="pages/about.html"), name="about"
-    ),
+
+    # Route Manager urls
+    path("route_manager/", include("scram.route_manager.urls", namespace="route_manager")),
+
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
