@@ -70,3 +70,6 @@ CELERY_TASK_EAGER_PROPAGATES = True
 REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES': (
     'rest_framework.permissions.IsAdminUser', ),
 }
+
+# Behave Django testing framework
+INSTALLED_APPS += ["behave_django"]  # noqa F405
