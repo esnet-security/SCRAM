@@ -2,7 +2,7 @@
 
 Werkzeug==1.0.1 # https://github.com/pallets/werkzeug
 ipdb==0.13.4  # https://github.com/gotcha/ipdb
-psycopg2==2.8.6  # https://github.com/psycopg/psycopg2
+psycopg2-binary==2.8.6  # https://github.com/psycopg/psycopg2
 watchgod==0.6  # https://github.com/samuelcolvin/watchgod
 
 # Testing
@@ -11,6 +11,7 @@ mypy==0.812  # https://github.com/python/mypy
 django-stubs==1.7.0  # https://github.com/typeddjango/django-stubs
 pytest==6.2.2  # https://github.com/pytest-dev/pytest
 pytest-sugar==0.9.4  # https://github.com/Frozenball/pytest-sugar
+behave-django==1.4.0  # https://github.com/behave/behave-django
 
 # Documentation
 # ------------------------------------------------------------------------------

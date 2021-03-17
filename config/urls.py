@@ -4,16 +4,16 @@ from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import include, path
 from django.views import defaults as default_views
-from django.views.generic import TemplateView
 from rest_framework.authtoken.views import obtain_auth_token
 
 from scram.route_manager import views
 
 urlpatterns = [
     path("", views.home_page, name="home"),
-    path(
-        "about/", TemplateView.as_view(template_name="pages/about.html"), name="about"
-    ),
+
+    # Route Manager urls
+    path("route_manager/", include("scram.route_manager.urls", namespace="route_manager")),
+
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management

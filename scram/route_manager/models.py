@@ -1,3 +1,17 @@
-# from django.db import models
+from django.db import models
+from django.urls import reverse
 
-# Create your models here.
+from netfields import InetAddressField
+import uuid as uuid_lib
+
+
+class IPAddress(models.Model):
+    """ Our base IP model """
+    ip = InetAddressField(unique=True)
+    uuid = models.UUIDField(
+        db_index=True,
+        default=uuid_lib.uuid4,
+        editable=False)
+
+    def get_absolute_url(self):
+        return reverse('')
