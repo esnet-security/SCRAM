@@ -28,6 +28,12 @@ ci-test:
 help: Makefile
 	@sed -n 's/^##//p' $<
 
+## migrate: makemigrations and then migrate
+.Phony: migrate
+migrate:
+	docker-compose -f local.yml run django python manage.py makemigrations && \
+	docker-compose -f local.yml run django python manage.py migrate
+
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest:
