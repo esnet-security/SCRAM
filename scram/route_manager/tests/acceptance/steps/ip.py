@@ -69,4 +69,3 @@ def step_impl(context, ip):
             break
 
     context.test.assertTrue(ip_found)
-
