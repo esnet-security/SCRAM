@@ -12,6 +12,13 @@ def step_impl(context, ip):
     )
 
 
+@when("we remove the IP {ip}")
+def step_impl(context, ip):
+    context.response = context.test.client.delete(
+        reverse("route_manager:ipaddress_detail_rest_api", args=[ip])
+    )
+
+
 @when("we list the IPs")
 def step_impl(context):
     context.response = context.test.client.get(
