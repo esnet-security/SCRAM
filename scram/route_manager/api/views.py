@@ -16,4 +16,4 @@ class IPAddressRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = IPAddress.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = IPAddressSerializer
-    lookup_field = 'uuid'
+    lookup_field = 'ip'
