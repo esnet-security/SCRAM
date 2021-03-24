@@ -12,10 +12,27 @@ def step_impl(context, ip):
     )
 
 
+@when("we remove the IP {ip}")
+def step_impl(context, ip):
+    context.response = context.test.client.delete(
+        reverse("route_manager:ipaddress_detail_rest_api", args=[ip])
+    )
+
+
 @when("we list the IPs")
 def step_impl(context):
     context.response = context.test.client.get(
         reverse("route_manager:ipaddress_rest_api")
+    )
+
+
+@when("we update the IP {ip_from} to {ip_to}")
+def step_impl(context, ip_from, ip_to):
+    """
+    :type context: behave.runner.Context
+    """
+    context.response = context.test.client.patch(
+        reverse("route_manager:ipaddress_detail_rest_api", args=[ip_from]), {"ip": ip_to}
     )
 
 
