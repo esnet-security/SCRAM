@@ -16,11 +16,7 @@ build:
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
-ci-test:
-	docker-compose -f local.yml run --rm django python manage.py migrate && \
-	docker-compose -f local.yml up -d && \
-	docker-compose -f local.yml run django pytest; \
-	docker-compose -f local.yml run django python manage.py behave --no-input
+ci-test: | build migrate run pytest behave-all
 
 # This automatically builds the help target based on commands prepended with a double hashbang
 ## help: print this help output
@@ -43,3 +39,8 @@ pytest:
 .Phony: run
 run:
 	docker-compose -f local.yml up -d
+
+## type-check: static type checking
+.Phony: type-check
+type-check:
+	docker-compose -f local.yml run django mypy scram
