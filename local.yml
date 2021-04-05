@@ -4,6 +4,10 @@ volumes:
   local_postgres_data: {}
   local_postgres_data_backups: {}
 
+networks:
+  default:
+      name: scram
+
 services:
   django: &django
     build:
