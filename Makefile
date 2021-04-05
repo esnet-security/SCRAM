@@ -44,3 +44,13 @@ run:
 .Phony: type-check
 type-check:
 	docker-compose -f local.yml run django mypy scram
+
+## django-addr: get the IP and ephemeral port assigned to docker:8000
+.Phony: django-addr
+django-addr:
+	@docker-compose -f local.yml port django 8000
+
+## django-url: get the URL based on http://$(make django-addr)
+.Phony: django-url
+django-url:
+	@echo http://$$(make django-addr)
