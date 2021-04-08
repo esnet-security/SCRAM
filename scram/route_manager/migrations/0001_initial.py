@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name='Route',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ip', netfields.fields.InetAddressField(max_length=39)),
+                ('route', netfields.fields.InetAddressField(max_length=39)),
             ],
         ),
     ]

@@ -6,8 +6,8 @@ import uuid as uuid_lib
 
 
 class Route(models.Model):
-    """ Our base IP model """
-    ip = InetAddressField(unique=True)
+    """ Model describing a route """
+    route = InetAddressField(unique=True)
     uuid = models.UUIDField(
         db_index=True,
         default=uuid_lib.uuid4,

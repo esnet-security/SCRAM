@@ -16,4 +16,4 @@ class NetworkDetailView(RetrieveDestroyAPIView):
     queryset = Route.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = IPAddressSerializer
-    lookup_field = 'ip'
+    lookup_field = 'route'

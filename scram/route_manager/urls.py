@@ -6,7 +6,7 @@ app_name = 'route_manager'
 
 urlpatterns = [
     path(route='api/', view=views.NetworkView.as_view(), name='ipaddress_rest_api'),
-    path(route='api/<path:ip>/',
+    path(route='api/<path:route>/',
          view=views.NetworkDetailView.as_view(),
          name='ipaddress_detail_rest_api')
 ]
