@@ -6,16 +6,16 @@ import ipaddress
 
 
 @when("we add the IP {route}")
-def step_impl(context, ip):
+def step_impl(context, route):
     context.response = context.test.client.post(
-        reverse("route_manager:ipaddress_rest_api"), {"route": ip}
+        reverse("route_manager:ipaddress_rest_api"), {"route": route}
     )
 
 
 @when("we remove the IP {route}")
-def step_impl(context, ip):
+def step_impl(context, route):
     context.response = context.test.client.delete(
-        reverse("route_manager:ipaddress_detail_rest_api", args=[ip])
+        reverse("route_manager:ipaddress_detail_rest_api", args=[route])
     )
 
 
@@ -43,12 +43,12 @@ def step_impl(context, num):
 
 
 @then("{route} is one of our IPs")
-def step_impl(context, ip):
+def step_impl(context, route):
     objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
 
     ip_found = False
     for obj in objs.json():
-        if obj["route"] == ip:
+        if obj["route"] == route:
             ip_found = True
             break
 
@@ -57,9 +57,9 @@ def step_impl(context, ip):
 
 # This does a CIDR match
 @then("{route} is contained in our IPs")
-def step_impl(context, ip):
+def step_impl(context, route):
     objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
-    ip_target = ipaddress.ip_address(ip)
+    ip_target = ipaddress.ip_address(route)
 
     ip_found = False
     for obj in objs.json():
