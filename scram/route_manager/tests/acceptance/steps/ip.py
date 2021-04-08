@@ -8,21 +8,21 @@ import ipaddress
 @when("we add the IP {route}")
 def step_impl(context, route):
     context.response = context.test.client.post(
-        reverse("route_manager:ipaddress_rest_api"), {"route": route}
+        reverse("route_manager:api_root"), {"route": route}
     )
 
 
 @when("we remove the IP {route}")
 def step_impl(context, route):
     context.response = context.test.client.delete(
-        reverse("route_manager:ipaddress_detail_rest_api", args=[route])
+        reverse("route_manager:api_route_detail", args=[route])
     )
 
 
 @when("we list the IPs")
 def step_impl(context):
     context.response = context.test.client.get(
-        reverse("route_manager:ipaddress_rest_api")
+        reverse("route_manager:api_root")
     )
 
 
@@ -32,19 +32,19 @@ def step_impl(context, ip_from, ip_to):
     :type context: behave.runner.Context
     """
     context.response = context.test.client.patch(
-        reverse("route_manager:ipaddress_detail_rest_api", args=[ip_from]), {"route": ip_to}
+        reverse("route_manager:api_route_detail", args=[ip_from]), {"route": ip_to}
     )
 
 
 @then("the number of IPs is {num:d}")
 def step_impl(context, num):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
+    objs = context.test.client.get(reverse("route_manager:api_root"))
     context.test.assertEqual(len(objs.json()), num)
 
 
 @then("{route} is one of our IPs")
 def step_impl(context, route):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
+    objs = context.test.client.get(reverse("route_manager:api_root"))
 
     ip_found = False
     for obj in objs.json():
@@ -58,7 +58,7 @@ def step_impl(context, route):
 # This does a CIDR match
 @then("{route} is contained in our IPs")
 def step_impl(context, route):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
+    objs = context.test.client.get(reverse("route_manager:api_root"))
     ip_target = ipaddress.ip_address(route)
 
     ip_found = False

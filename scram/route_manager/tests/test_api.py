@@ -8,7 +8,7 @@ from django.urls import reverse
 class TestAddRemoveIP(APITestCase):
 
     def setUp(self):
-        self.url = reverse('route_manager:ipaddress_rest_api')
+        self.url = reverse('route_manager:api_root')
         self.superuser = get_user_model().objects.create_superuser('sam', 'sam@es.net', 'samtestpassword')
         self.client.login(username='sam', password='samtestpassword')
 
@@ -34,7 +34,7 @@ class TestAddRemoveIP(APITestCase):
 class TestUnauthenticatedAccess(APITestCase):
 
     def setUp(self):
-        self.url = reverse('route_manager:ipaddress_rest_api')
+        self.url = reverse('route_manager:api_root')
 
     def test_unauthenticated_users_have_no_create_access(self):
         response = self.client.post(self.url, {'route': '1.2.3.4'}, format='json')
