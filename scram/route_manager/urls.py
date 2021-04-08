@@ -5,8 +5,8 @@ from .api import views
 app_name = 'route_manager'
 
 urlpatterns = [
-    path(route='api/', view=views.NetworkView.as_view(), name='ipaddress_rest_api'),
+    path(route='api/', view=views.RouteView.as_view(), name='api_root'),
     path(route='api/<path:route>/',
-         view=views.NetworkDetailView.as_view(),
-         name='ipaddress_detail_rest_api')
+         view=views.RouteDetailView.as_view(),
+         name='api_route_detail')
 ]
