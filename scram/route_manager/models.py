@@ -5,7 +5,7 @@ from netfields import InetAddressField
 import uuid as uuid_lib
 
 
-class IPAddress(models.Model):
+class Route(models.Model):
     """ Our base IP model """
     ip = InetAddressField(unique=True)
     uuid = models.UUIDField(

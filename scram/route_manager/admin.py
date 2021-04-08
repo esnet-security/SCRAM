@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import IPAddress
+from .models import Route
 
 
-admin.site.register(IPAddress)
+admin.site.register(Route)
