@@ -49,6 +49,9 @@ gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt
 
-code_quality:
+code_quality_html:
+  extends: code_quality
+  variables:
+    REPORT_FORMAT: html
   artifacts:
-    paths: [gl-code-quality-report.json]
+    paths: [gl-code-quality-report.html]
