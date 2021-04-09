@@ -5,24 +5,24 @@ import ipaddress
 # TODO: Probably want to make these generic once we have more models
 
 
-@when("we add the IP {ip}")
-def step_impl(context, ip):
+@when("we add the IP {route}")
+def step_impl(context, route):
     context.response = context.test.client.post(
-        reverse("route_manager:ipaddress_rest_api"), {"ip": ip}
+        reverse("route_manager:api_root"), {"route": route}
     )
 
 
-@when("we remove the IP {ip}")
-def step_impl(context, ip):
+@when("we remove the IP {route}")
+def step_impl(context, route):
     context.response = context.test.client.delete(
-        reverse("route_manager:ipaddress_detail_rest_api", args=[ip])
+        reverse("route_manager:api_route_detail", args=[route])
     )
 
 
 @when("we list the IPs")
 def step_impl(context):
     context.response = context.test.client.get(
-        reverse("route_manager:ipaddress_rest_api")
+        reverse("route_manager:api_root")
     )
 
 
@@ -32,23 +32,23 @@ def step_impl(context, ip_from, ip_to):
     :type context: behave.runner.Context
     """
     context.response = context.test.client.patch(
-        reverse("route_manager:ipaddress_detail_rest_api", args=[ip_from]), {"ip": ip_to}
+        reverse("route_manager:api_route_detail", args=[ip_from]), {"route": ip_to}
     )
 
 
 @then("the number of IPs is {num:d}")
 def step_impl(context, num):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
+    objs = context.test.client.get(reverse("route_manager:api_root"))
     context.test.assertEqual(len(objs.json()), num)
 
 
-@then("{ip} is one of our IPs")
-def step_impl(context, ip):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
+@then("{route} is one of our IPs")
+def step_impl(context, route):
+    objs = context.test.client.get(reverse("route_manager:api_root"))
 
     ip_found = False
     for obj in objs.json():
-        if obj["ip"] == ip:
+        if obj["route"] == route:
             ip_found = True
             break
 
@@ -56,14 +56,14 @@ def step_impl(context, ip):
 
 
 # This does a CIDR match
-@then("{ip} is contained in our IPs")
-def step_impl(context, ip):
-    objs = context.test.client.get(reverse("route_manager:ipaddress_rest_api"))
-    ip_target = ipaddress.ip_address(ip)
+@then("{route} is contained in our IPs")
+def step_impl(context, route):
+    objs = context.test.client.get(reverse("route_manager:api_root"))
+    ip_target = ipaddress.ip_address(route)
 
     ip_found = False
     for obj in objs.json():
-        net = ipaddress.ip_network(obj["ip"])
+        net = ipaddress.ip_network(obj["route"])
         if ip_target in net:
             ip_found = True
             break

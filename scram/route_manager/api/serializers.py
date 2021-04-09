@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from ..models import IPAddress
+from ..models import Route
 
 
-class IPAddressSerializer(serializers.ModelSerializer):
+class RouteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = IPAddress
-        fields = ['ip', 'uuid']
+        model = Route
+        fields = ['route', 'uuid']

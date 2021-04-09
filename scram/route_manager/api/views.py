@@ -1,19 +1,19 @@
 from rest_framework.generics import (ListCreateAPIView, RetrieveDestroyAPIView)
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import IPAddress
-from .serializers import IPAddressSerializer
+from ..models import Route
+from .serializers import RouteSerializer
 
 
-class NetworkView(ListCreateAPIView):
-    queryset = IPAddress.objects.all()
+class RouteView(ListCreateAPIView):
+    queryset = Route.objects.all()
     permission_classes = (IsAuthenticated,)
-    serializer_class = IPAddressSerializer
+    serializer_class = RouteSerializer
     lookup_field = 'uuid'
 
 
-class NetworkDetailView(RetrieveDestroyAPIView):
-    queryset = IPAddress.objects.all()
+class RouteDetailView(RetrieveDestroyAPIView):
+    queryset = Route.objects.all()
     permission_classes = (IsAuthenticated,)
-    serializer_class = IPAddressSerializer
-    lookup_field = 'ip'
+    serializer_class = RouteSerializer
+    lookup_field = 'route'
