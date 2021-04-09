@@ -1,5 +1,6 @@
 include:
   - template: Dependency-Scanning.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
 
 stages:
   - lint
@@ -47,3 +48,7 @@ pytest:
 gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt
+
+code_quality:
+  artifacts:
+    paths: [gl-code-quality-report.json]
