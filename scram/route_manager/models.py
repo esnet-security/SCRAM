@@ -27,6 +27,3 @@ class Entry(models.Model):
     """An instance of an action taken on a route."""
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
-
-    class Meta:
-        verbose_name_plural: "Entries"
