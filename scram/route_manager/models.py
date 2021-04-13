@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 
 from netfields import InetAddressField
 import uuid as uuid_lib
@@ -35,3 +36,6 @@ class History(models.Model):
     who = models.CharField("Username", default="Unknown", max_length=30)
     why = models.CharField("Comment for the action", max_length=200)
     when = models.DateTimeField(auto_now_add=True)
+
+    expiration = models.DateTimeField(default="9999, 12, 31, tz=timezone.utc")
+    expiration_reason = models.CharField("Optional reason for the expiration", max_length=200, null=True, blank=True)
