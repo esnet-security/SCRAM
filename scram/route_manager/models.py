@@ -30,3 +30,11 @@ class Entry(models.Model):
 
     class Meta:
         verbose_name_plural: "Entries"
+
+
+class History(models.Model):
+    """Who, what, when, why"""
+    entry = models.ForeignKey("Entry", on_delete=models.CASCADE)
+    who = models.CharField("Username", default="Unknown", max_length=30)
+    why = models.CharField("Comment for the action", max_length=200)
+    when = models.DateTimeField(auto_now_add=True)
