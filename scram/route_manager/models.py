@@ -15,3 +15,9 @@ class Route(models.Model):
 
     def get_absolute_url(self):
         return reverse('')
+
+
+class ActionType(models.Model):
+    """Defines an action that can be done with a given route. e.g. Block, shunt, redirect."""
+    name = models.CharField("One-word description of the action", max_length=30)
+    available = models.BooleanField("Is this a valid choice for new entries?", default=True)
