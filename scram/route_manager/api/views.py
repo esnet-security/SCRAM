@@ -1,18 +1,18 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import Route
-from .serializers import RouteSerializer
+from ..models import ActionType, Route
+from .serializers import ActionTypeSerializer, RouteSerializer
 
 
-class RouteView(ListCreateAPIView):
-    queryset = Route.objects.all()
+class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ActionType.objects.all()
     permission_classes = (IsAuthenticated,)
-    serializer_class = RouteSerializer
-    lookup_field = 'uuid'
+    serializer_class = ActionTypeSerializer
+    lookup_field = 'name'
 
 
-class RouteDetailView(RetrieveDestroyAPIView):
+class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = RouteSerializer
