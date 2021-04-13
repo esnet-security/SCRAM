@@ -1,6 +1,7 @@
-from behave import when, then
-from django.urls import reverse
 import ipaddress
+
+from behave import then, when
+from django.urls import reverse
 
 # TODO: Probably want to make these generic once we have more models
 

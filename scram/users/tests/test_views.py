@@ -10,11 +10,7 @@ from django.urls import reverse
 from scram.users.forms import UserChangeForm
 from scram.users.models import User
 from scram.users.tests.factories import UserFactory
-from scram.users.views import (
-    UserRedirectView,
-    UserUpdateView,
-    user_detail_view,
-)
+from scram.users.views import UserRedirectView, UserUpdateView, user_detail_view
 
 pytestmark = pytest.mark.django_db
 
