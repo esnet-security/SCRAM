@@ -22,6 +22,11 @@ class ActionType(models.Model):
     name = models.CharField("One-word description of the action", max_length=30)
     available = models.BooleanField("Is this a valid choice for new entries?", default=True)
 
+    def __str__(self):
+        if not self.available:
+            return f"{self.name} (Inactive)"
+        return self.name
+
 
 class Entry(models.Model):
     """An instance of an action taken on a route."""
