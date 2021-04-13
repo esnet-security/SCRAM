@@ -1,5 +1,6 @@
-from scram.users.tests.factories import UserFactory
 from rest_framework.test import APIClient
+
+from scram.users.tests.factories import UserFactory
 
 
 def django_ready(context):

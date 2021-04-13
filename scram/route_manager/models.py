@@ -1,8 +1,8 @@
+import uuid as uuid_lib
+
 from django.db import models
 from django.urls import reverse
-
 from netfields import InetAddressField
-import uuid as uuid_lib
 
 
 class Route(models.Model):

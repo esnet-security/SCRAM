@@ -1,4 +1,4 @@
-from rest_framework.generics import (ListCreateAPIView, RetrieveDestroyAPIView)
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from ..models import Route

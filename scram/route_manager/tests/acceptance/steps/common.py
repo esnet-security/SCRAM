@@ -1,4 +1,4 @@
-from behave import when, then
+from behave import then, when
 
 
 @when("we're logged in")
