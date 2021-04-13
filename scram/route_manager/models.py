@@ -27,3 +27,11 @@ class Entry(models.Model):
     """An instance of an action taken on a route."""
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
+
+
+class History(models.Model):
+    """Who, what, when, why"""
+    entry = models.ForeignKey("Entry", on_delete=models.CASCADE)
+    who = models.CharField("Username", default="Unknown", max_length=30)
+    why = models.CharField("Comment for the action", max_length=200)
+    when = models.DateTimeField(auto_now_add=True)
