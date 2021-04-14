@@ -37,4 +37,4 @@ class History(models.Model):
     when = models.DateTimeField(auto_now_add=True)
 
     expiration = models.DateTimeField(default="9999, 12, 31, tz=timezone.utc")
-    expiration_reason = models.CharField("Optional reason for the expiration", max_length=200, null=True, blank=True)
+    expiration_reason = models.CharField(help_text="Optional reason for the expiration", max_length=200, null=True, blank=True)
