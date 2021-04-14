@@ -1,18 +1,18 @@
-Feature: add IP addresses
-  Users can add v4 and v6 IP addresses
+Feature: an automated source adds a block entry
+  Automated clients (eg zeek) can add v4/v6 block entries
 
   Scenario: unauthenticated users get a 403
-    When we add the IP 127.0.0.1
+    When we add the entry 127.0.0.1
     Then we get a 403 status code
 
-  Scenario Outline: add an IP address
+  Scenario Outline: add a block entry
     When we're logged in
-    And  we add the IP <ip>
-    And  we list the IPs
+    And  we add the entry <ip>
+    And  we list the entrys
 
-    Then the number of IPs is 1
-    And  <cidr> is one of our IPs
-    And  <ip> is contained in our IPs
+    Then the number of entrys is 1
+    And  <cidr> is one of our list of entrys
+    And  <ip> is contained in our entrys
 
 
     Examples: v4 IPs
@@ -25,12 +25,12 @@ Feature: add IP addresses
       | 2000:: | 2000::/128 |
       | ::1    | ::1/128    |
 
-  Scenario Outline: add an IP address multiple times
+  Scenario Outline: add a block entry multiple times and it's accepted
     When we're logged in
     And  we add the IP <ip>
     And  we add the IP <ip>
 
-    Then we get a 400 status code
+    Then we get a 200 status code
     And the number of IPs is 1
 
     Examples: IPs
@@ -40,12 +40,12 @@ Feature: add IP addresses
       | 2000::      |
       | ::1         |
 
-  Scenario Outline: invalid IPs can't be added
+  Scenario Outline: invalid block entries can't be added
     When we're logged in
-    And  we add the IP <ip>
+    And  we add the entry <ip>
 
     Then we get a 400 status code
-    And the number of IPs is 0
+    And the number of entrys is 0
 
     Examples: invalid IPs
       | ip          |
