@@ -17,3 +17,5 @@ class RouteViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = RouteSerializer
     lookup_field = 'route'
+    lookup_value_regex = '[0-9.]+'
+    http_method_names = ['get', 'post', 'head']
