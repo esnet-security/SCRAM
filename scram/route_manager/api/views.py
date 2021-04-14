@@ -1,8 +1,8 @@
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import ActionType, Route
-from .serializers import ActionTypeSerializer, RouteSerializer
+from ..models import ActionType, Entry
+from .serializers import ActionTypeSerializer, EntrySerializer
 
 
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -12,10 +12,10 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'name'
 
 
-class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all()
+class EntryViewSet(viewsets.ModelViewSet):
+    queryset = Entry.objects.all()
     permission_classes = (IsAuthenticated,)
-    serializer_class = RouteSerializer
-    lookup_field = 'route'
+    serializer_class = EntrySerializer
+    lookup_field = 'route__route'
     lookup_value_regex = '([0-9.]+){3}[0-9]'
     http_method_names = ['get', 'post', 'head', 'delete']
