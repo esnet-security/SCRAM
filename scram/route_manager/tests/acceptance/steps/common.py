@@ -36,9 +36,7 @@ def step_impl(context, model, value):
 
 @when("we list the {model}s")
 def step_impl(context, model):
-    context.response = context.test.client.get(
-        reverse(f"api:{model.lower()}-list")
-    )
+    context.response = context.test.client.get(reverse(f"api:{model.lower()}-list"))
 
 
 @when("we update the {model} {value_from} to {value_to}")
@@ -47,7 +45,8 @@ def step_impl(context, model, value_from, value_to):
     :type context: behave.runner.Context
     """
     context.response = context.test.client.patch(
-        reverse(f"api:{model.lower()}-detail", args=[value_from]), {model.lower(): value_to}
+        reverse(f"api:{model.lower()}-detail", args=[value_from]),
+        {model.lower(): value_to},
     )
 
 
