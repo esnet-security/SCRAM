@@ -29,11 +29,11 @@ Feature: an automated source adds a block entry
   Scenario Outline: add a block entry multiple times and it's accepted
     Given a block actiontype is defined
     When we're logged in
-    And  we add the IP <ip>
-    And  we add the IP <ip>
+    And  we add the entry <ip>
+    And  we add the entry <ip>
 
-    Then we get a 200 status code
-    And the number of IPs is 1
+    Then we get a 201 status code
+    And the number of entrys is 1
 
     Examples: IPs
       | ip          |
