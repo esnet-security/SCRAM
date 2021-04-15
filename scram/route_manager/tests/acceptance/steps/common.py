@@ -62,13 +62,18 @@ def step_impl(context, model, num):
     context.test.assertEqual(len(objs.json()), num)
 
 
+model_to_field_mapping = {"entry": "route"}
+
+
 @then("{value} is one of our list of {model}s")
 def step_impl(context, value, model):
     objs = context.test.client.get(reverse(f"api:{model.lower()}-list"))
 
     found = False
     for obj in objs.json():
-        if obj[model.lower()] == value:
+        # For some models, we need to look at a different field.
+        model = model_to_field_mapping.get(model.lower(), model.lower())
+        if obj[model] == value:
             found = True
             break
 
