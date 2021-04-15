@@ -1,6 +1,10 @@
+import logging
+
 from rest_framework import serializers
 
 from ..models import ActionType, Entry, Route
+
+logger = logging.getLogger(__name__)
 
 
 class ActionTypeSerializer(serializers.ModelSerializer):
@@ -11,7 +15,7 @@ class ActionTypeSerializer(serializers.ModelSerializer):
 
 class EntrySerializer(serializers.ModelSerializer):
     route = serializers.IPAddressField()
-    actiontype = serializers.CharField(default="1")
+    actiontype = serializers.CharField(default="block")
 
     class Meta:
         model = Entry

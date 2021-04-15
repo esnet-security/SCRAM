@@ -15,11 +15,9 @@ def step_impl(context, status_code):
 
 @when("we add the entry {value}")
 def step_impl(context, value):
-    import logging
     context.response = context.test.client.post(
-        reverse("api:entry-list"), {"route": value, "actiontype": "1"}
+        reverse("api:entry-list"), {"route": value, "actiontype": "block"}
     )
-    logging.warning(context.response.content)
 
 
 # @when("we add the {model} {value}")
