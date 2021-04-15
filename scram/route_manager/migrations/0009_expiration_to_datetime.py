@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0007_auto_20210413_1840'),
+        ('route_manager', '0008_default_block_actiontype'),
     ]
 
     operations = [

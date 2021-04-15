@@ -12,7 +12,7 @@ def create_block_actiontype(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0006_history'),
+        ('route_manager', '0007_history_expiration'),
     ]
 
     operations = [

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0009_merge_20210414_2003'),
+        ('route_manager', '0010_actiontype_helptext'),
     ]
 
     operations = [

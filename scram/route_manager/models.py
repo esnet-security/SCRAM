@@ -35,6 +35,9 @@ class Entry(models.Model):
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
 
+    class Meta:
+        unique_together = ['route', 'actiontype']
+
 
 class History(models.Model):
     """Who, what, when, why"""
