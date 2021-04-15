@@ -6,6 +6,7 @@ Feature: an automated source adds a block entry
     Then we get a 403 status code
 
   Scenario Outline: add a block entry
+    Given a block actiontype is defined
     When we're logged in
     And  we add the entry <ip>
     And  we list the entrys
@@ -26,6 +27,7 @@ Feature: an automated source adds a block entry
       | ::1    | ::1/128    |
 
   Scenario Outline: add a block entry multiple times and it's accepted
+    Given a block actiontype is defined
     When we're logged in
     And  we add the IP <ip>
     And  we add the IP <ip>
@@ -41,6 +43,7 @@ Feature: an automated source adds a block entry
       | ::1         |
 
   Scenario Outline: invalid block entries can't be added
+    Given a block actiontype is defined
     When we're logged in
     And  we add the entry <ip>
 

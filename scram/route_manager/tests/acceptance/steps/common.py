@@ -1,6 +1,12 @@
-from behave import then, when
-
+from behave import given, then, when
 from django.urls import reverse
+
+from scram.route_manager.models import ActionType
+
+
+@given("a {name} actiontype is defined")
+def define_block(context, name):
+    at, created = ActionType.objects.get_or_create(name=name)
 
 
 @when("we're logged in")
