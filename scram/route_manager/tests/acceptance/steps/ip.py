@@ -12,8 +12,7 @@ def step_impl(context, route):
 
     ip_found = False
     for obj in objs.json():
-        # Duplicated ["route"] to traverse the foreignkey relationship
-        net = ipaddress.ip_network(obj["route"]["route"])
+        net = ipaddress.ip_network(obj["route"])
         if ip_target in net:
             ip_found = True
             break
