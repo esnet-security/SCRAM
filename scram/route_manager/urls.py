@@ -1,8 +1,3 @@
-from django.urls import path
+app_name = "route_manager"
 
-from .api import views
-
-app_name = 'route_manager'
-
-urlpatterns = [
-]
+urlpatterns = []

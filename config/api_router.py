@@ -1,8 +1,8 @@
 from django.conf import settings
 from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from scram.users.api.views import UserViewSet
 from scram.route_manager.api.views import ActionTypeViewSet, EntryViewSet
+from scram.users.api.views import UserViewSet
 
 if settings.DEBUG:
     router = DefaultRouter()

@@ -1,6 +1,6 @@
 import ipaddress
 
-from behave import then, when
+from behave import then
 from django.urls import reverse
 
 
