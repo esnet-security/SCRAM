@@ -3,12 +3,12 @@
 ## behave-all: runs behave inside the containers against all of your features
 .Phony: behave-all
 behave-all:
-	docker-compose -f local.yml run django python manage.py behave --no-input
+	docker-compose -f local.yml run django python manage.py behave --no-input --simple
 
 ## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
 .Phony: behave
 behave:
-	docker-compose -f local.yml run django python manage.py behave --no-input -i $(FEATURE)
+	docker-compose -f local.yml run django python manage.py behave --no-input --simple -i $(FEATURE)
 
 ## build: rebuilds all your containers
 build:
