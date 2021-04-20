@@ -1,5 +1,6 @@
 import logging
 
+from netfields import rest_framework
 from rest_framework import serializers
 
 from ..models import ActionType, Entry, Route
@@ -13,8 +14,18 @@ class ActionTypeSerializer(serializers.ModelSerializer):
         fields = ["pk", "name", "available"]
 
 
+class RouteSerializer(serializers.ModelSerializer):
+    route = rest_framework.CidrAddressField()
+
+    class Meta:
+        model = Route
+        fields = [
+            "route",
+        ]
+
+
 class EntrySerializer(serializers.ModelSerializer):
-    route = serializers.IPAddressField()
+    route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
 
     class Meta:
@@ -22,9 +33,9 @@ class EntrySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def create(self, validated_data):
-        route = validated_data.pop("route")
+        valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
-        route_instance, created = Route.objects.get_or_create(route=route)
+        route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
         entry_instance, created = Entry.objects.get_or_create(
             **validated_data, route=route_instance, actiontype=actiontype_instance

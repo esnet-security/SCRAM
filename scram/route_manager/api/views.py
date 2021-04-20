@@ -17,5 +17,5 @@ class EntryViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = EntrySerializer
     lookup_field = "route__route"
-    lookup_value_regex = "([0-9.]+){3}[0-9]"
+    lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]

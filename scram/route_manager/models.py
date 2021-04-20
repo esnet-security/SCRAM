@@ -2,13 +2,13 @@ import uuid as uuid_lib
 
 from django.db import models
 from django.urls import reverse
-from netfields import InetAddressField
+from netfields import CidrAddressField
 
 
 class Route(models.Model):
     """ Model describing a route """
 
-    route = InetAddressField(unique=True)
+    route = CidrAddressField(unique=True)
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
     def get_absolute_url(self):
@@ -20,8 +20,13 @@ class Route(models.Model):
 
 class ActionType(models.Model):
     """Defines an action that can be done with a given route. e.g. Block, shunt, redirect."""
-    name = models.CharField(help_text="One-word description of the action", max_length=30)
-    available = models.BooleanField(help_text="Is this a valid choice for new entries?", default=True)
+
+    name = models.CharField(
+        help_text="One-word description of the action", max_length=30
+    )
+    available = models.BooleanField(
+        help_text="Is this a valid choice for new entries?", default=True
+    )
 
     def __str__(self):
         if not self.available:
@@ -36,7 +41,7 @@ class Entry(models.Model):
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
 
     class Meta:
-        unique_together = ['route', 'actiontype']
+        unique_together = ["route", "actiontype"]
 
 
 class History(models.Model):
