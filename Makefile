@@ -18,6 +18,12 @@ build:
 .Phony: ci-test
 ci-test: | build migrate run pytest behave-all
 
+## cleanup: remove local containers and volumes
+.Phony: cleanup
+cleanup:
+  @docker-compose -f local.yml rm -s
+  @docker volume prune
+
 # This automatically builds the help target based on commands prepended with a double hashbang
 ## help: print this help output
 .Phony: help
