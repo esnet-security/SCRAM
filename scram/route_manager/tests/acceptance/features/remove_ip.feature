@@ -27,7 +27,7 @@ Feature: remove a network
     And we add the entry <IP>
     And we remove the entry <IP>
     Then we get a 204 status code
-    And the number of IPs is 0
+    And the number of entrys is 0
 
     Examples: v4 IPs
       | IP            |

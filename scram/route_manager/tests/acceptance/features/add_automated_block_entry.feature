@@ -56,3 +56,16 @@ Feature: an automated source adds a block entry
       | 1:          |
       | 2000::1::1  |
       | 2000::/129  |
+
+  Scenario Outline: add a block entry as a cidr address
+    When we're logged in
+    And  we add the entry <ip>
+    And  we list the entrys
+
+    Then the number of entrys is 1
+    Examples:
+      | ip                 |
+      | 1.2.3.4/32         |
+      | 10.1.0.0/16         |
+      | 2000::1/128        |
+      | 2001:4f8:3:ba::/64 |
