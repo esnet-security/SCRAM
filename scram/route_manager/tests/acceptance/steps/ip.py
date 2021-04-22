@@ -1,65 +1,13 @@
 import ipaddress
 
-from behave import then, when
+from behave import then
 from django.urls import reverse
-
-# TODO: Probably want to make these generic once we have more models
-
-
-@when("we add the IP {route}")
-def step_impl(context, route):
-    context.response = context.test.client.post(
-        reverse("route_manager:api_root"), {"route": route}
-    )
-
-
-@when("we remove the IP {route}")
-def step_impl(context, route):
-    context.response = context.test.client.delete(
-        reverse("route_manager:api_route_detail", args=[route])
-    )
-
-
-@when("we list the IPs")
-def step_impl(context):
-    context.response = context.test.client.get(
-        reverse("route_manager:api_root")
-    )
-
-
-@when("we update the IP {ip_from} to {ip_to}")
-def step_impl(context, ip_from, ip_to):
-    """
-    :type context: behave.runner.Context
-    """
-    context.response = context.test.client.patch(
-        reverse("route_manager:api_route_detail", args=[ip_from]), {"route": ip_to}
-    )
-
-
-@then("the number of IPs is {num:d}")
-def step_impl(context, num):
-    objs = context.test.client.get(reverse("route_manager:api_root"))
-    context.test.assertEqual(len(objs.json()), num)
-
-
-@then("{route} is one of our IPs")
-def step_impl(context, route):
-    objs = context.test.client.get(reverse("route_manager:api_root"))
-
-    ip_found = False
-    for obj in objs.json():
-        if obj["route"] == route:
-            ip_found = True
-            break
-
-    context.test.assertTrue(ip_found)
 
 
 # This does a CIDR match
-@then("{route} is contained in our IPs")
+@then("{route} is contained in our entrys")
 def step_impl(context, route):
-    objs = context.test.client.get(reverse("route_manager:api_root"))
+    objs = context.test.client.get(reverse("api:entry-list"))
     ip_target = ipaddress.ip_address(route)
 
     ip_found = False
