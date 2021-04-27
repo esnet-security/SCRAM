@@ -23,7 +23,7 @@ ci-test: | build migrate run pytest behave-all
 .Phony: clean
 clean:
 	@docker-compose -f local.yml rm -f -s
-	@docker volume prune
+	@docker volume prune -f
 
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
