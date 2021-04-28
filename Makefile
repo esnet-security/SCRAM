@@ -3,16 +3,17 @@
 ## behave-all: runs behave inside the containers against all of your features
 .Phony: behave-all
 behave-all:
-	docker-compose -f local.yml run django python manage.py behave --no-input --simple
+	@docker-compose -f local.yml run django python manage.py behave --no-input --simple
 
 ## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
 .Phony: behave
 behave:
-	docker-compose -f local.yml run django python manage.py behave --no-input --simple -i $(FEATURE)
+	@docker-compose -f local.yml run django python manage.py behave --no-input --simple -i $(FEATURE)
 
 ## build: rebuilds all your containers
+.Phony: build
 build:
-	docker-compose -f local.yml build
+	@docker-compose -f local.yml build
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
@@ -22,7 +23,7 @@ ci-test: | build migrate run pytest behave-all
 .Phony: clean
 clean:
 	@docker-compose -f local.yml rm -f -s
-	@docker volume prune
+	@docker volume prune -f
 
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
@@ -43,20 +44,20 @@ help: Makefile
 ## migrate: makemigrations and then migrate
 .Phony: migrate
 migrate:
-	docker-compose -f local.yml run django python manage.py makemigrations
-	docker-compose -f local.yml run django python manage.py migrate
+	@docker-compose -f local.yml run django python manage.py makemigrations
+	@docker-compose -f local.yml run django python manage.py migrate
 
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest:
-	docker-compose -f local.yml run django pytest
+	@docker-compose -f local.yml run django pytest
 
 ## run: brings up the containers as described in local.yml
 .Phony: run
 run:
-	docker-compose -f local.yml up -d
+	@docker-compose -f local.yml up -d
 
 ## type-check: static type checking
 .Phony: type-check
 type-check:
-	docker-compose -f local.yml run django mypy scram
+	@docker-compose -f local.yml run django mypy scram

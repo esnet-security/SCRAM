@@ -24,19 +24,19 @@ pytest:
   services:
   - docker:dind
   before_script:
+  - apk add make
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - ".ci-scripts/pull_images.sh"
-  - docker-compose -f local.yml build
+  - make build
   - ".ci-scripts/push_images.sh"
-  - docker-compose -f local.yml run django python manage.py makemigrations
-  - docker-compose -f local.yml run django python manage.py migrate
-  - docker-compose -f local.yml up -d
+  - make migrate
+  - make run
   script:
-  - docker-compose -f local.yml run django pytest
-  - docker-compose -f local.yml run django python manage.py behave --no-input --simple
+  - make pytest
+  - make behave-all
   after_script:
-  - docker-compose -f local.yml rm -f -s
+  - make clean
 gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt
