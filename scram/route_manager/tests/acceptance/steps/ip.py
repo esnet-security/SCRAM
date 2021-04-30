@@ -1,6 +1,6 @@
 import ipaddress
 
-from behave import then
+from behave import then, when
 from django.urls import reverse
 
 
@@ -18,3 +18,20 @@ def step_impl(context, route):
             break
 
     context.test.assertTrue(ip_found)
+
+
+@when("we query for {ip}")
+def step_impl(context, ip):
+    try:
+        context.response = context.test.client.get(
+            reverse("api:entry-detail", args=[ip])
+        )
+        context.queryException = None
+    except ValueError as e:
+        context.response = None
+        context.queryException = e
+
+
+@then("we get a ValueError")
+def step_impl(context):
+    assert isinstance(context.queryException, ValueError)
