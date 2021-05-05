@@ -1,7 +1,7 @@
 import ipaddress
 
 from django.http import Http404
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -40,3 +40,9 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise Http404
         serializer = EntrySerializer(entry, many=True)
         return Response(serializer.data)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        cidr = ipaddress.ip_network(pk, strict=False)
+        entry = Entry.objects.filter(route__route__host=cidr)
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
