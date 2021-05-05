@@ -25,6 +25,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def retrieve(self, request, pk=None, **kwargs):
+        # TODO: update this once we add to settings
         v4_minprefix = 8
         v6_minprefix = 32
 
