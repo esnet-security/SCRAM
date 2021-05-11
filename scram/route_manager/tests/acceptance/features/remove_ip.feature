@@ -5,10 +5,10 @@ Feature: remove a network
     When we add the entry 127.0.0.1
     Then we get a 403 status code
 
-  Scenario Outline: removing a nonexistant IP returns a 404
+  Scenario Outline: removing a nonexistant IP returns a 204 (the client should not have to worry about it)
     When we're logged in
     And we remove the entry <IP>
-    Then we get a 404 status code
+    Then we get a 204 status code
 
     Examples: v4 IPs
       | IP            |
@@ -39,4 +39,4 @@ Feature: remove a network
       | IP            |
       | 2000::        |
       | ::1/128       |
-      | 2000::0/8     |
+      | 2000::0/32    |

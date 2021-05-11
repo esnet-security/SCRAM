@@ -26,13 +26,6 @@ def step_impl(context, value):
     )
 
 
-# @when("we add the {model} {value}")
-# def step_impl(context, model, value):
-#     context.response = context.test.client.post(
-#         reverse(f"api:{model.lower()}-list"), {model.lower(): value, "actiontype": 1}
-#     )
-
-
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
     context.response = context.test.client.delete(
