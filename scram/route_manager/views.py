@@ -1,8 +1,8 @@
 from django.shortcuts import render
 
-from .models import Entry
+from .models import ActionType, Entry
 
 
 def home_page(request):
-    context = {"Entries": Entry.objects.all()}
+    context = {"Entries": Entry.objects.all(), "Actiontypes": ActionType.objects.all()}
     return render(request, "route_manager/home.html", context)

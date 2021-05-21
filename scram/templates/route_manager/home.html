@@ -1,8 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div class="row">
+    {% for actiontype in Actiontypes %}
+      <div class="col">
+        <h2>{{ actiontype.name }}</h2>
+          {% for entry in Entries %}
+            <p>{{ entry.route }}</p>
+          {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  <div class="row">
 
-  {% for entry in Entries %}
-    <p>{{ entry.route }}: {{ entry.actiontype }}</p>
-  {% endfor %}
+  </div>
 {% endblock %}
