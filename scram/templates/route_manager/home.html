@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  {% for entry in Entries %}
+    <p>{{ entry.route }}: {{ entry.actiontype }}</p>
+  {% endfor %}
+{% endblock %}
