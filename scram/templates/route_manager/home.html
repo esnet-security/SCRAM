@@ -6,7 +6,9 @@
       <div class="col">
         <h2>{{ actiontype.name }}</h2>
           {% for entry in Entries %}
-            <p>{{ entry.route }}</p>
+            {% if actiontype.name|lower == entry.actiontype|lower %}
+              <p>{{ entry.route }}</p>
+            {% endif %}
           {% endfor %}
       </div>
     {% endfor %}
