@@ -1,6 +1,8 @@
-# from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render
+
+from .models import ActionType, Entry
 
 
 def home_page(request):
-    return HttpResponse("<html><title>SCRAM</title></html>")
+    context = {"Entries": Entry.objects.all(), "Actiontypes": ActionType.objects.all()}
+    return render(request, "route_manager/home.html", context)
