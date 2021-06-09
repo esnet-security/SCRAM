@@ -1,15 +1,23 @@
 {% load static i18n %}
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-dark justify-content-between mb-1">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{% url 'home' %}">
+    <a class="navbar-brand font-weight-bold" href="{% url 'home' %}">
       <img class="img-responsive" id="logo" alt="logo" src="{% static 'images/favicons/favicon.ico' %}" width="25" height="25">
       SCRAM
     </a>
+    <form class="w-100 d-inline">
+      <input class="form-control pl-2 me-2 mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+    </form>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav ml-auto text-nowrap">
+        {% if request.user.is_superuser %}
+          <li class="nav-item">
+            <a id="admin-page" class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
+          </li>
+        {% endif %}
         {% if request.user.is_authenticated %}
           <li class="nav-item">
             {# URL provided by django-allauth/account/urls.py #}
@@ -29,10 +37,6 @@
             <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
           </li>
         {% endif %}
-        <form class="d-flex">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
-        </form>
       </ul>
     </div>
   </div>
