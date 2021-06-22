@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="row">
+  <div class="d-flex justify-content-center mt-3">
     <form class="form-inline" action="/api/entrys/" method="post">
       {% csrf_token %}
       <div class="form-group mb-2">
