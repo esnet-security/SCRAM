@@ -24,7 +24,7 @@
         <h2>{{ actiontype.name }}</h2>
           {% for entry in Entries %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
-              <p>{{ entry.route }}</p>
+              <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
             {% endif %}
           {% endfor %}
         {% endif %}
