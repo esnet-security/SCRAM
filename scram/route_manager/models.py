@@ -19,7 +19,7 @@ class Route(models.Model):
 
 
 class ActionType(models.Model):
-    """Defines an action that can be done with a given route. e.g. Block, shunt, redirect."""
+    """ Defines an action that can be done with a given route. e.g. Block, shunt, redirect, etc. """
 
     name = models.CharField(
         help_text="One-word description of the action", max_length=30
@@ -35,7 +35,7 @@ class ActionType(models.Model):
 
 
 class Entry(models.Model):
-    """An instance of an action taken on a route."""
+    """ An instance of an action taken on a route. """
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
@@ -45,7 +45,7 @@ class Entry(models.Model):
 
 
 class History(models.Model):
-    """Who, what, when, why"""
+    """ Who, what, when, why """
 
     entry = models.ForeignKey("Entry", on_delete=models.CASCADE)
     who = models.CharField("Username", default="Unknown", max_length=30)

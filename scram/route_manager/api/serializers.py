@@ -24,13 +24,16 @@ class RouteSerializer(serializers.ModelSerializer):
         ]
 
 
-class EntrySerializer(serializers.ModelSerializer):
+class EntrySerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(
+        view_name="api:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
+    )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
 
     class Meta:
         model = Entry
-        fields = "__all__"
+        fields = ["route", "actiontype", "url"]
 
     def create(self, validated_data):
         valid_route = validated_data.pop("route")
