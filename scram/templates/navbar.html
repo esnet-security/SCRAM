@@ -1,7 +1,7 @@
 {% load static i18n %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{% url 'home' %}">
+    <a class="navbar-brand" href="{% url 'route_manager:home' %}">
       <img class="img-responsive" id="logo" alt="logo" src="{% static 'images/favicons/favicon.ico' %}" width="25" height="25">
       SCRAM
     </a>
@@ -29,9 +29,10 @@
             <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
           </li>
         {% endif %}
-        <form class="d-flex">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-outline-success" type="submit">Search</button>
+        <form class="d-flex" action="{% url 'route_manager:search' %}" method="POST">
+          {% csrf_token %}
+            <input class="form-control mb-2" name="cidr" type="search" placeholder="cidr">
+            <button class="btn btn-outline-success mb-2" type="submit">Search</button>
         </form>
       </ul>
     </div>

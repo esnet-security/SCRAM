@@ -6,14 +6,9 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from rest_framework.authtoken.views import obtain_auth_token
 
-from scram.route_manager import views
-
 urlpatterns = [
-    path("", views.home_page, name="home"),
-
     # Route Manager urls
-    path("route_manager/", include("scram.route_manager.urls", namespace="route_manager")),
-
+    path("", include("scram.route_manager.urls", namespace="route_manager")),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
