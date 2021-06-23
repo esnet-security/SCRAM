@@ -1,17 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <div class="d-flex justify-content-center mt-3">
+    <form class="form-inline" action="/api/entrys/" method="post">
+      {% csrf_token %}
+      <div class="form-group mb-2">
+        <input class="form-control mb-2" name="route" placeholder="cidr" type="text">
+        <select class="form-control mb-2" name="actiontype">
+          {% for at in Actiontypes %}
+            {% if at.available %}
+              <option>{{ at }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-danger mb-2" type="submit">Add Entry</button>
+      </div>
+    </form>
+  </div>
   <div class="row">
     {% for actiontype in Actiontypes %}
       <div class="col">
-        <h2 class="text-center">{{ actiontype.name|capfirst }}</h2>
-        <ul class="list-group list-group-flush">
+        {% if actiontype.available %}
+        <h2>{{ actiontype.name }}</h2>
           {% for entry in Entries %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
             {% endif %}
           {% endfor %}
-        </ul>
+        {% endif %}
       </div>
     {% endfor %}
   </div>

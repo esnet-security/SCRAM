@@ -39,7 +39,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         entry = Entry.objects.filter(route__route__net_overlaps=cidr)
         if entry.count() == 0:
             raise Http404
-        serializer = EntrySerializer(entry, many=True)
+        serializer = EntrySerializer(entry, many=True, context={"request": request})
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
