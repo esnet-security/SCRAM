@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="d-flex justify-content-center mt-3">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="jumbotron w-100" style="background-color:#626366">
+        <h1 class="display-3 text-center text-white font-weight-bold">SCRAM</h1>
+        <hr class="my-4">
+        <p class="text-center" style="color:#2ba6c8">Security Catch and Release Automation Manager</p>
+      </div>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center mt-2">
     <form class="form-inline" action="/api/entrys/" method="post">
       {% csrf_token %}
-      <div class="form-group mb-2">
-        <input class="form-control mb-2" name="route" placeholder="cidr" type="text">
+      <div class="form-group inline mb-2">
+        <input class="form-control mb-2 mr-2" name="route" placeholder="cidr" type="text">
         <select class="form-control mb-2" name="actiontype">
           {% for at in Actiontypes %}
             {% if at.available %}
@@ -13,7 +22,7 @@
             {% endif %}
           {% endfor %}
         </select>
-        <button class="btn btn-outline-danger mb-2" type="submit">Add Entry</button>
+        <button class="btn btn-info mb-2 ml-2" style="background-color:#2ba6c8!important;" type="submit">Add Entry</button>
       </div>
     </form>
   </div>
