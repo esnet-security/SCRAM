@@ -30,7 +30,7 @@
     {% for actiontype in Actiontypes %}
       <div class="col">
         {% if actiontype.available %}
-        <h2>{{ actiontype.name }}</h2>
+        <h2 class="text-center mt-2">{{ actiontype.name }}</h2>
           {% for entry in Entries %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
