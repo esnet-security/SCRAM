@@ -5,8 +5,10 @@
       <img class="img-responsive" id="logo" alt="logo" src="{% static 'images/favicons/favicon.ico' %}" width="25" height="25">
       SCRAM
     </a>
-    <form class="w-100 d-inline">
-      <input class="form-control pl-2 me-2 mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+    <form class="d-flex w-100 mt-2 d-inline" action="{% url 'route_manager:search' %}" method="POST">
+      {% csrf_token %}
+      <input class="form-control pl-2 me-2" name="cidr" type="search" placeholder="cidr">
+      <button class="btn btn-info mb-2" style="background-color:#2ba6c8!important;" type="submit">Search</button>
     </form>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -37,11 +39,6 @@
             <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
           </li>
         {% endif %}
-        <form class="d-flex" action="{% url 'route_manager:search' %}" method="POST">
-          {% csrf_token %}
-            <input class="form-control mb-2" name="cidr" type="search" placeholder="cidr">
-            <button class="btn btn-outline-success mb-2" type="submit">Search</button>
-        </form>
       </ul>
     </div>
   </div>
