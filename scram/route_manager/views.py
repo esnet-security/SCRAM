@@ -10,7 +10,10 @@ def home_page(request):
     context = {"Entries": Entry.objects.all(), "Actiontypes": ActionType.objects.all()}
 
     if User.objects.count() == 0:
-        password = User.objects.make_random_password()
+        password = User.objects.make_random_password(
+            length=20,
+            allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*",
+        )
         User.objects.create_superuser("admin", "admin@example.com", password)
         authenticated_admin = authenticate(request, username="admin", password=password)
         login(request, authenticated_admin)
