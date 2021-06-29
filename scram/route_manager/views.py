@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render
 
 from ..users.models import User
@@ -11,10 +12,17 @@ def home_page(request):
     if User.objects.count() == 0:
         password = User.objects.make_random_password()
         User.objects.create_superuser("admin", "admin@example.com", password)
+        authenticated_admin = authenticate(request, username="admin", password=password)
+        login(request, authenticated_admin)
         messages.add_message(
             request,
             messages.SUCCESS,
-            f"Admin user created for you.\n Please save this password: {password}",
+            f"An admin user was created for you. Please save this password: {password}",
+        )
+        messages.add_message(
+            request,
+            messages.INFO,
+            "You have been logged in as the admin user",
         )
 
     return render(request, "route_manager/home.html", context)
