@@ -14,6 +14,7 @@ services:
       - postgres
     volumes:
       - $CI_PROJECT_DIR:/app:z
+      - /tmp/profile_data:/tmp/profile_data
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
