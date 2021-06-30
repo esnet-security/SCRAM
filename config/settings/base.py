@@ -309,4 +309,10 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Your stuff...
 # ------------------------------------------------------------------------------
 
+# Should we create an admin user for you
 AUTOCREATE_ADMIN: True
+# How many entries to show PER Actiontype on the home page
+RECENT_LIMIT: 20
+# What is the largest cidr range we'll accept entries for
+V4_MINPREFIX: 8
+V6_MINPREFIX: 32
