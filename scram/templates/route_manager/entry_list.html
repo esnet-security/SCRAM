@@ -2,17 +2,16 @@
 
 {% block content %}
   <div class="row">
-    {% for actiontype, entry_list in entries.items %}
-      <div class="col">
-        {% if actiontype.available %}
-        <h2 class="text-center mt-2">{{ actiontype.name }} ({{ entry_list.total }})</h2>
-          {% for entry in entry_list.objs %}
-            {% if actiontype.name|lower == entry.actiontype|lower %}
-              <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
-            {% endif %}
-          {% endfor %}
-        {% endif %}
-      </div>
-    {% endfor %}
-  </div>
+  {% for actiontype, entry_list in entries.items %}
+    <div class="col">
+      {% if actiontype.available %}
+      <h2 class="text-center mt-2">{{ actiontype.name }} ({{ entry_list.total }})</h2>
+        {% for entry in entry_list.objs %}
+          {% if actiontype.name|lower == entry.actiontype|lower %}
+            <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </div>
+  {% endfor %}
 {% endblock %}

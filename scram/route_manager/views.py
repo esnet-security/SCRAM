@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.generic.list import ListView
 
 from .models import ActionType, Entry
 
@@ -26,13 +27,16 @@ def search_entries(request):
     )
 
 
-def entry_list(request, prefilter=Entry.objects.all()):
-    context = {"entries": {}}
-    for at in ActionType.objects.all():
-        queryset = prefilter.filter(actiontype=at).order_by("-pk")
-        context["entries"][at] = {
-            "objs": queryset,
-            "total": queryset.count(),
-        }
+class EntryListView(ListView):
+    model = Entry
+    template_name = "route_manager/entry_list.html"
 
-    return render(request, "route_manager/entry_list.html", context)
+    def get_context_data(self, **kwargs):
+        context = {"entries": {}}
+        for at in ActionType.objects.all():
+            queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
+            context["entries"][at] = {
+                "objs": queryset,
+                "total": queryset.count(),
+            }
+        return context
