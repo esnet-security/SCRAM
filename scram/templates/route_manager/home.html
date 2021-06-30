@@ -30,10 +30,14 @@
     {% for actiontype, entry_list in entries.items %}
       <div class="col">
         {% if actiontype.available %}
-        <h2 class="text-center mt-2">{{ actiontype.name }} ({{ entry_list.total }})</h2>
+        <h2 class="text-center mt-2">{{ actiontype.name }}
+          <span class="badge badge-secondary badge-pill">{{ entry_list.total }}</span>
+        </h2>
           {% for entry in entry_list.objs %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
-              <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
+              <li class="list-group-item list-group-item-light text-center">
+                <a class="link" href="{% url 'route_manager:detail' entry.id %}">
+                  {{ entry.route }}</a></li>
             {% endif %}
           {% endfor %}
         {% endif %}
