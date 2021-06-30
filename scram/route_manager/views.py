@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic.list import ListView
+from django.views.generic import ListView
 
 from .models import ActionType, Entry
 
