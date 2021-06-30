@@ -8,7 +8,7 @@ from .models import ActionType, Entry
 
 
 def home_page(request, prefilter=Entry.objects.all()):
-    num_entries = settings.recent_limit
+    num_entries = settings.RECENT_LIMIT
     context = {"entries": {}}
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
@@ -17,7 +17,7 @@ def home_page(request, prefilter=Entry.objects.all()):
             "total": queryset.count(),
         }
 
-    if settings.autocreate_admin:
+    if settings.AUTOCREATE_ADMIN:
         if User.objects.count() == 0:
             password = User.objects.make_random_password(
                 length=20,
