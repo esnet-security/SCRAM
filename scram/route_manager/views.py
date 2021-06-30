@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.generic import DetailView
 
 from .models import ActionType, Entry
 
@@ -24,3 +25,8 @@ def search_entries(request):
             route__route__net_contained_or_equal=request.POST.get("cidr")
         ),
     )
+
+
+class EntryDetailView(DetailView):
+    model = Entry
+    template_name = "route_manager/entry_detail.html"
