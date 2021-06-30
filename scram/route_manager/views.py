@@ -24,3 +24,15 @@ def search_entries(request):
             route__route__net_contained_or_equal=request.POST.get("cidr")
         ),
     )
+
+
+def entry_list(request, prefilter=Entry.objects.all()):
+    context = {"entries": {}}
+    for at in ActionType.objects.all():
+        queryset = prefilter.filter(actiontype=at).order_by("-pk")
+        context["entries"][at] = {
+            "objs": queryset,
+            "total": queryset.count(),
+        }
+
+    return render(request, "route_manager/entry_list.html", context)

@@ -7,4 +7,5 @@ app_name = "route_manager"
 urlpatterns = [
     path("", views.home_page, name="home"),
     path("/search/", views.search_entries, name="search"),
+    path("entries/", views.entry_list, name="entry-list"),
 ]
