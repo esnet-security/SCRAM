@@ -16,7 +16,7 @@
       <div class="form-group inline mb-2">
         <input class="form-control mb-2 mr-2" name="route" placeholder="cidr" type="text">
         <select class="form-control mb-2" name="actiontype">
-          {% for at in Actiontypes %}
+          {% for at in entries.keys %}
             {% if at.available %}
               <option>{{ at }}</option>
             {% endif %}
@@ -27,11 +27,11 @@
     </form>
   </div>
   <div class="row">
-    {% for actiontype in Actiontypes %}
+    {% for actiontype, entry_list in entries.items %}
       <div class="col">
         {% if actiontype.available %}
-        <h2 class="text-center mt-2">{{ actiontype.name }}</h2>
-          {% for entry in Entries %}
+        <h2 class="text-center mt-2">{{ actiontype.name }} ({{ entry_list.total }})</h2>
+          {% for entry in entry_list.objs %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">{{ entry.route }}</li>
             {% endif %}
