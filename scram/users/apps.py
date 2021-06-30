@@ -1,5 +1,9 @@
+import logging
+
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
 
 
 class UsersConfig(AppConfig):
@@ -10,4 +14,4 @@ class UsersConfig(AppConfig):
         try:
             import scram.users.signals  # noqa F401
         except ImportError:
-            pass
+            logger.warning("SCRAM user signals not found")
