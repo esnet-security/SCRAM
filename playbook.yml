@@ -1,5 +1,5 @@
 ---
-- hosts: bhr-netlab
+- hosts: bhr-netlab.es.net
   tasks:
     - name: Clone SCRAM repository
       git:
