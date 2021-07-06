@@ -1,0 +1,13 @@
+---
+- hosts: bhr-netlab
+  tasks:
+    - name: Clone SCRAM repository
+      git:
+        repo: https://gitlab.es.net/security/scram
+        dest: /usr/local/scram
+        version: main
+
+    - name: Start docker-compose
+      docker_compose:
+        project_src: /usr/local/scram/
+        files: local.yml
