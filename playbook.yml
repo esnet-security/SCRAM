@@ -1,5 +1,7 @@
 ---
 - hosts: bhr-netlab.es.net
+  vars:
+    ansible_python_interpreter: /bin/python3
   tasks:
     - name: Clone SCRAM repository
       git:
