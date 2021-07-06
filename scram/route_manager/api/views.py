@@ -1,5 +1,6 @@
 import ipaddress
 
+from django.conf import settings
 from django.http import Http404
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -25,16 +26,13 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def retrieve(self, request, pk=None, **kwargs):
-        # TODO: update this once we add to settings
-        v4_minprefix = 8
-        v6_minprefix = 32
 
         cidr = ipaddress.ip_network(pk, strict=False)
         if cidr.version == 4:
-            if cidr.prefixlen < v4_minprefix:
+            if cidr.prefixlen < settings.V4_MINPREFIX:
                 raise PrefixTooLarge()
         else:
-            if cidr.prefixlen < v6_minprefix:
+            if cidr.prefixlen < settings.V6_MINPREFIX:
                 raise PrefixTooLarge()
         entry = Entry.objects.filter(route__route__net_overlaps=cidr)
         if entry.count() == 0:
