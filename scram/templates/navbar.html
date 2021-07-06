@@ -15,6 +15,9 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav ml-auto text-nowrap">
+        <li class="nav-item">
+          <a id="entry-list" class="nav-link" href="{% url 'route_manager:entry-list' %}">{% trans "Entries" %}</a>
+        </li>
         {% if request.user.is_superuser %}
           <li class="nav-item">
             <a id="admin-page" class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>

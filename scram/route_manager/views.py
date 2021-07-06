@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.generic import ListView
 
 from .models import ActionType, Entry
 
@@ -24,3 +25,18 @@ def search_entries(request):
             route__route__net_contained_or_equal=request.POST.get("cidr")
         ),
     )
+
+
+class EntryListView(ListView):
+    model = Entry
+    template_name = "route_manager/entry_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = {"entries": {}}
+        for at in ActionType.objects.all():
+            queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
+            context["entries"][at] = {
+                "objs": queryset,
+                "total": queryset.count(),
+            }
+        return context
