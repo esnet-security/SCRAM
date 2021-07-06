@@ -3,7 +3,7 @@
   tasks:
     - name: Clone SCRAM repository
       git:
-        repo: https://gitlab.es.net/security/scram
+        repo: https://gitlab.es.net/security/scram.git
         dest: /usr/local/scram
         version: main
 
