@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView
 
 from .models import ActionType, Entry
@@ -25,6 +26,13 @@ def search_entries(request):
             route__route__net_contained_or_equal=request.POST.get("cidr")
         ),
     )
+
+
+@require_POST
+def delete_entry(request, pk):
+    query = get_object_or_404(Entry, pk=pk)
+    query.delete()
+    return redirect("route_manager:home")
 
 
 class EntryDetailView(DetailView):
