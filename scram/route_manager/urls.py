@@ -9,4 +9,5 @@ urlpatterns = [
     path("search/", views.search_entries, name="search"),
     path("delete/<int:pk>/", views.delete_entry, name="delete"),
     path(route="<int:pk>/", view=views.EntryDetailView.as_view(), name="detail"),
+    path("entries/", views.EntryListView.as_view(), name="entry-list"),
 ]

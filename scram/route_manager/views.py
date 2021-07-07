@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 from .models import ActionType, Entry
 
@@ -38,3 +38,18 @@ def delete_entry(request, pk):
 class EntryDetailView(DetailView):
     model = Entry
     template_name = "route_manager/entry_detail.html"
+
+
+class EntryListView(ListView):
+    model = Entry
+    template_name = "route_manager/entry_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = {"entries": {}}
+        for at in ActionType.objects.all():
+            queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
+            context["entries"][at] = {
+                "objs": queryset,
+                "total": queryset.count(),
+            }
+        return context
