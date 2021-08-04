@@ -41,7 +41,7 @@
 
     - name: Deploy django env template
       template:
-        src: /ansible/django.env.j2
+        src: ansible/django.env.j2
         dest: "{{ scram_home }}/.envs/.production/.django"
         owner: "{{ scram_user }}"
         group: "{{ scram_user }}"
