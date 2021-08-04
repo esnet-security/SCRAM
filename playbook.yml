@@ -39,6 +39,13 @@
         owner: "{{ scram_user }}"
         group: "{{ scram_user }}"
 
+    - name: Deploy django env template
+      template:
+        src: /ansible/django.env.j2
+        dest: "{{ scram_home }}/.envs/.production/.django"
+        owner: "{{ scram_user }}"
+        group: "{{ scram_user }}"
+
     - name: Start docker-compose
       docker_compose:
         project_src: "{{ scram_home }}"
