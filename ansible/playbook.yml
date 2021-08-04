@@ -9,6 +9,8 @@
         dest: /usr/local/scram
         version: main
 
+    - name: Create .env files
+
     - name: Start docker-compose
       docker_compose:
         project_src: /usr/local/scram/
