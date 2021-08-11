@@ -31,8 +31,8 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: "Host(`es.net`) || Host(`www.es.net`)"
-      
+      rule: "Host(`bhr-netlab.es.net`) || Host(`www.bhr-netlab.es.net`)"
+
       entryPoints:
         - web-secure
       middlewares:
@@ -43,7 +43,7 @@ http:
         certResolver: letsencrypt
 
     flower-secure-router:
-      rule: "Host(`es.net`)"
+      rule: "Host(`bhr-netlab.es.net`)"
       entryPoints:
         - flower
       service: flower
