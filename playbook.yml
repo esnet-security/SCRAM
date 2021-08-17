@@ -60,7 +60,20 @@
         - django
         - postgres
 
+    - name: Turn off old containers
+      docker_compose:
+        project_src: "{{ scram_home }}"
+        files: production.yml
+        state: absent
+
     - name: Start docker-compose
       docker_compose:
         project_src: "{{ scram_home }}"
         files: production.yml
+
+    - name: Run django migrations and collectstatic
+      command: "docker-compose -f production.yml run django python manage.py {{ item }}"
+      loop:
+        - makemigrations
+        - migrate
+        - collectstatic
