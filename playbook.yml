@@ -73,6 +73,8 @@
 
     - name: Run django migrations and collectstatic
       command: "docker-compose -f production.yml run django python manage.py {{ item }}"
+      args:
+        chdir: "{{ scram_home }}"
       loop:
         - makemigrations
         - migrate
