@@ -65,6 +65,7 @@
         project_src: "{{ scram_home }}"
         files: production.yml
         state: absent
+      failed_when: false
 
     - name: Start docker-compose
       docker_compose:
