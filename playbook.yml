@@ -80,3 +80,5 @@
         - makemigrations
         - migrate
         - collectstatic
+      tags:
+        - migrations
