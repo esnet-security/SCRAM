@@ -5,6 +5,8 @@ __pycache__/
 *$py.class
 
 .idea
+.idea/*
+*.iml
 
 # C extensions
 *.so

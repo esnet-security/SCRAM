@@ -8,7 +8,6 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: check-yaml
 
   - repo: https://github.com/psf/black
     rev: 20.8b1
@@ -26,4 +25,3 @@ repos:
       - id: flake8
         args: ['--config=setup.cfg']
         additional_dependencies: [flake8-isort]
-
