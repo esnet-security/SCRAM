@@ -2,7 +2,7 @@
 - hosts: bhr-netlab.es.net
   vars:
     ansible_python_interpreter: /bin/python3
-    scram_manager_email:
+    scram_manager_email: soehlert@es.net
     scram_user: 'scram'
     scram_home: '/usr/local/scram'
     scram_django_secret_key: !vault |
