@@ -2,6 +2,7 @@
 - hosts: bhr-netlab.es.net
   vars:
     ansible_python_interpreter: /bin/python3
+    scram_manager_email:
     scram_user: 'scram'
     scram_home: '/usr/local/scram'
     scram_django_secret_key: !vault |
@@ -59,6 +60,13 @@
       loop:
         - django
         - postgres
+
+    - name: Deploy traefik config file
+      template:
+        src: "ansible/traefik.yml.j2"
+        dest: "{{ scram_home }}/compose/production/traefik/traefik.yml"
+        owner: "{{ scram_user }}"
+        group: "{{ scram_user }}"
 
     - name: Turn off old containers
       docker_compose:
