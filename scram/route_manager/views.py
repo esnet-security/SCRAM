@@ -1,3 +1,5 @@
+import ipaddress
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -45,11 +47,10 @@ def home_page(request, prefilter=Entry.objects.all()):
 
 def search_entries(request):
     # We call home_page because search is just a more specific case of the same view and template to return
+    addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
     return home_page(
         request,
-        Entry.objects.filter(
-            route__route__net_contained_or_equal=request.POST.get("cidr")
-        ),
+        Entry.objects.filter(route__route__net_contained_or_equal=addr),
     )
 
 
