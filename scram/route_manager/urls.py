@@ -6,6 +6,7 @@ app_name = "route_manager"
 
 urlpatterns = [
     path("", views.home_page, name="home"),
-    path("/search/", views.search_entries, name="search"),
+    path("search/", views.search_entries, name="search"),
     path("entries/", views.EntryListView.as_view(), name="entry-list"),
+    path("add/", views.add_entry, name="add"),
 ]
