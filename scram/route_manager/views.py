@@ -74,6 +74,8 @@ def add_entry(request):
             for error in v:
                 errors.append(f"'{k}' error: {str(error)}")
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
+    else:
+        messages.add_message(request, messages.WARNING, "Something went wrong")
     with transaction.atomic():
         home = home_page(request)
     return home
