@@ -1,3 +1,5 @@
+import ipaddress
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -46,12 +48,14 @@ def home_page(request, prefilter=Entry.objects.all()):
 
 
 def search_entries(request):
-    # We call home_page because search is just a more specific case of the same view and template to return
+    # Using ipaddress because we needed to turn off strict mode
+    # (which netfields uses by default with seemingly no toggle)
+    # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
+    addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
         request,
-        Entry.objects.filter(
-            route__route__net_contained_or_equal=request.POST.get("cidr")
-        ),
+        Entry.objects.filter(route__route__net_contained_or_equal=addr),
     )
 
 
