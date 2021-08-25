@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.db import transaction
 from django.shortcuts import render
 from django.views.generic import ListView
 
+from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
 from .models import ActionType, Entry
 
@@ -51,6 +53,32 @@ def search_entries(request):
             route__route__net_contained_or_equal=request.POST.get("cidr")
         ),
     )
+
+
+add_entry_api = EntryViewSet.as_view({"post": "create"})
+
+
+def add_entry(request):
+    with transaction.atomic():
+        res = add_entry_api(request)
+
+    if res.status_code == 201:
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            "Entry successfully added",
+        )
+    elif res.status_code == 400:
+        errors = []
+        for k, v in res.data.items():
+            for error in v:
+                errors.append(f"'{k}' error: {str(error)}")
+        messages.add_message(request, messages.ERROR, "<br>".join(errors))
+    else:
+        messages.add_message(request, messages.WARNING, "Something went wrong")
+    with transaction.atomic():
+        home = home_page(request)
+    return home
 
 
 class EntryListView(ListView):
