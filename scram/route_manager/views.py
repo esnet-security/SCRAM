@@ -1,12 +1,20 @@
+import ipaddress
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
+from ..route_manager.api.views import EntryViewSet
+from ..users.models import User
 from .models import ActionType, Entry
 
 
 def home_page(request, prefilter=Entry.objects.all()):
-    num_entries = 20
+    num_entries = settings.RECENT_LIMIT
     context = {"entries": {}}
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
@@ -15,16 +23,40 @@ def home_page(request, prefilter=Entry.objects.all()):
             "total": queryset.count(),
         }
 
+    if settings.AUTOCREATE_ADMIN:
+        if User.objects.count() == 0:
+            password = User.objects.make_random_password(
+                length=20,
+                allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*",
+            )
+            User.objects.create_superuser("admin", "admin@example.com", password)
+            authenticated_admin = authenticate(
+                request, username="admin", password=password
+            )
+            login(request, authenticated_admin)
+            messages.add_message(
+                request,
+                messages.SUCCESS,
+                f"An admin user was created for you. Please save this password: {password}",
+            )
+            messages.add_message(
+                request,
+                messages.INFO,
+                "You have been logged in as the admin user",
+            )
+
     return render(request, "route_manager/home.html", context)
 
 
 def search_entries(request):
-    # We call home_page because search is just a more specific case of the same view and template to return
+    # Using ipaddress because we needed to turn off strict mode
+    # (which netfields uses by default with seemingly no toggle)
+    # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
+    addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
         request,
-        Entry.objects.filter(
-            route__route__net_contained_or_equal=request.POST.get("cidr")
-        ),
+        Entry.objects.filter(route__route__net_contained_or_equal=addr),
     )
 
 
@@ -38,6 +70,32 @@ def delete_entry(request, pk):
 class EntryDetailView(DetailView):
     model = Entry
     template_name = "route_manager/entry_detail.html"
+
+
+add_entry_api = EntryViewSet.as_view({"post": "create"})
+
+
+def add_entry(request):
+    with transaction.atomic():
+        res = add_entry_api(request)
+
+    if res.status_code == 201:
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            "Entry successfully added",
+        )
+    elif res.status_code == 400:
+        errors = []
+        for k, v in res.data.items():
+            for error in v:
+                errors.append(f"'{k}' error: {str(error)}")
+        messages.add_message(request, messages.ERROR, "<br>".join(errors))
+    else:
+        messages.add_message(request, messages.WARNING, "Something went wrong")
+    with transaction.atomic():
+        home = home_page(request)
+    return home
 
 
 class EntryListView(ListView):
