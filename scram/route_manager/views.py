@@ -4,8 +4,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
-from django.shortcuts import render
-from django.views.generic import ListView
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+from django.views.generic import DetailView, ListView
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
@@ -57,6 +58,18 @@ def search_entries(request):
         request,
         Entry.objects.filter(route__route__net_contained_or_equal=addr),
     )
+
+
+@require_POST
+def delete_entry(request, pk):
+    query = get_object_or_404(Entry, pk=pk)
+    query.delete()
+    return redirect("route_manager:home")
+
+
+class EntryDetailView(DetailView):
+    model = Entry
+    template_name = "route_manager/entry_detail.html"
 
 
 add_entry_api = EntryViewSet.as_view({"post": "create"})
