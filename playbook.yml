@@ -3,6 +3,7 @@
   vars:
     ansible_python_interpreter: /bin/python3
     scram_manager_email: soehlert@es.net
+    scram_code_branch: topic/soehlert/detailview_sec-299
     scram_user: 'scram'
     scram_home: '/usr/local/scram'
     scram_django_secret_key: !vault |
@@ -42,7 +43,7 @@
       git:
         repo: https://gitlab.es.net/security/scram.git
         dest: "{{ scram_home }}"
-        version: main
+        version: "{{ scram_code_branch }}"
 
     - name: Create production .env files
       file:
