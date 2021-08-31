@@ -6,6 +6,8 @@ from django.urls import include, path
 from django.views import defaults as default_views
 from rest_framework.authtoken.views import obtain_auth_token
 
+from .api_router import app_name
+
 urlpatterns = [
     # Route Manager urls
     path("", include("scram.route_manager.urls", namespace="route_manager")),
@@ -21,9 +23,15 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 
 # API URLS
+api_version_urls = (
+    [
+        path("v1/", include("config.api_router", namespace="v1")),
+    ],
+    app_name,
+)
 urlpatterns += [
     # API base url
-    path("api/", include("config.api_router", namespace="api")),
+    path("api/", include(api_version_urls, namespace="api")),
     # DRF auth token
     path("auth-token/", obtain_auth_token),
 ]
