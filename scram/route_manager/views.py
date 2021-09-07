@@ -91,8 +91,12 @@ def add_entry(request):
             for error in v:
                 errors.append(f"'{k}' error: {str(error)}")
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
+    elif res.status_code == 403:
+        messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
-        messages.add_message(request, messages.WARNING, "Something went wrong")
+        messages.add_message(
+            request, messages.WARNING, f"Something went wrong: {res.status_code}"
+        )
     with transaction.atomic():
         home = home_page(request)
     return home
