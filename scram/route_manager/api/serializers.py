@@ -26,7 +26,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
-        view_name="api:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
+        view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
     )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
