@@ -22,20 +22,20 @@ def step_impl(context, status_code):
 @when("we add the entry {value}")
 def step_impl(context, value):
     context.response = context.test.client.post(
-        reverse("api:entry-list"), {"route": value, "actiontype": "block"}
+        reverse("api:v1:entry-list"), {"route": value, "actiontype": "block"}
     )
 
 
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
     context.response = context.test.client.delete(
-        reverse(f"api:{model.lower()}-detail", args=[value])
+        reverse(f"api:v1:{model.lower()}-detail", args=[value])
     )
 
 
 @when("we list the {model}s")
 def step_impl(context, model):
-    context.response = context.test.client.get(reverse(f"api:{model.lower()}-list"))
+    context.response = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
 
 
 @when("we update the {model} {value_from} to {value_to}")
@@ -44,14 +44,14 @@ def step_impl(context, model, value_from, value_to):
     :type context: behave.runner.Context
     """
     context.response = context.test.client.patch(
-        reverse(f"api:{model.lower()}-detail", args=[value_from]),
+        reverse(f"api:v1:{model.lower()}-detail", args=[value_from]),
         {model.lower(): value_to},
     )
 
 
 @then("the number of {model}s is {num:d}")
 def step_impl(context, model, num):
-    objs = context.test.client.get(reverse(f"api:{model.lower()}-list"))
+    objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
     context.test.assertEqual(len(objs.json()), num)
 
 
@@ -60,7 +60,7 @@ model_to_field_mapping = {"entry": "route"}
 
 @then("{value} is one of our list of {model}s")
 def step_impl(context, value, model):
-    objs = context.test.client.get(reverse(f"api:{model.lower()}-list"))
+    objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
 
     found = False
     for obj in objs.json():
