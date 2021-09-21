@@ -44,6 +44,7 @@
         repo: https://gitlab.es.net/security/scram.git
         dest: "{{ scram_home }}"
         version: "{{ scram_code_branch }}"
+        force: true
 
     - name: Create production .env files
       file:
