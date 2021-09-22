@@ -27,12 +27,14 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def perform_create(self, serializer):
-        db = walrus.Database()
+        db = walrus.Database(host="redis")
 
         # Add an empty message to create the stream
         actiontype = serializer.validated_data["actiontype"]
-        route = serializer.validated_date["route"]
-        db.xadd(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
+        route = serializer.validated_data["route"]
+        db.xadd(
+            f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
+        )
 
         serializer.save()
 
