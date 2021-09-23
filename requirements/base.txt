@@ -26,3 +26,4 @@ django-cors-headers==3.7.0 # https://github.com/adamchainz/django-cors-headers
 pytest~=6.2.2
 behave~=1.2.6
 django-debug-toolbar~=3.2
+walrus~=0.8.2
