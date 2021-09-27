@@ -1,10 +1,11 @@
 ---
-- hosts: bhr-netlab.es.net
+- hosts: scram
   vars:
     ansible_python_interpreter: /bin/python3
     scram_manager_email: soehlert@es.net
     scram_code_branch: main
     scram_user: 'scram'
+    scram_group: 'scram'
     scram_home: '/usr/local/scram'
     scram_django_secret_key: !vault |
       $ANSIBLE_VAULT;1.1;AES256
@@ -28,16 +29,18 @@
 
 
   tasks:
-    - name: Create SCRAM group
-      group:
-        name: "{{ scram_user }}"
-        state: present
+    - block:
+      - name: Create SCRAM group
+        group:
+          name: "{{ scram_user }}"
+          state: present
 
-    - name: Create SCRAM user
-      user:
-        name: "{{ scram_user }}"
-        comment: "SCRAM User"
-        group: "{{ scram_user }}"
+      - name: Create SCRAM user
+        user:
+          name: "{{ scram_user }}"
+          comment: "SCRAM User"
+          group: "{{ scram_user }}"
+      when: "'localhost' not in inventory_hostname"
 
     - name: Clone SCRAM repository
       git:
@@ -51,14 +54,14 @@
         path: "{{ scram_home }}/.envs/.production"
         state: directory
         owner: "{{ scram_user }}"
-        group: "{{ scram_user }}"
+        group: "{{ scram_group }}"
 
     - name: Deploy environment variable templates
       template:
         src: "ansible/{{ item }}.env.j2"
         dest: "{{ scram_home }}/.envs/.production/.{{ item }}"
         owner: "{{ scram_user }}"
-        group: "{{ scram_user }}"
+        group: "{{ scram_group }}"
       loop:
         - django
         - postgres
@@ -68,7 +71,7 @@
         src: "ansible/traefik.yml.j2"
         dest: "{{ scram_home }}/compose/production/traefik/traefik.yml"
         owner: "{{ scram_user }}"
-        group: "{{ scram_user }}"
+        group: "{{ scram_group }}"
 
     - name: Turn off old containers
       docker_compose:
