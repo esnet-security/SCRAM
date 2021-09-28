@@ -43,7 +43,7 @@
           comment: "SCRAM User"
           group: "{{ scram_group }}"
           uid: "{{ scram_uid }}"
-      when: "'mac' not in inventory_hostname" and scram_install_user
+      when: "'mac' not in group_names" and scram_install_user
 
     - name: Clone SCRAM repository
       git:
