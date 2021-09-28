@@ -1,3 +1,10 @@
 [scram]
 bhr-netlab
 localhost ansible_python_interpreter=/usr/local/bin/python3
+
+[mac]
+localhost
+
+[mac:vars]
+scram_user = ansible_user_id
+scram_group = staff
