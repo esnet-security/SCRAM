@@ -2,10 +2,12 @@
 - hosts: scram
   vars:
     ansible_python_interpreter: /bin/python3
-    scram_manager_email: soehlert@es.net
+    scram_manager_email: person@example.com
     scram_code_branch: main
+    scram_install_user: true
     scram_user: 'scram'
     scram_group: 'scram'
+    scram_uid: '9999'
     scram_home: '/usr/local/scram'
     scram_django_secret_key: !vault |
       $ANSIBLE_VAULT;1.1;AES256
@@ -39,8 +41,9 @@
         user:
           name: "{{ scram_user }}"
           comment: "SCRAM User"
-          group: "{{ scram_user }}"
-      when: "'localhost' not in inventory_hostname"
+          group: "{{ scram_group }}"
+          uid: "{{ scram_uid }}"
+      when: "'mac' not in inventory_hostname" and scram_install_user
 
     - name: Clone SCRAM repository
       git:
