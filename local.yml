@@ -53,6 +53,12 @@ services:
     ports:
       - "6379"
 
+  client:
+    image: golang:1.17.1-alpine
+    depends_on:
+      - django
+      - redis
+
   celeryworker:
     <<: *django
     image: scram_local_celeryworker

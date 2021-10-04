@@ -47,6 +47,12 @@ services:
   redis:
     image: redis:5.0
 
+  client:
+    image: golang:1.17.1-alpine
+    depends_on:
+      - django
+      - redis
+
   celeryworker:
     <<: *django
     image: scram_production_celeryworker
@@ -61,5 +67,3 @@ services:
     <<: *django
     image: scram_production_flower
     command: /start-flower
-
-  
