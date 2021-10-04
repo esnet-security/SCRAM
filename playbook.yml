@@ -15,6 +15,12 @@
           uid: "{{ scram_uid }}"
       when: '"mac" not in group_names and scram_install_user'
 
+    - name: Turn off old containers
+      make:
+        chdir: "{{ scram_home }}"
+        target: down
+      failed_when: false
+
     - name: Remove old code
       file:
         state: absent
@@ -68,12 +74,6 @@
       changed_when: false
       when: not scram_prod
 
-    - name: Turn off old containers
-      make:
-        chdir: "{{ scram_home }}"
-        target: down
-      failed_when: false
-
     - name: Build and start docker-compose stack
       make:
         chdir: "{{ scram_home }}"
@@ -95,6 +95,12 @@
         target: django-url
       register: django_url
 
-    - name: Show django URL
-      debug:
-        var: django_url.stdout
+    - block:
+      - name: Show django URL
+        debug:
+          var: django_url.stdout
+        failed_when: '"http://" | string in django_url.stdout'
+      rescue:
+        - name: Just show localhost URL when appropriate
+          debug:
+            msg: "https://localhost/"
