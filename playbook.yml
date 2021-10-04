@@ -15,6 +15,11 @@
           uid: "{{ scram_uid }}"
       when: '"mac" not in group_names and scram_install_user'
 
+    - name: Remove old code
+      file:
+        state: absent
+        path: "{{ scram_home }}"
+
     - name: Clone SCRAM repository
       git:
         repo: https://gitlab.es.net/security/scram.git
@@ -22,49 +27,74 @@
         version: "{{ scram_code_branch }}"
         force: true
 
-    - name: Create production .env files
-      file:
-        path: "{{ scram_home }}/.envs/.production"
-        state: directory
-        owner: "{{ scram_user }}"
-        group: "{{ scram_group }}"
+    - block:
+      - name: Create production .env files
+        file:
+          path: "{{ scram_home }}/.envs/.production"
+          state: directory
+          owner: "{{ scram_user }}"
+          group: "{{ scram_group }}"
 
-    - name: Deploy environment variable templates
-      template:
-        src: "ansible/{{ item }}.env.j2"
-        dest: "{{ scram_home }}/.envs/.production/.{{ item }}"
-        owner: "{{ scram_user }}"
-        group: "{{ scram_group }}"
-      loop:
-        - django
-        - postgres
+      - name: Deploy environment variable templates
+        template:
+          src: "ansible/{{ item }}.env.j2"
+          dest: "{{ scram_home }}/.envs/.production/.{{ item }}"
+          owner: "{{ scram_user }}"
+          group: "{{ scram_group }}"
+        loop:
+          - django
+          - postgres
 
-    - name: Deploy traefik config file
-      template:
-        src: "ansible/traefik.yml.j2"
-        dest: "{{ scram_home }}/compose/production/traefik/traefik.yml"
-        owner: "{{ scram_user }}"
-        group: "{{ scram_group }}"
+      - name: Deploy traefik config file
+        template:
+          src: "ansible/traefik.yml.j2"
+          dest: "{{ scram_home }}/compose/production/traefik/traefik.yml"
+          owner: "{{ scram_user }}"
+          group: "{{ scram_group }}"
+      tags:
+        - configs
+
+    - name: Toggle prod
+      make:
+        chdir: "{{ scram_home }}"
+        target: toggle-prod
+      changed_when: false
+      when: scram_prod
+
+    - name: Toggle local
+      make:
+        chdir: "{{ scram_home }}"
+        target: toggle-local
+      changed_when: false
+      when: not scram_prod
 
     - name: Turn off old containers
-      docker_compose:
-        project_src: "{{ scram_home }}"
-        files: production.yml
-        state: absent
+      make:
+        chdir: "{{ scram_home }}"
+        target: down
       failed_when: false
 
-    - name: Start docker-compose
-      docker_compose:
-        project_src: "{{ scram_home }}"
-        files: production.yml
-
-    - name: Run django migrations and collectstatic
-      command: "docker-compose -f production.yml run django python manage.py {{ item }}"
-      args:
+    - name: Build and start docker-compose stack
+      make:
         chdir: "{{ scram_home }}"
+        target: "{{ item }}"
       loop:
-        - makemigrations
-        - migrate
-        - collectstatic
+        - build
+        - run
+
+    - name: Run django migrations
+      make:
+        chdir: "{{ scram_home }}"
+        target: migrate
       tags:
         - migrations
+
+    - name: Grab the django URL
+      make:
+        chdir: "{{ scram_home }}"
+        target: django-url
+      register: django_url
+
+    - name: Show django URL
+      debug:
+        var: django_url.stdout

@@ -10,6 +10,11 @@ toggle-prod:
 toggle-local:
 	@ln -sf local.yml active.yml
 
+# Since toggle-(local|prod) are phony targets, this file is not tracked
+# to compare if its "newer" so running another target with this as a prereq
+# will not run this target again. That would overwrite active.yml back to local.yml
+# no matter what, which is bad. Phony targets prevents this
+## active.yml: creates file active.yml on first run (as a prereq)
 active.yml:
 	@ln -sf local.yml active.yml
 
@@ -38,6 +43,11 @@ clean: active.yml
 	@docker-compose -f active.yml rm -f -s
 	@docker volume prune -f
 
+## collect-static: run collect static admin command
+.Phony: collectstatic
+collectstatic: active.yml
+	@docker-compose -f active.yml run django python manage.py collectstatic
+
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
 django-addr: active.yml
@@ -48,11 +58,26 @@ django-addr: active.yml
 django-url: active.yml
 	@echo http://$$(make django-addr)
 
+## down: turn down docker compose stack
+.Phony: down
+down: active.yml
+	@docker-compose -f active.yml down
+
+## exec: executes a given command on a given container (append CONTAINER=container_name_here and COMMAND=command_here)
+.Phony: exec
+exec: active.yml
+	@docker-compose -f active.yml exec $(CONTAINER) $(COMMAND)
+
 # This automatically builds the help target based on commands prepended with a double hashbang
 ## help: print this help output
 .Phony: help
 help: Makefile
 	@sed -n 's/^##//p' $<
+
+## tail-log: tail a docker container's logs (append CONTAINER=container_name_here)
+.Phony: tail-log
+tail-log: active.yml
+	@docker-compose -f active.yml logs -f $(CONTAINER)
 
 ## migrate: makemigrations and then migrate
 .Phony: migrate
