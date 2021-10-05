@@ -31,7 +31,7 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: "Host(`{{ ansible_fqdn }}`) || Host(`www.{{ ansible_fqdn }}`)"
+      rule: "Host(`{{ scram_traefik_host | default(ansible_fqdn) }}`)"
 
       entryPoints:
         - web-secure
@@ -43,7 +43,7 @@ http:
         certResolver: letsencrypt
 
     flower-secure-router:
-      rule: "Host(`{{ ansible_fqdn }}`)"
+      rule: "Host(`{{ scram_traefik_host | default(ansible_fqdn) }}`)"
       entryPoints:
         - flower
       service: flower

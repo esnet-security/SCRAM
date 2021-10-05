@@ -1,0 +1,4 @@
+---
+scram_user: "{{ ansible_user_id }}"
+scram_home: "/Users/{{ scram_user }}/projects/scram/"
+scram_group: "staff"
