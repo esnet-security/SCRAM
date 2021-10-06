@@ -11,12 +11,12 @@ server {
     server_name {{ scram_server_alias }};
 {% endif %}
 
-    return 301 https://$host$request_uri;
+    return 301 http://$host$request_uri;
 }
 
 server {
-    listen [::]:443 ssl;
-    listen 443 ssl;
+    listen [::]:443;
+    listen 443;
     server_name {{ scram_nginx_host | default(ansible_fqdn) }};
 
 {% if server_alias is defined and server_alias != '' %}
