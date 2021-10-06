@@ -2,10 +2,6 @@ upstream django {
     server django:5000;
 }
 
-upstream flower {
-    server flower:5555;
-}
-
 server {
     listen [::]:80;
     listen 80;
