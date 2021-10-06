@@ -51,10 +51,18 @@
           - django
           - postgres
 
-      - name: Deploy traefik config file
+    - block:
+      - name: Create nginx directory
+        file:
+          state: directory
+          path: "{{ scram_home }}/compose/production/nginx"
+          owner: "{{ scram_user }}"
+          group: "{{ scram_group }}"
+
+      - name: Deploy nginx config
         template:
-          src: "ansible/traefik.yml.j2"
-          dest: "{{ scram_home }}/compose/production/traefik/traefik.yml"
+          src: "ansible/nginx.conf.j2"
+          dest: "{{ scram_home }}/compose/production/nginx/nginx.conf"
           owner: "{{ scram_user }}"
           group: "{{ scram_group }}"
       tags:
