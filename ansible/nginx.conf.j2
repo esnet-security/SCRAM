@@ -41,4 +41,8 @@ server {
         proxy_set_header   X-Forwarded-Server $host;
         proxy_set_header   X-Forwarded-Proto $scheme;
     }
+
+    location /staticfiles/ {
+        autoindex on;
+        root /staticfiles/;
 }
