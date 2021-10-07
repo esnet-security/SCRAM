@@ -13,7 +13,7 @@
           comment: "SCRAM User"
           group: "{{ scram_group }}"
           uid: "{{ scram_uid }}"
-      when: '"mac" not in group_names and scram_install_user'
+      when: "'mac' not in group_names and scram_install_user|bool"
 
     - name: Turn off old containers
       make:
@@ -59,12 +59,13 @@
           owner: "{{ scram_user }}"
           group: "{{ scram_group }}"
 
-      - name: Deploy nginx config
+      - name: Deploy local nginx config
         template:
-          src: "ansible/nginx.conf.j2"
+          src: "ansible/nginx-local.conf.j2"
           dest: "{{ scram_home }}/compose/production/nginx/nginx.conf"
           owner: "{{ scram_user }}"
           group: "{{ scram_group }}"
+      when: "'localhost' in inventory_hostname"
       tags:
         - configs
 
