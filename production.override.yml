@@ -1,0 +1,5 @@
+services:
+  nginx:
+    volumes:
+      - /etc/scram/ssl/server.crt:/etc/ssl/server.crt
+      - /etc/scram/ssl/server.key:/etc/ssl/server.key

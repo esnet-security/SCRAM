@@ -41,6 +41,7 @@ services:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - production_nginx:/app/nginx
       - ./staticfiles:/staticfiles
+
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"

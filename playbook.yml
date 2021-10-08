@@ -97,11 +97,28 @@
       tags:
         - configs
 
-    - name: Toggle prod
-      make:
-        chdir: "{{ scram_home }}"
-        target: toggle-prod
-      changed_when: false
+    - block:
+      - name: Toggle prod
+        make:
+          chdir: "{{ scram_home }}"
+          target: toggle-prod
+        changed_when: false
+
+      - name: Ensure SSL directory exists when in staging/production
+        file:
+          path: "{{ scram_nginx_ssl }}"
+          state: directory
+          owner: root
+          group: root
+        when: "'localhost' not in inventory_hostname"
+
+        # This file is what adds the volumes for nginx cert stuff to work
+        # since we dont run certs in the prod-on-local situation we don't want that
+      - name: Remove prod override docker compose file on localhost
+        file:
+          path: ./production.override.yml
+          state: absent
+        when: "'localhost' in inventory_hostname"
       when: scram_prod
 
     - name: Toggle local
