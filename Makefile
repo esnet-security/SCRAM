@@ -35,7 +35,7 @@ build: active.yml
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
-ci-test: | build migrate run pytest behave-all
+ci-test: | toggle-local build migrate run pytest behave-all
 
 ## cleanup: remove local containers and volumes
 .Phony: clean
