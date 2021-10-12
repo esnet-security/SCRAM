@@ -1,6 +1,7 @@
 ---
 - hosts: scram
   vars:
+    scram_nginx_ssl: '/etc/scram/ssl'
     scram_django_secret_key: !vault |
       $ANSIBLE_VAULT;1.1;AES256
       37353133393361393233336139383865636231303334353931303165323930353535396163353436
