@@ -113,7 +113,7 @@
         when: "'localhost' not in inventory_hostname"
 
         # This file is what adds the volumes for nginx cert stuff to work
-        # since we dont run certs in the prod-on-local situation we don't want that
+        # since we don't run certs in the prod-on-local situation we don't want that
       - name: Remove prod override docker compose file on localhost
         file:
           path: ./production.override.yml
