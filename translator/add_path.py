@@ -2,6 +2,7 @@
 
 import grpc
 from google.protobuf.any_pb2 import Any
+import walrus
 
 import gobgp_pb2
 import gobgp_pb2_grpc
@@ -9,15 +10,19 @@ import attribute_pb2
 
 _TIMEOUT_SECONDS = 1000
 
+db = walrus.Database(host="redis")
+cg = db.consumer_group('cg-west', ["block_add"])
+cg.create()
+cg.set_id('$')
 
-def run():
+def block(ip, cidr_size):
     channel = grpc.insecure_channel('gobgp:50051')
     stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
     nlri = Any()
     nlri.Pack(attribute_pb2.IPAddressPrefix(
-        prefix_len=24,
-        prefix="10.0.0.0",
+        prefix_len=cidr_size,
+        prefix=ip,
     ))
     origin = Any()
     origin.Pack(attribute_pb2.OriginAttribute(
@@ -50,6 +55,19 @@ def run():
         _TIMEOUT_SECONDS,
     )
 
+def run():
+    # TODO: block
+    unacked_msgs = cg.read()
+    if not unacked_msgs:
+        return
+
+    for stream_name, stream_msgs in unacked_msgs:
+        for msg in stream_msgs:
+            redis_id, data = msg
+            ip, cidr_size = data[b'route'].decode('utf-8').split('/', 1)
+            block(ip, int(cidr_size))
+            cg.block_add.ack(redis_id)
 
 if __name__ == '__main__':
-    run()
+    while True:
+        run()
