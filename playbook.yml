@@ -109,7 +109,7 @@
 
         # This adds the volumes for nginx cert stuff to work
         # since we don't run certs in the prod-on-local situation we don't want that
-      - name: Add cert mounts for prod SSL
+      - name: Remove cert mounts for SSL on prod on local
         lineinfile:
           path: "{{ scram_home }}/production.yml"
           state: absent
