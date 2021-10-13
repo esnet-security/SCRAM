@@ -111,7 +111,7 @@
         # since we don't run certs in the prod-on-local situation we don't want that
       - name: Add cert mounts for prod SSL
         lineinfile:
-          path: ./production.yml
+          path: "{{ scram_home }}/production.yml"
           insertafter: "- ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf"
           line: "{{ item }}"
         loop:
