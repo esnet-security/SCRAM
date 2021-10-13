@@ -32,7 +32,6 @@ server {
     ssl_certificate /etc/ssl/server.crt;
     ssl_certificate_key /etc/ssl/server.key;
 
-
     location / {
         proxy_pass http://django;
         proxy_redirect     off;

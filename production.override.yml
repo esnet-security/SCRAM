@@ -1,5 +1,0 @@
-services:
-  nginx:
-    volumes:
-      - /etc/scram/ssl/bhr-netlab.es.net.crt:/etc/ssl/server.crt
-      - /etc/scram/ssl/bhr-netlab.es.net.key:/etc/ssl/server.key
