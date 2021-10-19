@@ -99,15 +99,15 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "https://bhr-netlab.es.net"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "account_login"
+LOGIN_URL = "oidc/authenticate/"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#password-hashers
 PASSWORD_HASHERS = [
-    # https://docs.djangoproject.com/en/dev/topics/auth/passwords/#using-argon2-with-django
+    # https://docs.djangoproject.com/en/dev/topics/Gauth/passwords/#using-argon2-with-django
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
@@ -230,7 +230,7 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = [("""Sam Oehlert""", "soehlert@es.net")]
+ADMINS = [("Sam Oehlert", "soehlert@es.net")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 
@@ -314,11 +314,7 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
 # Staff groups allowed to access SCRAM
-SCRAM_AUTHORIZED_GROUPS = [
-    "svc_scram_admin",
-    "svc_scram_readwrite",
-    "svc_scram_readonly",
-]
+SCRAM_AUTHORIZED_GROUPS = "svc_scram_admin"
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 20
 # What is the largest cidr range we'll accept entries for

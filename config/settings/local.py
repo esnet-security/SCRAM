@@ -67,8 +67,8 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
 
-REST_FRAMEWORK = {'DEFAULT_PERMISSION_CLASSES': (
-    'rest_framework.permissions.IsAdminUser', ),
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
 }
 
 # Behave Django testing framework

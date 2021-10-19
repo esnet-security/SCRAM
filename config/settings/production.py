@@ -1,3 +1,5 @@
+import os
+
 from .base import *  # noqa
 from .base import env
 
@@ -76,15 +78,11 @@ TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#default-from-email
-DEFAULT_FROM_EMAIL = env(
-    "DJANGO_DEFAULT_FROM_EMAIL", default="SCRAM <noreply@es.net>"
-)
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="SCRAM <noreply@es.net>")
 # https://docs.djangoproject.com/en/dev/ref/settings/#server-email
 SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-subject-prefix
-EMAIL_SUBJECT_PREFIX = env(
-    "DJANGO_EMAIL_SUBJECT_PREFIX", default="[SCRAM]"
-)
+EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[SCRAM]")
 
 # ADMIN
 # ------------------------------------------------------------------------------
@@ -149,3 +147,23 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+OIDC_OP_JWKS_ENDPOINT = os.environ.get(
+    "OIDC_OP_JWKS_ENDPOINT",
+    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/certs",
+)
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
+    "OIDC_OP_AUTHORIZATION_ENDPOINT",
+    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/auth",
+)
+OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
+    "OIDC_OP_TOKEN_ENDPOINT",
+    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/token",
+)
+OIDC_OP_USER_ENDPOINT = os.environ.get(
+    "OIDC_OP_USER_ENDPOINT",
+    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/userinfo",
+)
+OIDC_RP_SIGN_ALGO = "RS256"
+
+OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
+OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET")
