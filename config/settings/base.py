@@ -313,6 +313,12 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
+# Staff groups allowed to access SCRAM
+SCRAM_AUTHORIZED_GROUPS = [
+    "svc_scram_admin",
+    "svc_scram_readwrite",
+    "svc_scram_readonly",
+]
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 20
 # What is the largest cidr range we'll accept entries for

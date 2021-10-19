@@ -5,7 +5,8 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 class ESnetAuthBackend(OIDCAuthenticationBackend):
     def update_authorized_group(self, claims, user):
-        if settings.ESDB_AUTHORIZED_GROUP in claims.get("groups"):
+        print(claims.get("groups"))
+        if settings.SCRAM_AUTHORIZED_GROUP in claims.get("groups"):
             authorized_group, _ = Group.objects.get_or_create(
                 name=settings.ESDB_AUTHORIZED_GROUP
             )
