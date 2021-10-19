@@ -1,5 +1,6 @@
 ---
 ansible_connection: local
-scram_traefik_host: localhost
+scram_install_user: false
+scram_nginx_host: localhost
 scram_django_secret_key: thisdoesnotmattermuchforlocalhostbutchangeforproduction
 scram_postgres_password: thisalsodoesnotmattermuchforlocalhostbutchangeforproduction
