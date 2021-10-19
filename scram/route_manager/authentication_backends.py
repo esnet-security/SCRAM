@@ -34,4 +34,5 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     def verify_claims(self, claims):
         verified = super(ESnetAuthBackend, self).verify_claims(claims)
         is_authorized = settings.SCRAM_AUTHORIZED_GROUPS in claims.get("groups", [])
-        return verified and is_authorized
+        is_staff = settings.SCRAM_AUTHORIZED_GROUPS in claims.get("groups", [])
+        return verified and is_authorized and is_staff
