@@ -149,19 +149,19 @@ LOGGING = {
 # ------------------------------------------------------------------------------
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/certs",
+    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/certs",
 )
 OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
     "OIDC_OP_AUTHORIZATION_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/auth",
+    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/auth",
 )
 OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
     "OIDC_OP_TOKEN_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/token",
+    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/token",
 )
 OIDC_OP_USER_ENDPOINT = os.environ.get(
     "OIDC_OP_USER_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnet/protocol/openid-connect/userinfo",
+    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/userinfo",
 )
 OIDC_RP_SIGN_ALGO = "RS256"
 
