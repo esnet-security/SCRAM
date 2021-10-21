@@ -18,8 +18,11 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         user = super(ESnetAuthBackend, self).create_user(claims)
         user.first_name = claims.get("given_name", "")
         user.last_name = claims.get("family_name", "")
-        print(f"user: {user}, claims: {claims}")
+        user.username = claims.get("preferred_username", "")
         self.update_authorized_group(claims, user)
+        if settings.SCRAM_ADMIN_GROUPS in claims.get("groups", []):
+            user.is_staff = True
+            user.is_superuser = True
         user.save()
 
         return user
@@ -27,7 +30,6 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     def update_user(self, user, claims):
         user.first_name = claims.get("given_name", "")
         user.last_name = claims.get("family_name", "")
-        print(f"user: {user}, claims: {claims}")
         self.update_authorized_group(claims, user)
         user.save()
 
