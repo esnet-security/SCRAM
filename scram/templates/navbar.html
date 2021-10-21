@@ -24,13 +24,17 @@
           </li>
         {% endif %}
         {% if user.is_authenticated %}
-          <p>Current user: {{ user.email }}</p>
-          <form action="{% url 'oidc_logout' %}" method="post">
-            {% csrf_token %}
-            <input type="submit" value="logout">
-          </form>
+          <li class="nav-item">
+            <p>Current user: {{ user.email }}</p>
+            <form action="{% url 'oidc_logout' %}" method="post">
+              {% csrf_token %}
+              <input type="submit" value="logout">
+            </form>
+          </li>
         {% else %}
-          <a href="{% url 'oidc_authentication_init' %}">Login</a>
+          <li class="nav-item">
+            <a href="{% url 'oidc_authentication_init' %}">Login</a>
+          </li>
         {% endif %}
       </ul>
     </div>
