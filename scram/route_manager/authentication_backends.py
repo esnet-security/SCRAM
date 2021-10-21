@@ -7,9 +7,7 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     def update_authorized_group(self, claims, user):
         for group in settings.SCRAM_AUTHORIZED_GROUPS:
             if group in claims.get("groups"):
-                authorized_group, _ = Group.objects.get_or_create(
-                    name=settings.SCRAM_AUTHORIZED_GROUPS
-                )
+                authorized_group, _ = Group.objects.get_or_create(name=group)
 
                 if authorized_group not in user.groups.all():
                     user.groups.add(authorized_group)
@@ -17,9 +15,7 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
 
     def create_user(self, claims):
         user = super(ESnetAuthBackend, self).create_user(claims)
-        user.first_name = claims.get("given_name", "")
-        user.last_name = claims.get("family_name", "")
-        user.name = user.first_name + " " + user.last_name
+        user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
         self.update_authorized_group(claims, user)
         if settings.SCRAM_ADMIN_GROUPS in claims.get("groups", []):
@@ -30,9 +26,7 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         return user
 
     def update_user(self, user, claims):
-        user.first_name = claims.get("given_name", "")
-        user.last_name = claims.get("family_name", "")
-        user.name = user.first_name + " " + user.last_name
+        user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
         self.update_authorized_group(claims, user)
         if settings.SCRAM_ADMIN_GROUPS in claims.get("groups", []):
