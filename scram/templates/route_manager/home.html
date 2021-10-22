@@ -10,6 +10,7 @@
       </div>
     </div>
   </div>
+  {% if not request.user|has_group:"" %}
   <div class="d-flex justify-content-center mt-2">
     <form class="form-inline" action="{% url 'route_manager:add' %}" method="post">
       {% csrf_token %}
