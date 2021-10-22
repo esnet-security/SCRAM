@@ -15,7 +15,6 @@ from .decorators import allowed_groups
 from .models import ActionType, Entry
 
 
-@allowed_groups([settings.SCRAM_AUTHORIZED_GROUPS])
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
     context = {"entries": {}}
