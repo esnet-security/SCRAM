@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import redirect
-
-from .views import home_page
+from django.urls import reverse
 
 
 def allowed_groups(allowed_roles=[]):
@@ -19,7 +18,7 @@ def allowed_groups(allowed_roles=[]):
                     messages.WARNING,
                     "You do not have permission to view the requested page",
                 )
-                return redirect(home_page)
+                return redirect(reverse("route_manager:home"))
 
         return wrapper_func
 
