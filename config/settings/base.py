@@ -327,3 +327,9 @@ RECENT_LIMIT = 20
 # What is the largest cidr range we'll accept entries for
 V4_MINPREFIX = 8
 V6_MINPREFIX = 32
+
+# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+# https://github.com/mozilla/mozilla-django-oidc/issues/118
+# Using `/` because named urls don't work for this package
+# https://github.com/mozilla/mozilla-django-oidc/issues/434
+LOGOUT_REDIRECT_URL = "/"
