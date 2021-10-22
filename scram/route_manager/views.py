@@ -5,14 +5,17 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
+from .decorators import allowed_groups
 from .models import ActionType, Entry
 
 
+@allowed_groups([settings.SCRAM_AUTHORIZED_GROUPS])
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
     context = {"entries": {}}
@@ -48,6 +51,7 @@ def home_page(request, prefilter=Entry.objects.all()):
     return render(request, "route_manager/home.html", context)
 
 
+@allowed_groups([settings.SCRAM_AUTHORIZED_GROUPS])
 def search_entries(request):
     # Using ipaddress because we needed to turn off strict mode
     # (which netfields uses by default with seemingly no toggle)
@@ -61,12 +65,17 @@ def search_entries(request):
 
 
 @require_POST
+@allowed_groups([settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS])
 def delete_entry(request, pk):
     query = get_object_or_404(Entry, pk=pk)
     query.delete()
     return redirect("route_manager:home")
 
 
+@method_decorator(
+    allowed_groups([[settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]]),
+    name="dispatch",
+)
 class EntryDetailView(DetailView):
     model = Entry
     template_name = "route_manager/entry_detail.html"
@@ -75,6 +84,7 @@ class EntryDetailView(DetailView):
 add_entry_api = EntryViewSet.as_view({"post": "create"})
 
 
+@allowed_groups([settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS])
 def add_entry(request):
     with transaction.atomic():
         res = add_entry_api(request)
@@ -102,6 +112,7 @@ def add_entry(request):
     return home
 
 
+@method_decorator(allowed_groups([[settings.SCRAM_AUTHORIZED_GROUPS]]), name="dispatch")
 class EntryListView(ListView):
     model = Entry
     template_name = "route_manager/entry_list.html"
