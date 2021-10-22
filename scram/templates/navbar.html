@@ -8,32 +8,34 @@
     <form class="d-flex w-100 mt-2 d-inline" action="{% url 'route_manager:search' %}" method="POST">
       {% csrf_token %}
       <input class="form-control pl-2 me-2" name="cidr" type="search" placeholder="cidr">
-      <button class="btn btn-info mb-2" style="background-color:#2ba6c8!important;" type="submit">Search</button>
+      <button class="btn btn-info mb-2" style="background-color:#2ba6c8!important;" type="submit">Searchj</button>
     </form>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto text-nowrap">
-        <li class="nav-item">
+      <ul class="navbar-nav nav-tabs ml-auto text-nowrap">
+        <li class="nav-item d-inline mt-2">
           <a id="entry-list" class="nav-link" href="{% url 'route_manager:entry-list' %}">{% trans "Entries" %}</a>
         </li>
         {% if request.user.is_superuser %}
-          <li class="nav-item">
+          <li class="nav-item d-inline mt-2">
             <a id="admin-page" class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
           </li>
         {% endif %}
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <p>Current user: {{ user.email }}</p>
-            <form action="{% url 'oidc_logout' %}" method="post">
-              {% csrf_token %}
-              <input type="submit" value="logout">
-            </form>
-          </li>
+          <li class="nav-item d-inline mt-2">
++           <a id="account-home" class="nav-link" href="{% url 'users:detail' user.username %}">{{ user.name }}</a>
++         </li>
++         <li class="nav-item mt-2 d-inline">
++            <form action="{% url 'oidc_logout' %}" method="post">
++              {% csrf_token %}
++             <button class="btn btn-outline-info ml-2 mb-2" style="outline-color:#2ba6c8!important;" type="submit">Logout</button>
++            </form>
++          </li>
         {% else %}
-          <li class="nav-item">
-            <a href="{% url 'oidc_authentication_init' %}">Login</a>
+           <li class="nav-item mt-2 d-inline">
+            <a class="btn btn-outline-info ml-2 mb-2" style="color:#2ba6c8!important;" role="button" href="{% url 'oidc_authentication_init' %}">Login</a>
           </li>
         {% endif %}
       </ul>
