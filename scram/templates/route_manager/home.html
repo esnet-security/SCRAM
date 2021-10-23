@@ -10,7 +10,9 @@
       </div>
     </div>
   </div>
-  {% if request.user|has_group:"svc_scram_admin" %}
+  {% for group in scram_readwrite %}
+    {{ group }}
+  {% endfor %}
   <div class="d-flex justify-content-center mt-2">
     <form class="form-inline" action="{% url 'route_manager:add' %}" method="post">
       {% csrf_token %}
