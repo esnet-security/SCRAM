@@ -3,6 +3,8 @@ import ipaddress
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -61,13 +63,15 @@ def search_entries(request):
 
 
 @require_POST
+@permission_required("route_manager.view_entry", "route_manager.delete_entry")
 def delete_entry(request, pk):
     query = get_object_or_404(Entry, pk=pk)
     query.delete()
     return redirect("route_manager:home")
 
 
-class EntryDetailView(DetailView):
+class EntryDetailView(PermissionRequiredMixin, DetailView):
+    permission_required = ("route_manager.view_entry", "route_manager.edit_entry")
     model = Entry
     template_name = "route_manager/entry_detail.html"
 
@@ -75,6 +79,7 @@ class EntryDetailView(DetailView):
 add_entry_api = EntryViewSet.as_view({"post": "create"})
 
 
+@permission_required("route_manager.view_entry", "route_manager.add_entry")
 def add_entry(request):
     with transaction.atomic():
         res = add_entry_api(request)
