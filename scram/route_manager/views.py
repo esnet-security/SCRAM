@@ -17,7 +17,8 @@ from .models import ActionType, Entry
 
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
-    context = {"entries": {}}
+    scram_readwrite = [settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]
+    context = {"entries": {}, "scram_readwrite": scram_readwrite}
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
         context["entries"][at] = {
