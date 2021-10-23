@@ -99,7 +99,6 @@ INSTALLED_APPS += ["anymail"]  # noqa F405
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 ANYMAIL = {}
 
-
 # LOGGING
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#logging
@@ -147,6 +146,9 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Extend middleware to add OIDC middleware
+MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)  # noqa: F405
+
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
     "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/certs",
