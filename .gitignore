@@ -6,6 +6,7 @@ __pycache__/
 
 .idea
 .idea/*
+.idea/scram.iml
 *.iml
 
 # C extensions
