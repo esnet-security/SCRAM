@@ -29,7 +29,7 @@ pytest:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - ".ci-scripts/pull_images.sh"
-  - make toggle-prod
+  - make toggle-local
   - docker-compose -f active.yml build --no-cache django
   - make build
   - ".ci-scripts/push_images.sh"
