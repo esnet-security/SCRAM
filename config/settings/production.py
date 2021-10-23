@@ -151,19 +151,19 @@ MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)  # noqa: F405
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/certs",
+    "https://example.com/auth/realms/example/protocol/openid-connect/certs",
 )
 OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
     "OIDC_OP_AUTHORIZATION_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/auth",
+    "https://example.com/auth/realms/example/protocol/openid-connect/auth",
 )
 OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
     "OIDC_OP_TOKEN_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/token",
+    "https://example.com/auth/realms/example/protocol/openid-connect/token",
 )
 OIDC_OP_USER_ENDPOINT = os.environ.get(
     "OIDC_OP_USER_ENDPOINT",
-    "https://sso.es.net/auth/realms/esnetldap/protocol/openid-connect/userinfo",
+    "https://example.com/auth/realms/example/protocol/openid-connect/userinfo",
 )
 OIDC_RP_SIGN_ALGO = "RS256"
 
