@@ -28,7 +28,7 @@
     </form>
   </div>
   {% endif %}
-  <div class="row">
+  <div class="row mb-5">
     {% for actiontype, entry_list in entries.items %}
       <div class="col">
         {% if actiontype.available %}
@@ -45,8 +45,5 @@
         {% endif %}
       </div>
     {% endfor %}
-  </div>
-  <div class="row">
-
   </div>
 {% endblock %}
