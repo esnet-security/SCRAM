@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load route_manager_tags %}
 {% block content %}
   <div class="container">
     <div class="row justify-content-center">
@@ -10,7 +10,7 @@
       </div>
     </div>
   </div>
-  {% if not request.user|has_group:"" %}
+  {% if request.user|has_group:"svc_scram_admin" %}
   <div class="d-flex justify-content-center mt-2">
     <form class="form-inline" action="{% url 'route_manager:add' %}" method="post">
       {% csrf_token %}
@@ -27,6 +27,7 @@
       </div>
     </form>
   </div>
+  {% endif %}
   <div class="row">
     {% for actiontype, entry_list in entries.items %}
       <div class="col">
