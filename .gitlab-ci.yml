@@ -30,7 +30,6 @@ pytest:
   - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - ".ci-scripts/pull_images.sh"
   - make toggle-local
-  - docker-compose -f active.yml build --no-cache django
   - make build
   - ".ci-scripts/push_images.sh"
   - make migrate
