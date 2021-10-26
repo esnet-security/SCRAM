@@ -15,12 +15,19 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("scram.users.urls", namespace="users")),
-    path("oidc/", include("mozilla_django_oidc.urls")),
     # Your stuff: custom urls includes go here
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
     # Static file serving when using Gunicorn + Uvicorn for local web socket development
     urlpatterns += staticfiles_urlpatterns()
+
+# Add the OIDC URLs if they're in use
+try:
+    import mozilla_django_oidc
+
+    url_patterns += path("oidc/", include("mozilla_django_oidc.urls"))
+except ImportError:
+    pass
 
 # API URLS
 api_version_urls = (
