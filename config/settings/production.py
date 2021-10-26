@@ -1,7 +1,7 @@
 import os
 
 from .base import *  # noqa
-from .base import env
+from .base import AUTHENTICATION_BACKENDS, MIDDLEWARE, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ LOGGING = {
 # Your stuff...
 # ------------------------------------------------------------------------------
 # Extend middleware to add OIDC middleware
-MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)  # noqa: F405
+MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
 AUTHENTICATION_BACKENDS += "scram.route_manager.authentication_backends.ESnetAuthBackend"
 

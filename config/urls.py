@@ -25,7 +25,7 @@ if settings.DEBUG:
 try:
     import mozilla_django_oidc
 
-    url_patterns += path("oidc/", include("mozilla_django_oidc.urls"))
+    urlpatterns += path("oidc/", include(mozilla_django_oidc.urls))
 except ImportError:
     pass
 
