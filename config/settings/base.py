@@ -97,6 +97,8 @@ AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "https://bhr-netlab.es.net"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "admin:login"
+# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+LOGOUT_URL = "admin:logout"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
