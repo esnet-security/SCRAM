@@ -90,14 +90,15 @@ MIGRATION_MODULES = {"sites": "scram.contrib.sites.migrations"}
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "scram.route_manager.authentication_backends.ESnetAuthBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = "https://bhr-netlab.es.net"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "oidc/authenticate/"
+LOGIN_URL = "admin:login"
+# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+LOGOUT_URL = "admin:logout"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
