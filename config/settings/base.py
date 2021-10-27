@@ -94,11 +94,11 @@ AUTHENTICATION_BACKENDS = [
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "https://bhr-netlab.es.net"
+LOGIN_REDIRECT_URL = "route_manager:home"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "admin:login"
+LOGIN_URL = "/admin/login"
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "admin:logout"
+LOGOUT_URL = "/admin/logout/"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -185,6 +185,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "scram.utils.context_processors.settings_context",
+                "scram.route_manager.context_processors.login_logout",
             ],
         },
     }

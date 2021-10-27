@@ -149,13 +149,15 @@ LOGGING = {
 # Extend middleware to add OIDC middleware
 MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
-AUTHENTICATION_BACKENDS += "scram.route_manager.authentication_backends.ESnetAuthBackend"
+AUTHENTICATION_BACKENDS += (
+    "scram.route_manager.authentication_backends.ESnetAuthBackend"
+)
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "oidc_authentication_init"
+LOGIN_URL = "/oidc/authenticate/"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "oidc_logout"
+LOGOUT_URL = "/oidc/logout/"
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
