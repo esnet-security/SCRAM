@@ -5,6 +5,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory
+from django.urls import reverse
 
 from scram.users.forms import UserChangeForm
 from scram.users.models import User
@@ -86,7 +87,7 @@ class TestUserDetailView:
         request.user = AnonymousUser()
 
         response = user_detail_view(request, username=user.username)
-        login_url = settings.LOGIN_URL
+        login_url = reverse(settings.LOGIN_URL)
 
         assert response.status_code == 302
         assert response.url == f"{login_url}?next=/fake-url/"
