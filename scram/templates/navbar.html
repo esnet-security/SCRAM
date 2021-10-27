@@ -28,14 +28,14 @@
             <a id="account-home" class="nav-link" href="{% url 'users:detail' user.username %}">{{ user.name }}</a>
           </li>
           <li class="nav-item mt-2 d-inline">
-             <form action="{% url LOGOUT_URL %}" method="post">
+             <form action="{{ logout }}" method="post">
                {% csrf_token %}
               <button class="btn btn-outline-info ml-2 mb-2" style="outline-color:#2ba6c8!important;" type="submit">Logout</button>
              </form>
           </li>
         {% else %}
            <li class="nav-item mt-2 d-inline">
-            <a class="btn btn-outline-info ml-2 mb-2" style="color:#2ba6c8!important;" role="button" href="{% url settings.LOGIN_URL %}">Login</a>
+            <a class="btn btn-outline-info ml-2 mb-2" style="color:#2ba6c8!important;" role="button" href='{{ login }}'>Login</a>
           </li>
         {% endif %}
       </ul>
