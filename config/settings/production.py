@@ -154,10 +154,10 @@ AUTHENTICATION_BACKENDS += (
 )
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "/oidc/authenticate/"
+LOGIN_URL = "oidc_authentication_init"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "/oidc/logout/"
+LOGOUT_URL = "oidc_logout"
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
