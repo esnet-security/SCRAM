@@ -23,9 +23,11 @@ if settings.DEBUG:
 
 # Add the OIDC URLs if they're in use
 try:
-    import mozilla_django_oidc
+    # Flake8 doesn't like this as it's an "unused import" but you have to call the include urls as a string
+    # so we ignore flake8 on this one
+    import mozilla_django_oidc  # noqa: F401
 
-    urlpatterns += path("oidc/", include(mozilla_django_oidc.urls))
+    urlpatterns += path("oidc/", include("mozilla_django_oidc.urls"))
 except ImportError:
     pass
 
