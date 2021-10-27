@@ -27,7 +27,7 @@ try:
     # so we ignore flake8 on this one
     import mozilla_django_oidc  # noqa: F401
 
-    urlpatterns += path("oidc/", include("mozilla_django_oidc.urls"))
+    urlpatterns += [path("oidc/", include("mozilla_django_oidc.urls"))]
 except ImportError:
     pass
 
