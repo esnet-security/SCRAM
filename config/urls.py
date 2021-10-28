@@ -21,7 +21,7 @@ if settings.DEBUG:
     # Static file serving when using Gunicorn + Uvicorn for local web socket development
     urlpatterns += staticfiles_urlpatterns()
 
-# Add the OIDC URLs if they're in use
+# OIDC is only set up to work on staging/production hosts. Locally, we are not connected to the OIDC server
 try:
     # Flake8 doesn't like this as it's an "unused import" but you have to call the include urls as a string
     # so we ignore flake8 on this one
