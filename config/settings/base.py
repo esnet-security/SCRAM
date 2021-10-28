@@ -298,7 +298,9 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
-<<<<<<< HEAD
+
+# Are you using local passwords or oidc?
+AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
 
 # Users in these groups have full privileges, including Django is_superuser
 SCRAM_ADMIN_GROUPS = ["svc_scram_admin"]
@@ -313,23 +315,15 @@ SCRAM_READONLY_GROUPS = ["svc_scram_readonly"]
 SCRAM_DENIED_GROUPS = ["svc_scram_denied"]
 
 # This is the set of all the groups
-SCRAM_GROUPS = SCRAM_ADMIN_GROUPS + SCRAM_READWRITE_GROUPS + SCRAM_READONLY_GROUPS + SCRAM_DENIED_GROUPS
+SCRAM_GROUPS = (
+    SCRAM_ADMIN_GROUPS
+    + SCRAM_READWRITE_GROUPS
+    + SCRAM_READONLY_GROUPS
+    + SCRAM_DENIED_GROUPS
+)
 
 # This is the full set of groups
 
-=======
-# Are you using local passwords or oidc?
-AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
-# Staff groups allowed to access SCRAM
-SCRAM_ADMIN_GROUPS = "svc_scram_admin"
-SCRAM_READWRITE_GROUPS = "svc_scram_readwrite"
-SCRAM_READONLY_GROUPS = "svc_scram_readonly"
-SCRAM_AUTHORIZED_GROUPS = [
-    SCRAM_READONLY_GROUPS,
-    SCRAM_READWRITE_GROUPS,
-    SCRAM_ADMIN_GROUPS,
-]
->>>>>>> 5d045fb1ff5a237b921770eb8b79f2c7922207f9
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 10
 # What is the largest cidr range we'll accept entries for

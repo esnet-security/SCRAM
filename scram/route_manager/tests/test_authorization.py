@@ -222,4 +222,3 @@ class OidcTest(TestCase):
         self.assertFalse(user.is_superuser)
         self.assertFalse(user.has_perm("route_manager.view_entry"))
         self.assertFalse(user.has_perm("route_manager.add_entry"))
-
