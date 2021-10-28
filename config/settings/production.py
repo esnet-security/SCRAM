@@ -150,14 +150,23 @@ LOGGING = {
 MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
 AUTHENTICATION_BACKENDS += (
-    "scram.route_manager.authentication_backends.ESnetAuthBackend"
+    "scram.route_manager.authentication_backends.ESnetAuthBackend",
 )
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "oidc_authentication_init"
 
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+LOGIN_REDIRECT_URL = "/"
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
 LOGOUT_URL = "oidc_logout"
+
+# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+# https://github.com/mozilla/mozilla-django-oidc/issues/118
+# Using `/` because named urls don't work for this package
+# https://github.com/mozilla/mozilla-django-oidc/issues/434
+LOGOUT_REDIRECT_URL = "/"
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
