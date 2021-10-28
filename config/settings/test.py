@@ -42,7 +42,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # Your stuff...
 # ------------------------------------------------------------------------------
 # Extend middleware to add OIDC middleware
-MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
+MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
