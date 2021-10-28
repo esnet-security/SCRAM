@@ -71,3 +71,10 @@ class AuthzTest(TestCase):
         pk = Entry.objects.latest("id").id
         response = self.client.get(reverse("route_manager:detail", kwargs={"pk": pk}))
         self.assertEqual(response.status_code, 200)
+
+    def test_unauthorized_after_group_removal(self):
+        """The user has r/w access, then when we remove them from the r/w group, they no longer do."""
+
+        self.test_authorized_add_entry()
+        self.user.user_permissions.remove(self.add)
+        self.test_unauthorized_add_entry()
