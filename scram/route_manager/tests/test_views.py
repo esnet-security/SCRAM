@@ -1,10 +1,7 @@
-from django.contrib.auth.models import Permission
-from django.test import Client, TestCase
-from django.urls import resolve, reverse
+from django.test import TestCase
+from django.urls import resolve
 
-from scram.route_manager.models import Entry
 from scram.route_manager.views import home_page
-from scram.users.models import User
 
 
 class HomePageTest(TestCase):
