@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+import os
 from pathlib import Path
 
 import environ
@@ -297,6 +298,8 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
+# Are you using local passwords or oidc?
+AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
 # Staff groups allowed to access SCRAM
 SCRAM_ADMIN_GROUPS = "svc_scram_admin"
 SCRAM_READWRITE_GROUPS = "svc_scram_readwrite"

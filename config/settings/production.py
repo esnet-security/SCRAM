@@ -149,6 +149,7 @@ LOGGING = {
 # Extend middleware to add OIDC middleware
 MIDDLEWARE += ("mozilla_django_oidc.middleware.SessionRefresh",)
 
+# Extend middleware to add OIDC auth backend
 AUTHENTICATION_BACKENDS += (
     "scram.route_manager.authentication_backends.ESnetAuthBackend",
 )

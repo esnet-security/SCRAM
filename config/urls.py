@@ -22,14 +22,12 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 
 # OIDC is only set up to work on staging/production hosts. Locally, we are not connected to the OIDC server
-try:
+if settings.AUTH_METHOD == "oidc":
     # Flake8 doesn't like this as it's an "unused import" but you have to call the include urls as a string
     # so we ignore flake8 on this one
     import mozilla_django_oidc  # noqa: F401
 
     urlpatterns += [path("oidc/", include("mozilla_django_oidc.urls"))]
-except ImportError:
-    pass
 
 # API URLS
 api_version_urls = (
