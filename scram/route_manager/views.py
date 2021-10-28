@@ -3,6 +3,8 @@ import ipaddress
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -13,9 +15,16 @@ from ..users.models import User
 from .models import ActionType, Entry
 
 
+def is_member(user):
+    return user.groups.filter(
+        name__in=[settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]
+    ).exists()
+
+
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
-    context = {"entries": {}}
+    readwrite = is_member(request.user)
+    context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
         context["entries"][at] = {
@@ -61,13 +70,15 @@ def search_entries(request):
 
 
 @require_POST
+@permission_required(["route_manager.view_entry", "route_manager.delete_entry"])
 def delete_entry(request, pk):
     query = get_object_or_404(Entry, pk=pk)
     query.delete()
     return redirect("route_manager:home")
 
 
-class EntryDetailView(DetailView):
+class EntryDetailView(PermissionRequiredMixin, DetailView):
+    permission_required = ["route_manager.view_entry", "route_manager.view_history"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
 
@@ -75,6 +86,7 @@ class EntryDetailView(DetailView):
 add_entry_api = EntryViewSet.as_view({"post": "create"})
 
 
+@permission_required(["route_manager.view_entry", "route_manager.add_entry"])
 def add_entry(request):
     with transaction.atomic():
         res = add_entry_api(request)

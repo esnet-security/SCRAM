@@ -3,7 +3,20 @@
 {% block title %}Page not found{% endblock %}
 
 {% block content %}
-<h1>Page not found</h1>
+<div class="page-wrap d-flex flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-12 text-center">
+                {% if exception %}
+                  <span class="display-1 d-block">{{ exception }}</span>
+                  <div class="mb-4 lead">The page you are looking for was not found.</div>
+                {% else %}
+                <span class="display-1 d-block">404</span>
+                <div class="mb-4 lead">The page you are looking for was not found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
-<p>{% if exception %}{{ exception }}{% else %}This is not the page you were looking for.{% endif %}</p>
 {% endblock content %}

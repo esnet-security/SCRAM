@@ -16,7 +16,6 @@ uvicorn[standard]==0.13.4  # https://github.com/encode/uvicorn
 django==3.1.7  # pyup: < 3.2  # https://www.djangoproject.com/
 django-environ==0.4.5  # https://github.com/joke2k/django-environ
 django-model-utils==4.1.1  # https://github.com/jazzband/django-model-utils
-django-allauth==0.44.0  # https://github.com/pennersr/django-allauth
 django-crispy-forms==1.11.1  # https://github.com/django-crispy-forms/django-crispy-forms
 django-redis==4.12.1  # https://github.com/jazzband/django-redis
 # Django REST Framework
@@ -27,3 +26,9 @@ pytest~=6.2.2
 behave~=1.2.6
 django-debug-toolbar~=3.2
 walrus~=0.8.2
+behave-django==1.4.0  # https://github.com/behave/behave-django
+pytest-django==4.1.0  # https://github.com/pytest-dev/pytest-django
+
+# OIDC
+# ------------------------------------------------------------------------------
+mozilla_django_oidc==2.0.0  # https://github.com/mozilla/mozilla-django-oidc

@@ -1,6 +1,7 @@
 """
 Base settings to build other settings files upon.
 """
+import os
 from pathlib import Path
 
 import environ
@@ -65,9 +66,6 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     "crispy_forms",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
     "django_celery_beat",
     "rest_framework",
     "rest_framework.authtoken",
@@ -93,14 +91,15 @@ MIGRATION_MODULES = {"sites": "scram.contrib.sites.migrations"}
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "users:redirect"
+LOGIN_REDIRECT_URL = "route_manager:home"
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "account_login"
+LOGIN_URL = "admin:login"
+# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+LOGOUT_URL = "admin:logout"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -187,6 +186,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "scram.utils.context_processors.settings_context",
+                "scram.route_manager.context_processors.login_logout",
             ],
         },
     }
@@ -228,7 +228,7 @@ EMAIL_TIMEOUT = 5
 # Django Admin URL.
 ADMIN_URL = "admin/"
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
-ADMINS = [("""Sam Oehlert""", "soehlert@es.net")]
+ADMINS = [("Sam Oehlert", "soehlert@es.net")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
 
@@ -279,19 +279,6 @@ CELERY_TASK_TIME_LIMIT = 5 * 60
 CELERY_TASK_SOFT_TIME_LIMIT = 60
 # http://docs.celeryproject.org/en/latest/userguide/configuration.html#beat-scheduler
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-# django-allauth
-# ------------------------------------------------------------------------------
-ACCOUNT_ALLOW_REGISTRATION = env.bool("DJANGO_ACCOUNT_ALLOW_REGISTRATION", True)
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_AUTHENTICATION_METHOD = "username"
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_REQUIRED = True
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-ACCOUNT_ADAPTER = "scram.users.adapters.AccountAdapter"
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-SOCIALACCOUNT_ADAPTER = "scram.users.adapters.SocialAccountAdapter"
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
@@ -311,8 +298,34 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
+
+# Are you using local passwords or oidc?
+AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
+
+# Users in these groups have full privileges, including Django is_superuser
+SCRAM_ADMIN_GROUPS = ["svc_scram_admin"]
+
+# Users in these groups can create and modify entries
+SCRAM_READWRITE_GROUPS = ["svc_scram_readwrite"]
+
+# Users in these groups can only read entries
+SCRAM_READONLY_GROUPS = ["svc_scram_readonly"]
+
+# Users in these groups have no access whatsoever
+SCRAM_DENIED_GROUPS = ["svc_scram_denied"]
+
+# This is the set of all the groups
+SCRAM_GROUPS = (
+    SCRAM_ADMIN_GROUPS
+    + SCRAM_READWRITE_GROUPS
+    + SCRAM_READONLY_GROUPS
+    + SCRAM_DENIED_GROUPS
+)
+
+# This is the full set of groups
+
 # How many entries to show PER Actiontype on the home page
-RECENT_LIMIT = 20
+RECENT_LIMIT = 10
 # What is the largest cidr range we'll accept entries for
 V4_MINPREFIX = 8
 V6_MINPREFIX = 32

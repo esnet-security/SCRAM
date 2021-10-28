@@ -35,7 +35,7 @@ build: active.yml
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
-ci-test: | build migrate run pytest behave-all
+ci-test: | toggle-local build migrate run pytest behave-all
 
 ## cleanup: remove local containers and volumes
 .Phony: clean
@@ -47,6 +47,12 @@ clean: active.yml
 .Phony: collectstatic
 collectstatic: active.yml
 	@docker-compose -f active.yml run django python manage.py collectstatic
+
+## copy: copy files over to staging server for testing (append STAGING=staging_host_here)
+# This is faster than using tower to push things out and it still keeps changes being made locally instead of remote
+.Phony: copy
+copy:
+	rsync -rl ./scram/* $(STAGING):/usr/local/scram/scram/m.
 
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
