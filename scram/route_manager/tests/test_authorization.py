@@ -71,5 +71,3 @@ class AuthzTest(TestCase):
         self.test_authorized_add_entry()
         self.user.user_permissions.remove(self.add)
         self.test_unauthorized_add_entry()
-
-
