@@ -78,7 +78,7 @@ def delete_entry(request, pk):
 
 
 class EntryDetailView(PermissionRequiredMixin, DetailView):
-    permission_required = ["route_manager.view_entry", "route_manager.change_entry"]
+    permission_required = ["route_manager.view_entry", "route_manager.view_history"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
 

@@ -4,41 +4,48 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 
 class ESnetAuthBackend(OIDCAuthenticationBackend):
-    def update_authorized_group(self, claims, user):
-        for group in settings.SCRAM_AUTHORIZED_GROUPS:
-            if group in claims.get("groups"):
-                authorized_group, _ = Group.objects.get_or_create(name=group)
+    def update_groups(self, user, claims):
+        """Sets the users group(s) to whatever is in the claims."""
 
-                if authorized_group not in user.groups.all():
-                    user.groups.add(authorized_group)
-                    user.save()
+        claimed_groups = claims.get("groups", [])
+
+        effective_groups = []
+        is_admin = False
+
+        ro_group = Group.objects.get(name="readonly")
+        rw_group = Group.objects.get(name="readwrite")
+
+        for g in claimed_groups:
+            # If any of the user's groups are in DENIED_GROUPS, deny them and stop processing immediately
+            if g in settings.SCRAM_DENIED_GROUPS:
+                effective_groups = []
+                is_admin = False
+                break
+
+            if g in settings.SCRAM_ADMIN_GROUPS:
+                is_admin = True
+
+            if g in settings.SCRAM_READONLY_GROUPS:
+                if ro_group not in effective_groups:
+                    effective_groups.append(ro_group)
+
+            if g in settings.SCRAM_READWRITE_GROUPS:
+                if rw_group not in effective_groups:
+                    effective_groups.append(rw_group)
+
+        user.groups.set(effective_groups)
+        user.is_staff = user.is_superuser = is_admin
+        user.save()
 
     def create_user(self, claims):
         user = super(ESnetAuthBackend, self).create_user(claims)
-        user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
-        user.username = claims.get("preferred_username", "")
-        self.update_authorized_group(claims, user)
-        if settings.SCRAM_ADMIN_GROUPS in claims.get("groups", []):
-            user.is_staff = True
-            user.is_superuser = True
-        user.save()
-
-        return user
+        return self.update_user(user, claims)
 
     def update_user(self, user, claims):
         user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
-        self.update_authorized_group(claims, user)
-        if settings.SCRAM_ADMIN_GROUPS in claims.get("groups", []):
-            user.is_staff = True
-            user.is_superuser = True
+        self.update_groups(user, claims)
+
+        user.save()
 
         return user
-
-    def verify_claims(self, claims):
-        verified = super(ESnetAuthBackend, self).verify_claims(claims)
-        for group in settings.SCRAM_AUTHORIZED_GROUPS:
-            if group in claims.get("groups", []):
-                is_authorized = group
-
-        return verified and is_authorized
