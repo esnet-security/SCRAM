@@ -70,9 +70,7 @@ def search_entries(request):
 
 
 @require_POST
-@permission_required(
-    ["route_manager.view_entry", "route_manager.delete_entry"], raise_exception=True
-)
+@permission_required(["route_manager.view_entry", "route_manager.delete_entry"])
 def delete_entry(request, pk):
     query = get_object_or_404(Entry, pk=pk)
     query.delete()
@@ -80,7 +78,7 @@ def delete_entry(request, pk):
 
 
 class EntryDetailView(PermissionRequiredMixin, DetailView):
-    permission_required = ["route_manager.view_entry", "route_manager.edit_entry"]
+    permission_required = ["route_manager.view_entry", "route_manager.change_entry"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
 
