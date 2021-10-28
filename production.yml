@@ -3,6 +3,7 @@ version: '3'
 volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
+    production_redis_data: {}
   production_nginx: {}
 
 services:
@@ -50,6 +51,8 @@ services:
 
   redis:
     image: redis:5.0
+    volumes:
+      - production_redis_data:Z
 
   client:
     image: golang:1.17.1-alpine
