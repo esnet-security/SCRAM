@@ -26,4 +26,9 @@ pytest~=6.2.2
 behave~=1.2.6
 django-debug-toolbar~=3.2
 walrus~=0.8.2
-mozilla_django_oidc==2.0.0 # only use OIDC in prod, but OIDC routes are in our templates
+behave-django==1.4.0  # https://github.com/behave/behave-django
+pytest-django==4.1.0  # https://github.com/pytest-dev/pytest-django
+
+# OIDC
+# ------------------------------------------------------------------------------
+mozilla_django_oidc==2.0.0  # https://github.com/mozilla/mozilla-django-oidc

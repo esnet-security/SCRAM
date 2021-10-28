@@ -2,9 +2,9 @@ from django.contrib.auth.models import Permission
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from scram.route_manager.authentication_backends import ESnetAuthBackend
 from scram.route_manager.models import Entry
 from scram.users.models import User
-
 
 class AuthzTest(TestCase):
     def setUp(self):
@@ -72,4 +72,16 @@ class AuthzTest(TestCase):
         self.user.user_permissions.remove(self.add)
         self.test_unauthorized_add_entry()
 
+
+class OidcTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_unauthorized(self):
+        """A user with no groups should have no access"""
+
+        claims = {"groups": []}
+
+        user = ESnetAuthBackend().create_user(claims)
+        self.assertFalse(user.is_staff)
 
