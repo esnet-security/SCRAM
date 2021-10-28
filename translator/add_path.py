@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+import ipaddress
+import logging
+
 import attribute_pb2
 import gobgp_pb2
 import gobgp_pb2_grpc
 import grpc
-import ipaddress
-import logging
-import sys
 import walrus
 from google.protobuf.any_pb2 import Any
 
@@ -50,8 +50,9 @@ def block(ip, cidr_size, ip_version):
             attribute_pb2.MpReachNLRIAttribute(
                 family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
                 next_hops=["::1"],
-                nlris=[nlri])
+                nlris=[nlri],
             )
+        )
 
     else:
         family = gobgp_pb2.Family.AFI_IP
@@ -94,7 +95,7 @@ def run():
             ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
             try:
                 ip_address = ipaddress.ip_address(ip)
-            except:
+            except:  # noqa E722
                 logging.error(f"Invalid IP address received: {ip}")
                 continue
             block(ip, int(cidr_size), ip_address.version)
