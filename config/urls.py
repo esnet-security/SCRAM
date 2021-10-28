@@ -15,12 +15,19 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("scram.users.urls", namespace="users")),
-    path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
     # Static file serving when using Gunicorn + Uvicorn for local web socket development
     urlpatterns += staticfiles_urlpatterns()
+
+# OIDC is only set up to work on staging/production hosts. Locally, we are not connected to the OIDC server
+if settings.AUTH_METHOD == "oidc":
+    # Flake8 doesn't like this as it's an "unused import" but you have to call the include urls as a string
+    # so we ignore flake8 on this one
+    import mozilla_django_oidc  # noqa: F401
+
+    urlpatterns += [path("oidc/", include("mozilla_django_oidc.urls"))]
 
 # API URLS
 api_version_urls = (

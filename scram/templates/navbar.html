@@ -15,32 +15,27 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav ml-auto text-nowrap">
-        <li class="nav-item">
+        <li class="nav-item d-inline mt-2">
           <a id="entry-list" class="nav-link" href="{% url 'route_manager:entry-list' %}">{% trans "Entries" %}</a>
         </li>
         {% if request.user.is_superuser %}
-          <li class="nav-item">
+          <li class="nav-item d-inline mt-2">
             <a id="admin-page" class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
           </li>
         {% endif %}
-        {% if request.user.is_authenticated %}
-          <li class="nav-item">
-            {# URL provided by django-allauth/account/urls.py #}
-            <a class="nav-link" href="{% url 'users:detail' request.user.username  %}">{% trans "My Profile" %}</a>
+        {% if user.is_authenticated %}
+          <li class="nav-item d-inline mt-2">
+            <a id="account-home" class="nav-link" href="{% url 'users:detail' user.username %}">{{ user.name }}</a>
           </li>
-          <li class="nav-item">
-            {# URL provided by django-allauth/account/urls.py #}
-            <a class="nav-link" href="{% url 'account_logout' %}">{% trans "Sign Out" %}</a>
+          <li class="nav-item mt-2 d-inline">
+             <form action="{{ logout }}" method="post">
+               {% csrf_token %}
+              <button class="btn btn-outline-info ml-2 mb-2" style="outline-color:#2ba6c8!important;" type="submit">Logout</button>
+             </form>
           </li>
         {% else %}
-          <li class="nav-item">
-            {# URL provided by django-allauth/account/urls.py #}
-            <a id="sign-up-link" class="nav-link" href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
-          </li>
-          <li class="nav-item">
-            {# URL provided by django-allauth/account/urls.py #}
-            <a id="log-in-link" class="nav-link" href="{% url 'account_login' %}">{% trans "Sign In" %}</a>
-          </li>
+           <li class="nav-item mt-2 d-inline">
+            <a class="btn btn-outline-info ml-2 mb-2" style="color:#2ba6c8!important;" role="button" href="{{ login }}">Login</a>          </li>
         {% endif %}
       </ul>
     </div>
