@@ -1,3 +1,4 @@
+import mozilla_django_oidc  # noqa: F401
 from django.conf import settings
 from django.urls import reverse
 
