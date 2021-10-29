@@ -4,6 +4,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Ignore prod nginx files so git doesnt think we've locally added new files when deploying templates with ansible
+compose/production/nginx
+
 .idea/
 .idea/*
 .idea/scram.iml
