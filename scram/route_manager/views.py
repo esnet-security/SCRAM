@@ -16,9 +16,8 @@ from .models import ActionType, Entry
 
 
 def is_member(user):
-    return user.groups.filter(
-        name__in=[settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]
-    ).exists()
+    readwrite_groups = [settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]
+    return user.groups.filter(name__in=[readwrite_groups]).exists()
 
 
 def home_page(request, prefilter=Entry.objects.all()):
