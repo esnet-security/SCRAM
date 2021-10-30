@@ -15,14 +15,10 @@ from ..users.models import User
 from .models import ActionType, Entry
 
 
-def is_member(user):
-    readwrite_groups = [settings.SCRAM_ADMIN_GROUPS, settings.SCRAM_READWRITE_GROUPS]
-    return user.groups.filter(name__in=[readwrite_groups]).exists()
-
-
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
-    readwrite = is_member(request.user)
+    if request.user.has_perm(("route_manager.view_entry", "route_manager.add_entry")):
+        readwrite = True
     context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
