@@ -15,3 +15,4 @@ CELERY_FLOWER_PASSWORD=debug
 
 # Django
 DATABASE_URL=sqlite:///django.db
+DJANGO_SETTINGS_MODULE=config.settings.local
