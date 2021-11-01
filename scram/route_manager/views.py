@@ -17,7 +17,7 @@ from .models import ActionType, Entry
 
 def home_page(request, prefilter=Entry.objects.all()):
     num_entries = settings.RECENT_LIMIT
-    if request.user.has_perm(("route_manager.view_entry", "route_manager.add_entry")):
+    if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
     else:
         readwrite = False
