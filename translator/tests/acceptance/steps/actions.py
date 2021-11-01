@@ -1,6 +1,7 @@
 from behave import then, when
 import gobgp_pb2
 import ipaddress
+import time
 
 @when("we add {route} to the {actiontype} list")
 def xadd(context, actiontype, route):
@@ -11,6 +12,9 @@ def xdel(context, actiontype, route):
     context.db.xdel(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
 
 def get_block_status(context, ip):
+    # Allow our add/delete requests to settle
+    time.sleep(1)
+
     ip_obj = ipaddress.ip_address(ip)
     if ip_obj.version == 6:
         family = gobgp_pb2.Family.AFI_IP6
