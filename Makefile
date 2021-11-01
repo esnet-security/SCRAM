@@ -28,6 +28,11 @@ behave-all: active.yml
 behave: active.yml
 	@docker-compose -f active.yml run django python manage.py behave --no-input --simple -i $(FEATURE)
 
+## behave-translator
+.Phony: behave-translator
+behave-translator: active.yml
+	@docker-compose -f active.yml exec -T redis_to_gobgp_translator behave /app/acceptance/features
+
 ## build: rebuilds all your containers
 .Phony: build
 build: active.yml

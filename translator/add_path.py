@@ -15,18 +15,19 @@ _TIMEOUT_SECONDS = 1000
 logging.basicConfig(level=logging.DEBUG)
 
 db = walrus.Database(host="redis")
-cg = db.consumer_group("cg-west", ["block_add"])
+cg = db.consumer_group("cg-west", ["block_add", "unblock_add"])
 cg.create()
 cg.set_id("$")
 
 
-def block(ip, cidr_size, ip_version):
-    logging.info(f"Blocking {ip}/{cidr_size}")
+def get_family(ip_version):
+    if ip_version == 6:
+        return gobgp_pb2.Family.AFI_IP6
+    else:
+        return gobgp_pb2.Family.AFI_IP
 
-    # Connect to GoBGP (Docker) on gRPC
-    channel = grpc.insecure_channel("gobgp:50051")
-    stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
+def build_path(ip, cidr_size, ip_version):
     origin = Any()
     origin.Pack(
         attribute_pb2.OriginAttribute(
@@ -43,9 +44,9 @@ def block(ip, cidr_size, ip_version):
     )
 
     next_hop = Any()
+    family = get_family(ip_version)
 
     if ip_version == 6:
-        family = gobgp_pb2.Family.AFI_IP6
         next_hop.Pack(
             attribute_pb2.MpReachNLRIAttribute(
                 family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
@@ -55,7 +56,6 @@ def block(ip, cidr_size, ip_version):
         )
 
     else:
-        family = gobgp_pb2.Family.AFI_IP
         next_hop.Pack(
             attribute_pb2.NextHopAttribute(
                 next_hop="10.87.3.66",
@@ -68,29 +68,69 @@ def block(ip, cidr_size, ip_version):
 
     attributes = [origin, next_hop, communities]
 
+    return gobgp_pb2.Path(
+        nlri=nlri,
+        pattrs=attributes,
+        family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+    )
+
+
+def block(ip, cidr_size, ip_version):
+    logging.info(f"Blocking {ip}/{cidr_size}")
+
+    # Connect to GoBGP (Docker) on gRPC
+    channel = grpc.insecure_channel("gobgp:50051")
+    stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+
     stub.AddPath(
         gobgp_pb2.AddPathRequest(
             table_type=gobgp_pb2.GLOBAL,
-            path=gobgp_pb2.Path(
-                nlri=nlri,
-                pattrs=attributes,
-                family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
-            ),
+            path=build_path(ip, cidr_size, ip_version),
         ),
         _TIMEOUT_SECONDS,
     )
 
 
+def unblock(ip, cidr_size, ip_version):
+    logging.info(f"Unblocking {ip}/{cidr_size}")
+    print(f"Unblocking {ip}/{cidr_size}")
+
+    # Connect to GoBGP (Docker) on gRPC
+    channel = grpc.insecure_channel("gobgp:50051")
+    stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+
+    stub.DeletePath(
+        gobgp_pb2.DeletePathRequest(
+            table_type=gobgp_pb2.GLOBAL,
+            path=build_path(ip, cidr_size, ip_version),
+        ),
+        _TIMEOUT_SECONDS,
+    )
+
+
+def unknown(ip, cidr_size, ip_version):
+    logging.warning(f"Unknown action for {ip}/{cidr_size}")
+
+
+action_registry = {
+    "block_add": block,
+    "unblock_add": unblock,
+}
+
+
 def run():
-    # TODO: block
+
+    # TODO: block until we get a response
     unacked_msgs = cg.read()
     if not unacked_msgs:
         return
 
     logging.debug("Processing messages from redis")
-
     for stream_name, stream_msgs in unacked_msgs:
+        stream_name = stream_name.decode("utf-8")
+        action = action_registry.get(stream_name, unknown)
         for msg in stream_msgs:
+            print(stream_name, msg)
             redis_id, data = msg
             ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
             try:
@@ -98,8 +138,8 @@ def run():
             except:  # noqa E722
                 logging.error(f"Invalid IP address received: {ip}")
                 continue
-            block(ip, int(cidr_size), ip_address.version)
-            cg.block_add.ack(redis_id)
+            action(ip, int(cidr_size), ip_address.version)
+            getattr(cg, str(stream_name)).ack(redis_id)
 
 
 if __name__ == "__main__":
