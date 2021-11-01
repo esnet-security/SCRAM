@@ -3,6 +3,7 @@ version: '3'
 volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
+  production_redis_data: {}
   production_nginx: {}
 
 services:
@@ -50,11 +51,31 @@ services:
 
   redis:
     image: redis:5.0
+    volumes:
+      - production_redis_data:Z
+
+  gobgp:
+    image: jauderho/gobgp:v2.32.0
+    volumes:
+      - $CI_PROJECT_DIR/gobgp_config:/config:z
+    ports:
+      - "179"
+      - "50051"
+
+  redis_to_gobgp_translator:
+    build:
+      context: .
+      dockerfile: ./compose/local/translator/Dockerfile
+    depends_on:
+      - redis
+      - gobgp
 
   celeryworker:
     <<: *django
     image: scram_production_celeryworker
     command: /start-celeryworker
+    networks:
+      - default
 
   celerybeat:
     <<: *django

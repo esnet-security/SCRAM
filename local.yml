@@ -53,6 +53,22 @@ services:
     ports:
       - "6379"
 
+  gobgp:
+    image: jauderho/gobgp:v2.32.0
+    volumes:
+      - $CI_PROJECT_DIR/gobgp_config:/config:z
+    ports:
+      - "179"
+      - "50051"
+
+  redis_to_gobgp_translator:
+    build:
+      context: .
+      dockerfile: ./compose/local/translator/Dockerfile
+    depends_on:
+      - redis
+      - gobgp
+
   celeryworker:
     <<: *django
     image: scram_local_celeryworker
