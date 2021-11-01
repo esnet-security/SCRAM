@@ -36,6 +36,7 @@ pytest:
   script:
   - make pytest
   - make behave-all
+  - make behave-translator
   after_script:
   - make clean
 gemnasium-dependency_scanning:
