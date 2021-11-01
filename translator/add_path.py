@@ -81,15 +81,23 @@ def block(ip, cidr_size, ip_version):
     )
 
 
+def unknown(ip, cidr_size, ip_version):
+    logging.warning(f"Unknown action for {ip}/{cidr_size}")
+
+
+action_registry = {"block_add": block,
+                  }
+
 def run():
-    # TODO: block
+
+    # TODO: block until we get a response
     unacked_msgs = cg.read()
     if not unacked_msgs:
         return
 
     logging.debug("Processing messages from redis")
-
     for stream_name, stream_msgs in unacked_msgs:
+        action = action_registry.get(stream_name, unknown)
         for msg in stream_msgs:
             redis_id, data = msg
             ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
@@ -98,8 +106,8 @@ def run():
             except:  # noqa E722
                 logging.error(f"Invalid IP address received: {ip}")
                 continue
-            block(ip, int(cidr_size), ip_address.version)
-            cg.block_add.ack(redis_id)
+            action(ip, int(cidr_size), ip_address.version)
+            cg.get(stream_name).ack(redis_id)
 
 
 if __name__ == "__main__":
