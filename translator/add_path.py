@@ -68,7 +68,12 @@ def build_path(ip, cidr_size, ip_version):
 
     attributes = [origin, next_hop, communities]
 
-    return gobgp_pb2.Path(nlri=nlri, pattrs=attributes, family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST))
+    return gobgp_pb2.Path(
+        nlri=nlri,
+        pattrs=attributes,
+        family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+    )
+
 
 def block(ip, cidr_size, ip_version):
     logging.info(f"Blocking {ip}/{cidr_size}")
@@ -84,6 +89,7 @@ def block(ip, cidr_size, ip_version):
         ),
         _TIMEOUT_SECONDS,
     )
+
 
 def unblock(ip, cidr_size, ip_version):
     logging.info(f"Unblocking {ip}/{cidr_size}")
@@ -101,13 +107,16 @@ def unblock(ip, cidr_size, ip_version):
         _TIMEOUT_SECONDS,
     )
 
+
 def unknown(ip, cidr_size, ip_version):
     logging.warning(f"Unknown action for {ip}/{cidr_size}")
 
 
-action_registry = {"block_add": block,
-                   "unblock_add": unblock,
-                  }
+action_registry = {
+    "block_add": block,
+    "unblock_add": unblock,
+}
+
 
 def run():
 
@@ -118,7 +127,7 @@ def run():
 
     logging.debug("Processing messages from redis")
     for stream_name, stream_msgs in unacked_msgs:
-        stream_name = stream_name.decode('utf-8')
+        stream_name = stream_name.decode("utf-8")
         action = action_registry.get(stream_name, unknown)
         for msg in stream_msgs:
             print(stream_name, msg)
