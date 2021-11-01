@@ -18,9 +18,10 @@ RUN mkdir /app \
     && cd /app \
     && git clone https://github.com/osrg/gobgp.git \
     && cd gobgp/api \
-    && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto 
+    && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/add_path.py /app
+COPY ./translator/tests /app
 RUN chmod +x /app/add_path.py
 
 WORKDIR /app
