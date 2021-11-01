@@ -103,26 +103,3 @@ services:
     command: /start-flower
     networks:
       - default
-
-networks:
-  default:
-    enable_ipv6: true
-    driver: bridge
-    driver_opts:
-      com.docker.network.enable_ipv6: "true"
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.6.0.0/24
-        - subnet: 2001:db6::/64
-
-  clab:
-    enable_ipv6: true
-    driver: macvlan
-    driver_opts:
-      parent: scram_clab
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.0.0.0/24
-        - subnet: 2001:db8::/64
