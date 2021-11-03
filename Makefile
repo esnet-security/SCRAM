@@ -85,6 +85,12 @@ exec: active.yml
 help: Makefile
 	@sed -n 's/^##//p' $<
 
+## list-routes: list gobgp routes
+.Phony: list-routes
+list-routes: active.yml
+	@docker-compose -f active.yml exec gobgp gobgp global rib
+
+
 ## tail-log: tail a docker container's logs (append CONTAINER=container_name_here)
 .Phony: tail-log
 tail-log: active.yml
