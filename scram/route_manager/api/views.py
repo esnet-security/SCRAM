@@ -25,21 +25,18 @@ class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
+    db = walrus.Database(host="redis")
 
     def perform_create(self, serializer):
-        db = walrus.Database(host="redis")
-
-        # Add an empty message to create the stream
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-        db.xadd(
+        self.db.xadd(
             f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
         )
 
         serializer.save()
 
     def retrieve(self, request, pk=None, **kwargs):
-
         cidr = ipaddress.ip_network(pk, strict=False)
         if cidr.version == 4:
             if cidr.prefixlen < settings.V4_MINPREFIX:
@@ -54,7 +51,14 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        cidr = ipaddress.ip_network(pk, strict=False)
-        entry = Entry.objects.filter(route__route__host=cidr)
+        entry = Entry.objects.get(pk=pk)
+        actiontype = entry.actiontype.name
+
+        self.db.xadd(
+            f"{actiontype}_remove",
+            {"route": str(entry.route), "actiontype": actiontype},
+        )
+
         entry.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
