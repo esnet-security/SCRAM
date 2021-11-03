@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
@@ -66,11 +66,13 @@ def search_entries(request):
     )
 
 
+delete_entry_api = EntryViewSet.as_view({"post": "destroy"})
+
+
 @require_POST
 @permission_required(["route_manager.view_entry", "route_manager.delete_entry"])
 def delete_entry(request, pk):
-    query = get_object_or_404(Entry, pk=pk)
-    query.delete()
+    delete_entry_api(request, pk)
     return redirect("route_manager:home")
 
 
