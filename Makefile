@@ -21,7 +21,7 @@ active.yml:
 ## behave-all: runs behave inside the containers against all of your features
 .Phony: behave-all
 behave-all: active.yml
-	@docker-compose -f active.yml run django python manage.py behave --no-input --simple
+	@docker-compose -f active.yml run django coverage run -a manage.py behave --no-input --simple
 
 ## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
 .Phony: behave
@@ -38,9 +38,14 @@ behave-translator: active.yml
 build: active.yml
 	@docker-compose -f active.yml build
 
+## coverage.xml: generate coverage from test runs
+coverage.xml: pytest behave-all
+	@docker-compose -f active.yml run django coverage report
+	@docker-compose -f active.yml run django coverage xml
+
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
-ci-test: | toggle-local build migrate run pytest behave-all
+ci-test: | toggle-local build migrate run pytest behave-all coverage.xml
 
 ## cleanup: remove local containers and volumes
 .Phony: clean
@@ -99,7 +104,7 @@ migrate: active.yml
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest: active.yml
-	@docker-compose -f active.yml run django .ci-scripts/coverage.sh
+	@docker-compose -f active.yml run django coverage run -m pytest
 
 ## run: brings up the containers as described in active.yml
 .Phony: run
