@@ -39,6 +39,9 @@ pytest:
   - make behave-translator
   after_script:
   - make clean
+  artifacts:
+    reports:
+      cobertura: coverage.xml
 gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt

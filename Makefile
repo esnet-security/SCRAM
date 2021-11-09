@@ -99,7 +99,7 @@ migrate: active.yml
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest: active.yml
-	@docker-compose -f active.yml run django pytest
+	@docker-compose -f active.yml run django .ci-scripts/coverage.sh
 
 ## run: brings up the containers as described in active.yml
 .Phony: run
