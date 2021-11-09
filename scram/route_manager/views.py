@@ -22,7 +22,6 @@ def home_page(request, prefilter=Entry.objects.all()):
     else:
         readwrite = False
     context = {"entries": {}, "readwrite": readwrite}
-    # testing
     for at in ActionType.objects.all():
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
         context["entries"][at] = {
