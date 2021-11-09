@@ -34,11 +34,10 @@ pytest:
   - make migrate
   - make run
   script:
-  - make pytest
-  - make behave-all
-  - make behave-translator
+  - make coverage.xml
   after_script:
   - make clean
+  - ls -la
   artifacts:
     reports:
       cobertura: coverage.xml
