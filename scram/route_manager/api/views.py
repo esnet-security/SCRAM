@@ -2,6 +2,7 @@ import ipaddress
 
 import walrus
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -51,14 +52,17 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        entry = Entry.objects.get(pk=pk)
-        actiontype = entry.actiontype.name
+        try:
+            entry = Entry.objects.get(pk=pk)
+            actiontype = entry.actiontype.name
 
-        self.db.xadd(
-            f"{actiontype}_remove",
-            {"route": str(entry.route), "actiontype": actiontype},
-        )
+            self.db.xadd(
+                f"{actiontype}_remove",
+                {"route": str(entry.route), "actiontype": actiontype},
+            )
 
-        entry.delete()
+            entry.delete()
+        except ObjectDoesNotExist:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
