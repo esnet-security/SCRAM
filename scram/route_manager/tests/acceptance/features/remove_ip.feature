@@ -14,13 +14,13 @@ Feature: remove a network
       | IP            |
       | 1.2.3.4       |
       | 5.6.7.8/32    |
-      | 22.22.22.1/24 |
+      | 22.22.22.0/24 |
 
     Examples: v6 IPs
       | IP            |
       | 2000::        |
       | ::1/128       |
-      | 2000::1/8     |
+      | 2000::0/32    |
 
   Scenario Outline: removing an existing IP returns a 204
     When we're logged in
