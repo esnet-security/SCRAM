@@ -2,7 +2,6 @@ import ipaddress
 
 import walrus
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import Http404
 from rest_framework import status, viewsets
@@ -38,7 +37,6 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
-
     def find_entries(self, arg):
         if not arg:
             return Entry.objects.none()
@@ -53,12 +51,13 @@ class EntryViewSet(viewsets.ModelViewSet):
 
             min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
             if cidr.version == 4:
-                max_prefix = getattr(settings, "V4_MAXPREFIX", 32)
+                max_prefix = getattr(settings, "V4_MAXPREFIX", 32)  # noqa: F841
             else:
-                max_prefix = getattr(settings, "V6_MAXPREFIX", 128)
+                max_prefix = getattr(settings, "V6_MAXPREFIX", 128)  # noqa: F841
 
             if cidr.prefixlen < min_prefix:
-                    raise PrefixTooLarge()
+                raise PrefixTooLarge()
+
             # TODO: max prefix
 
             query = Q(route__route__net_overlaps=cidr)
