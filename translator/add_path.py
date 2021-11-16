@@ -15,7 +15,7 @@ _TIMEOUT_SECONDS = 1000
 logging.basicConfig(level=logging.DEBUG)
 
 db = walrus.Database(host="redis")
-cg = db.consumer_group("cg-west", ["block_add", "block_remove "])
+cg = db.consumer_group("cg-west", ["block_add", "block_remove"])
 cg.create()
 cg.set_id("$")
 
