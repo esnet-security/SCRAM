@@ -1,7 +1,7 @@
 from behave import given, then, when
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType, Entry
+from scram.route_manager.models import ActionType
 
 
 @given("a {name} actiontype is defined")
@@ -28,9 +28,8 @@ def step_impl(context, value):
 
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
-    pk = Entry.objects.get(route__route=value).id
     context.response = context.test.client.delete(
-        reverse(f"api:v1:{model.lower()}-detail", args=[pk])
+        reverse(f"api:v1:{model.lower()}-detail", args=[value])
     )
 
 
