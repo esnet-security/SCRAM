@@ -11,17 +11,18 @@ Feature: remove a network
     Then we get a 204 status code
 
     Examples: Made Up Primary Key
-      | PK  |
-      | 1   |
+      | PK        |
+      | 1         |
+      | 9.9.9.9   |
 
 
   Scenario Outline: removing an existing IP returns a 204
     When we're logged in
     And we add the entry <IP>
-    And we remove the entry <PK>
+    And we remove the entry <IP>
     Then we get a 204 status code
     And the number of entrys is 0
 
     Examples: IP
       | PK | IP            |
-      | 1  | 1.2.3.4       |
+      | 1  | 1.2.3.4/32    |

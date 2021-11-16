@@ -25,7 +25,6 @@ def step_impl(context, value):
         reverse("api:v1:entry-list"), {"route": value, "actiontype": "block"}
     )
 
-
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
     context.response = context.test.client.delete(

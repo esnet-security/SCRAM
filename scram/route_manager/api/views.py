@@ -3,6 +3,7 @@ import ipaddress
 import walrus
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import Http404
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -37,32 +38,45 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
+
+    def find_entries(self, arg):
+        if not arg:
+            return Entry.objects.none()
+
+        # Is our argument an integer?
+        try:
+            pk = int(arg)
+            query = Q(pk=pk)
+        except ValueError:
+            # Maybe a CIDR? We want the ValueError at this point, if not.
+            cidr = ipaddress.ip_network(arg, strict=False)
+
+            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
+            if cidr.version == 4:
+                max_prefix = getattr(settings, "V4_MAXPREFIX", 32)
+            else:
+                max_prefix = getattr(settings, "V6_MAXPREFIX", 128)
+
+            if cidr.prefixlen < min_prefix:
+                    raise PrefixTooLarge()
+            # TODO: max prefix
+
+            query = Q(route__route__net_overlaps=cidr)
+
+        return Entry.objects.filter(query)
+
     def retrieve(self, request, pk=None, **kwargs):
-        cidr = ipaddress.ip_network(pk, strict=False)
-        if cidr.version == 4:
-            if cidr.prefixlen < settings.V4_MINPREFIX:
-                raise PrefixTooLarge()
-        else:
-            if cidr.prefixlen < settings.V6_MINPREFIX:
-                raise PrefixTooLarge()
-        entry = Entry.objects.filter(route__route__net_overlaps=cidr)
-        if entry.count() == 0:
+        entries = self.find_entries(pk)
+        # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
+        if entries.count() != 1:
             raise Http404
-        serializer = EntrySerializer(entry, many=True, context={"request": request})
+        serializer = EntrySerializer(entries, many=True, context={"request": request})
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        try:
-            entry = Entry.objects.get(pk=pk)
-            actiontype = entry.actiontype.name
-
-            self.db.xadd(
-                f"{actiontype}_remove",
-                {"route": str(entry.route), "actiontype": actiontype},
-            )
-
-            entry.delete()
-        except ObjectDoesNotExist:
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        entries = self.find_entries(pk)
+        # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
+        if entries.count() == 1:
+            entries[0].delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
