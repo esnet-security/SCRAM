@@ -340,3 +340,6 @@ scram/media/
 .envs/*
 !.envs/.local/
 active.yml
+
+coverage.coverage
+coverage.xml
