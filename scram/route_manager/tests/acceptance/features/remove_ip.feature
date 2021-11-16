@@ -22,14 +22,6 @@ Feature: remove a network
     Then we get a 204 status code
     And the number of entrys is 0
 
-    Examples: v4 IPs
+    Examples: IP
       | PK | IP            |
       | 1  | 1.2.3.4       |
-      | 2  | 5.6.7.8/32    |
-      | 3  | 22.22.22.0/24 |
-
-    Examples: v6 IPs
-      | PK | IP            |
-      | 4  | 2000::        |
-      | 5  | ::1/128       |
-      | 6  | 2000::0/32    |
