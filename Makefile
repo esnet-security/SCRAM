@@ -39,7 +39,7 @@ build: active.yml
 	@docker-compose -f active.yml build
 
 ## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all
+coverage.xml: pytest behave-all behave-translator
 	@docker-compose -f active.yml run django coverage report
 	@docker-compose -f active.yml run django coverage xml
 
