@@ -6,12 +6,12 @@ from behave import then, when
 
 
 @when("we add {route} to the {actiontype} list")
-def xadd(context, actiontype, route):
-    context.db.xadd(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
+def xadd(context, route, actiontype):
+    context.db.xadd(f"{route}_add", {"route": route, "actiontype": actiontype})
 
 
 @when("we delete {route} from the {actiontype} list")
-def xdel(context, actiontype, route):
+def xdel(context, route, actiontype):
     context.db.xdel(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
 
 
