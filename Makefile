@@ -45,7 +45,7 @@ coverage.xml: pytest behave-all behave-translator
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
-ci-test: | toggle-local build migrate run pytest behave-all behave-translator coverage.xml
+ci-test: | toggle-local build migrate run coverage.xml
 
 ## cleanup: remove local containers and volumes
 .Phony: clean
