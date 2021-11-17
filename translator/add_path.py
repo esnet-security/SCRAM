@@ -15,7 +15,7 @@ _TIMEOUT_SECONDS = 1000
 logging.basicConfig(level=logging.DEBUG)
 
 db = walrus.Database(host="redis")
-cg = db.consumer_group("cg-west", ["block_add", "unblock_add"])
+cg = db.consumer_group("cg-west", ["block_add", "block_remove"])
 cg.create()
 cg.set_id("$")
 
@@ -50,7 +50,7 @@ def build_path(ip, cidr_size, ip_version):
         next_hop.Pack(
             attribute_pb2.MpReachNLRIAttribute(
                 family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
-                next_hops=["::1"],
+                next_hops=["100::1"],
                 nlris=[nlri],
             )
         )
@@ -58,12 +58,12 @@ def build_path(ip, cidr_size, ip_version):
     else:
         next_hop.Pack(
             attribute_pb2.NextHopAttribute(
-                next_hop="10.87.3.66",
+                next_hop="192.0.2.1",
             )
         )
 
     communities = Any()
-    comm_id = (294 << 16) + 666
+    comm_id = (293 << 16) + 666
     communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
 
     attributes = [origin, next_hop, communities]
@@ -114,12 +114,11 @@ def unknown(ip, cidr_size, ip_version):
 
 action_registry = {
     "block_add": block,
-    "unblock_add": unblock,
+    "block_remove": unblock,
 }
 
 
 def run():
-
     # TODO: block until we get a response
     unacked_msgs = cg.read()
     if not unacked_msgs:

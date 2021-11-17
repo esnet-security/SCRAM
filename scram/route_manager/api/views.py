@@ -1,7 +1,7 @@
 import ipaddress
-
 import walrus
 from django.conf import settings
+from django.db.models import Q
 from django.http import Http404
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -25,36 +25,49 @@ class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
+    db = walrus.Database(host="redis")
 
     def perform_create(self, serializer):
-        db = walrus.Database(host="redis")
-
-        # Add an empty message to create the stream
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-        db.xadd(
+        self.db.xadd(
             f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
         )
 
         serializer.save()
 
-    def retrieve(self, request, pk=None, **kwargs):
+    def find_entries(self, arg):
+        if not arg:
+            return Entry.objects.none()
 
-        cidr = ipaddress.ip_network(pk, strict=False)
-        if cidr.version == 4:
-            if cidr.prefixlen < settings.V4_MINPREFIX:
+        # Is our argument an integer?
+        try:
+            pk = int(arg)
+            query = Q(pk=pk)
+        except ValueError:
+            # Maybe a CIDR? We want the ValueError at this point, if not.
+            cidr = ipaddress.ip_network(arg, strict=False)
+
+            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
+            if cidr.prefixlen < min_prefix:
                 raise PrefixTooLarge()
-        else:
-            if cidr.prefixlen < settings.V6_MINPREFIX:
-                raise PrefixTooLarge()
-        entry = Entry.objects.filter(route__route__net_overlaps=cidr)
-        if entry.count() == 0:
+
+            query = Q(route__route__net_overlaps=cidr)
+
+        return Entry.objects.filter(query)
+
+    def retrieve(self, request, pk=None, **kwargs):
+        entries = self.find_entries(pk)
+        # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
+        if entries.count() != 1:
             raise Http404
-        serializer = EntrySerializer(entry, many=True, context={"request": request})
+        serializer = EntrySerializer(entries, many=True, context={"request": request})
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        cidr = ipaddress.ip_network(pk, strict=False)
-        entry = Entry.objects.filter(route__route__host=cidr)
-        entry.delete()
+        entries = self.find_entries(pk)
+        # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
+        if entries.count() == 1:
+            entries[0].delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)

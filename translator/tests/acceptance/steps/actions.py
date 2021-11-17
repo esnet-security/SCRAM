@@ -6,13 +6,13 @@ from behave import then, when
 
 
 @when("we add {route} to the {actiontype} list")
-def xadd(context, actiontype, route):
+def xadd(context, route, actiontype):
     context.db.xadd(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
 
 
 @when("we delete {route} from the {actiontype} list")
-def xdel(context, actiontype, route):
-    context.db.xdel(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
+def xdel(context, route, actiontype):
+    context.db.xadd(f"{actiontype}_remove", {"route": route, "actiontype": actiontype})
 
 
 def get_block_status(context, ip):
