@@ -1,4 +1,5 @@
 import ipaddress
+
 import walrus
 from django.conf import settings
 from django.db.models import Q
@@ -20,7 +21,7 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EntryViewSet(viewsets.ModelViewSet):
-    queryset = Entry.objects.all()
+    queryset = Entry.objects.filter(is_active=True)
     permission_classes = (IsAuthenticated,)
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
@@ -36,7 +37,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
-    def find_entries(self, arg):
+    def find_entries(self, arg, active_filter=None):
         if not arg:
             return Entry.objects.none()
 
@@ -54,10 +55,13 @@ class EntryViewSet(viewsets.ModelViewSet):
 
             query = Q(route__route__net_overlaps=cidr)
 
+        if active_filter is not None:
+            query &= Q(is_active=active_filter)
+
         return Entry.objects.filter(query)
 
     def retrieve(self, request, pk=None, **kwargs):
-        entries = self.find_entries(pk)
+        entries = self.find_entries(pk, active_filter=True)
         # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
         if entries.count() != 1:
             raise Http404
@@ -65,9 +69,11 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        entries = self.find_entries(pk)
+        entries = self.find_entries(pk, active_filter=True)
         # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
         if entries.count() == 1:
-            entries[0].delete()
+            entry = entries[0]
+            entry.is_active = False
+            entry.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
