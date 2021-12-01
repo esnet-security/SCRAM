@@ -117,6 +117,11 @@ pytest: active.yml
 run: active.yml
 	@docker-compose -f active.yml up -d
 
+## stop: turns off running containers
+.Phony: stop
+stop: active.yml
+	@docker-compose -f active.yml stop
+
 ## type-check: static type checking
 .Phony: type-check
 type-check: active.yml
