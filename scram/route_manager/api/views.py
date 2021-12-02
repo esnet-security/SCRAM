@@ -40,6 +40,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         # Find user somehow?
         # create history object with the associated entry including username
 
+    @staticmethod
     def find_entries(self, arg, active_filter=None):
         if not arg:
             return Entry.objects.none()
