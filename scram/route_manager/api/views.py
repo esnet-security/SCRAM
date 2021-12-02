@@ -45,7 +45,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         history.save()
 
     @staticmethod
-    def find_entries(self, arg, active_filter=None):
+    def find_entries(arg, active_filter=None):
         if not arg:
             return Entry.objects.none()
 
