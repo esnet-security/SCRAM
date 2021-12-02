@@ -37,8 +37,12 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
-        # Find user somehow?
         # create history object with the associated entry including username
+        entry = Entry.objects.filter(route__route=route)
+        history = History(
+            entry=entry[0], who=self.request.user, why="API perform create"
+        )
+        history.save()
 
     @staticmethod
     def find_entries(self, arg, active_filter=None):
