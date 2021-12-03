@@ -38,10 +38,8 @@ class EntryViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         # create history object with the associated entry including username
-        entry = Entry.objects.filter(route__route=route)
-        history = History(
-            entry=entry[0], who=self.request.user, why="API perform create"
-        )
+        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
+        history = History(entry=entry, who=self.request.user, why="API perform create")
         history.save()
 
     @staticmethod
