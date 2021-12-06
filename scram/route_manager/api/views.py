@@ -8,7 +8,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry
+from ..models import ActionType, Entry, History
 from .exceptions import PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer
 
@@ -37,7 +37,13 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         serializer.save()
 
-    def find_entries(self, arg, active_filter=None):
+        # create history object with the associated entry including username
+        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
+        history = History(entry=entry, who=self.request.user, why="API perform create")
+        history.save()
+
+    @staticmethod
+    def find_entries(arg, active_filter=None):
         if not arg:
             return Entry.objects.none()
 
@@ -72,7 +78,10 @@ class EntryViewSet(viewsets.ModelViewSet):
         entries = self.find_entries(pk, active_filter=True)
         # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
         if entries.count() == 1:
+            # create history object with the associated entry including username
             entry = entries[0]
+            history = History(entry=entry, who=request.user, why="API destroy function")
+            history.save()
             entry.is_active = False
             entry.save()
 
