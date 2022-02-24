@@ -59,7 +59,7 @@ services:
     networks:
       - default
     volumes:
-      - production_redis_data:Z
+      - production_redis_data:/var/lib/redis:Z
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
