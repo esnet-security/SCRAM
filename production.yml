@@ -64,7 +64,7 @@ services:
   gobgp:
     image: jauderho/gobgp:v2.32.0
     volumes:
-      - $CI_PROJECT_DIR/gobgp_config:/config:z
+      - ./gobgp_config:/config:z
     networks:
       default: {}
       peering:
