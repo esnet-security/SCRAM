@@ -58,6 +58,7 @@ services:
     volumes:
       - ./gobgp_config:/config:z
     networks:
+      default: {}
       peering:
         ipv4_address: ${SCRAM_V4_ADDRESS}
         ipv6_address: ${SCRAM_V6_ADDRESS}
