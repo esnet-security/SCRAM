@@ -31,8 +31,6 @@ behave: active.yml
 ## behave-translator
 .Phony: behave-translator
 behave-translator: active.yml
-	@docker-compose -f active.yml down -v redis_to_gobgp_translator
-	@docker-compose -f active.yml up -d redis_to_gobgp_translator
 	@docker-compose -f active.yml exec -T redis_to_gobgp_translator /usr/local/bin/behave /app/acceptance/features
 
 ## build: rebuilds all your containers
