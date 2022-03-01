@@ -7,15 +7,17 @@
         <tr>
           <th>Entry</th>
           <th>Actiontype</th>
+          <th>Is Active</th>
           <th></th>
         </tr>
         <tr>
           <td>{{ entry.route }}</td>
           <td class="text-center">{{ entry.actiontype.name }}</td>
+          <td>{{ entry.is_active }}</td>
           <td>
             <form class="form-inline" action="{% url 'route_manager:delete' entry.id %}" method="POST">
             {% csrf_token %}
-            <button class="btn btn-danger btn-sm" type="submit">Delete Entry</button>
+            <button class="btn btn-danger btn-sm" type="submit">Deactivate Entry</button>
             </form></td>
         </tr>
       </table>
