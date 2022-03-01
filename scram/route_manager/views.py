@@ -1,5 +1,6 @@
 import ipaddress
 
+import rest_framework.utils.serializer_helpers
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -98,9 +99,13 @@ def add_entry(request):
         )
     elif res.status_code == 400:
         errors = []
-        for k, v in res.data.items():
-            for error in v:
-                errors.append(f"'{k}' error: {str(error)}")
+        if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
+            for k, v in res.data.items():
+                for error in v:
+                    errors.append(f"'{k}' error: {str(error)}")
+        else:
+            for k, v in res.data.items():
+                errors.append(f"error: {str(v)}")
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
     elif res.status_code == 403:
         messages.add_message(request, messages.ERROR, "Permission Denied")

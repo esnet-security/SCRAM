@@ -327,5 +327,5 @@ SCRAM_GROUPS = (
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 10
 # What is the largest cidr range we'll accept entries for
-V4_MINPREFIX = 8
-V6_MINPREFIX = 32
+V4_MINPREFIX = 32
+V6_MINPREFIX = 128
