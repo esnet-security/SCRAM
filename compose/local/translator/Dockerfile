@@ -16,7 +16,7 @@ RUN pip install -r /requirements.txt
 
 RUN mkdir /app \
     && cd /app \
-    && git clone https://github.com/osrg/gobgp.git \
+    && git clone -b v2.32.0 https://github.com/osrg/gobgp.git \
     && cd gobgp/api \
     && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
 

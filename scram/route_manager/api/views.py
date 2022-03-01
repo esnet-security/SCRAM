@@ -31,6 +31,11 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
+
+        min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
+        if route.prefixlen < min_prefix:
+            raise PrefixTooLarge()
+
         self.db.xadd(
             f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
         )
@@ -54,10 +59,6 @@ class EntryViewSet(viewsets.ModelViewSet):
         except ValueError:
             # Maybe a CIDR? We want the ValueError at this point, if not.
             cidr = ipaddress.ip_network(arg, strict=False)
-
-            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
-            if cidr.prefixlen < min_prefix:
-                raise PrefixTooLarge()
 
             query = Q(route__route__net_overlaps=cidr)
 

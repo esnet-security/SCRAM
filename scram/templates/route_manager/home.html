@@ -39,7 +39,7 @@
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">
                 <a class="link" href="{% url 'route_manager:detail' entry.id %}">
-                  {{ entry.route }}</a></li>
+                  {{ entry }}</a></li>
             {% endif %}
           {% endfor %}
         {% endif %}
