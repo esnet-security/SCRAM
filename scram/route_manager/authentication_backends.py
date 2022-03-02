@@ -44,7 +44,8 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     def update_user(self, user, claims):
         user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
-        self.update_groups(user, claims)
+        if claims.get("groups", False]):
+            self.update_groups(user, claims)
 
         user.save()
 
