@@ -81,9 +81,15 @@ class EntryViewSet(viewsets.ModelViewSet):
         if entries.count() == 1:
             # create history object with the associated entry including username
             entry = entries[0]
+            actiontype = entry.actiontype
+            route = entry.route
             history = History(entry=entry, who=request.user, why="API destroy function")
             history.save()
             entry.is_active = False
             entry.save()
+
+            self.db.xadd(
+                f"{actiontype}_remove", {"route": str(route), "actiontype": str(actiontype)}
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)
