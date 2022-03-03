@@ -46,6 +46,8 @@ class EntryViewSet(viewsets.ModelViewSet):
         entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
         history = History(entry=entry, who=self.request.user, why="API perform create")
         history.save()
+        entry.is_active = True
+        entry.save()
 
     @staticmethod
     def find_entries(arg, active_filter=None):
