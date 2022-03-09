@@ -33,10 +33,11 @@ behave: active.yml
 behave-translator: active.yml
 	@docker-compose -f active.yml exec -T redis_to_gobgp_translator /usr/local/bin/behave /app/acceptance/features
 
-## build: rebuilds all your containers
+## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
 build: active.yml
 	@docker-compose -f active.yml up -d --no-deps --build $(CONTAINER)
+	@docker-compose -f active.yml restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
 coverage.xml: pytest behave-all behave-translator
