@@ -21,10 +21,14 @@
        ).then(res => {
                 var elem = document.getElementById("entry_status_" + entry_id);
                 elem.classList.remove('fa-question-circle');
-                if ( res.data.is_active )
+                if ( res.data.is_active ) {
                     elem.classList.add('fa-bullhorn', 'text-success');
-                else
+                    elem.setAttribute('title', "Currently being announced");
+                }
+                else {
                     elem.classList.add('fa-bug', 'text-warning');
+                    elem.setAttribute('title', "Currently NOT being announced");
+                }
             });
     }
     </script>
@@ -43,7 +47,7 @@
               <li class="list-group-item list-group-item-light text-center">
                 <a class="link" href="{% url 'route_manager:detail' entry.id %}">
                   {{ entry }}</a>
-             <i class="fa fa-question-circle" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.pk }}");</script>
+             <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.pk }}");</script>
              </li>
             {% endif %}
         {% endfor %}
