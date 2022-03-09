@@ -7,9 +7,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
+import walrus
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
@@ -131,3 +133,18 @@ class EntryListView(ListView):
                 "total": queryset.count(),
             }
         return context
+
+@require_POST
+@permission_required(["route_manager.view_entry"])
+def status_entry(request, pk):
+    db = walrus.Database(host="redis")
+    obj = Entry.objects.get(pk=pk)
+    req_id = db.xadd("status_request", {"route": str(obj.route)})
+    cg = db.consumer_group("cg-west", ["status_response"])
+    cg.create()
+    cg.set_id(req_id)
+    resp = cg.read(count=1, block=2000)
+    for msg_type, response in resp:
+        resp_id, data = response[0]
+        if data[b'req_id'] == req_id:
+            return JsonResponse({'is_active': data[b'is_active'] == b"True"})
