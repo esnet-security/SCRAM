@@ -75,6 +75,11 @@ django-addr: active.yml
 django-url: active.yml
 	@echo http://$$(make django-addr)
 
+## django-open: open a browser for http://$(make django-addr)
+.Phony: django-open
+django-open: active.yml
+	@open http://$$(make django-addr)
+
 ## down: turn down docker compose stack
 .Phony: down
 down: active.yml
