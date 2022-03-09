@@ -1,5 +1,39 @@
 {% extends "base.html" %}
 
+{% block javascript %}
+    {% csrf_token %}
+    <script>
+    function getStatus(entry_id) {
+        fetch("{% url 'route_manager:status' pk='0000001000' %}".replace('0000001000', entry_id), {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            mode: 'same-origin',
+        }
+        ).then(response =>
+            response.json().then(data => ({
+                data: data,
+                status: response.status
+            }))
+       ).then(res => {
+                var elem = document.getElementById("entry_status_" + entry_id);
+                elem.classList.remove('fa-question-circle');
+                if ( res.data.is_active ) {
+                    elem.classList.add('fa-bullhorn', 'text-success');
+                    elem.setAttribute('title', "Currently being announced");
+                }
+                else {
+                    elem.classList.add('fa-bug', 'text-warning');
+                    elem.setAttribute('title', "Currently NOT being announced");
+                }
+            });
+    }
+    </script>
+{% endblock %}
+
 {% block content %}
   <div class="row">
   {% for actiontype, entry_list in entries.items %}
@@ -12,7 +46,9 @@
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">
                 <a class="link" href="{% url 'route_manager:detail' entry.id %}">
-                  {{ entry }}</a></li>
+                  {{ entry }}</a>
+             <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.pk }}");</script>
+             </li>
             {% endif %}
         {% endfor %}
       {% endif %}
