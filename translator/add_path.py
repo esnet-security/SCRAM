@@ -15,7 +15,7 @@ _TIMEOUT_SECONDS = 1000
 logging.basicConfig(level=logging.DEBUG)
 
 db = walrus.Database(host="redis")
-cg = db.consumer_group("cg-west", ["block_add", "block_remove"])
+cg = db.consumer_group("cg-west", ["block_add", "block_remove", "status_request"])
 cg.create()
 cg.set_id("$")
 
@@ -75,7 +75,7 @@ def build_path(ip, cidr_size, ip_version):
     )
 
 
-def block(ip, cidr_size, ip_version):
+def block(ip, cidr_size, ip_version, redis_id):
     logging.info(f"Blocking {ip}/{cidr_size}")
 
     # Connect to GoBGP (Docker) on gRPC
@@ -91,7 +91,7 @@ def block(ip, cidr_size, ip_version):
     )
 
 
-def unblock(ip, cidr_size, ip_version):
+def unblock(ip, cidr_size, ip_version, redis_id):
     logging.info(f"Unblocking {ip}/{cidr_size}")
     print(f"Unblocking {ip}/{cidr_size}")
 
@@ -108,6 +108,19 @@ def unblock(ip, cidr_size, ip_version):
     )
 
 
+def get_status(ip, cidr_size, ip_version, redis_id):
+    logging.warning("Received get_status call")
+    # Connect to GoBGP (Docker) on gRPC
+    channel = grpc.insecure_channel("gobgp:50051")
+    stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+
+    prefixes = [gobgp_pb2.TableLookupPrefix(prefix=ip)]
+    family = get_family(ip_version)
+    response = stub.ListPath(gobgp_pb2.ListPathRequest(table_type=gobgp_pb2.GLOBAL, prefixes=prefixes, family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST), ), _TIMEOUT_SECONDS)
+    current_dests = [d for d in response]
+    db.xadd("status_response", {"req_id": redis_id, "is_active": str(len(current_dests) > 0)})
+
+
 def unknown(ip, cidr_size, ip_version):
     logging.warning(f"Unknown action for {ip}/{cidr_size}")
 
@@ -115,6 +128,7 @@ def unknown(ip, cidr_size, ip_version):
 action_registry = {
     "block_add": block,
     "block_remove": unblock,
+    "status_request": get_status,
 }
 
 
@@ -137,7 +151,7 @@ def run():
             except:  # noqa E722
                 logging.error(f"Invalid IP address received: {ip}")
                 continue
-            action(ip, int(cidr_size), ip_address.version)
+            action(ip, int(cidr_size), ip_address.version, redis_id)
             getattr(cg, str(stream_name)).ack(redis_id)
 
 
