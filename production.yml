@@ -1,4 +1,4 @@
-version: '3'
+version: '2.4'
 
 volumes:
   production_postgres_data: {}
@@ -12,8 +12,6 @@ services:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
     image: scram_production_django
-    networks:
-      - default
     depends_on:
       - postgres
       - redis
@@ -29,8 +27,6 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: scram_production_postgres
-    networks:
-      - default
     volumes:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
@@ -42,8 +38,6 @@ services:
     restart: on-failure:5
     depends_on:
       - django
-    networks:
-      - default
     volumes:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/scram/ssl/server.crt:/etc/ssl/server.crt
@@ -56,20 +50,20 @@ services:
 
   redis:
     image: redis:5.0
-    networks:
-      - default
     volumes:
-      - production_redis_data:Z
+      - production_redis_data:/var/lib/redis:Z
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
-    networks:
-      - default
-      - clab
     volumes:
-      - $CI_PROJECT_DIR/gobgp_config:/config:z
+      - ./gobgp_config:/config:z
+    networks:
+      default: {}
+      peering:
+        ipv4_address: ${SCRAM_V4_ADDRESS}
+        ipv6_address: ${SCRAM_V6_ADDRESS}
     ports:
-      - "179"
+      - "179:179"
       - "50051"
 
   redis_to_gobgp_translator:
@@ -79,49 +73,17 @@ services:
     depends_on:
       - redis
       - gobgp
-    networks:
-      - default
 
-  celeryworker:
-    <<: *django
-    image: scram_production_celeryworker
-    command: /start-celeryworker
-    networks:
-      - default
-
-  celerybeat:
-    <<: *django
-    image: scram_production_celerybeat
-    networks:
-      - default
-    command: /start-celerybeat
-
-  flower:
-    <<: *django
-    image: scram_production_flower
-    networks:
-      - default
-    command: /start-flower
-
-  networks:
-    default:
-      enable_ipv6: true
-      driver: bridge
-      driver_opts:
-        com.docker.network.enable_ipv6: "true"
-      ipam:
-        driver: default
-        config:
-          - subnet: 10.6.0.0/24
-          - subnet: 2001:db6::/64
-
-    clab:
-      enable_ipv6: true
-      driver: macvlan
-      driver_opts:
-        parent: scram_clab
-      ipam:
-        driver: default
-        config:
-          - subnet: 10.0.0.0/24
-          - subnet: 2001:db8::/64
+networks:
+  peering:
+    enable_ipv6: true
+    driver: macvlan
+    driver_opts:
+      parent: ${SCRAM_PEERING_IFACE}
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SCRAM_V4_SUBNET}
+          gateway: ${SCRAM_V4_GATEWAY}
+        - subnet: ${SCRAM_V6_SUBNET}
+          gateway: ${SCRAM_V6_GATEWAY}
