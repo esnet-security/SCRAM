@@ -36,7 +36,7 @@ behave-translator: active.yml
 ## build: rebuilds all your containers
 .Phony: build
 build: active.yml
-	@docker-compose -f active.yml build
+	@docker-compose -f active.yml up -d --no-deps --build $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
 coverage.xml: pytest behave-all behave-translator
@@ -126,3 +126,8 @@ stop: active.yml
 .Phony: type-check
 type-check: active.yml
 	@docker-compose -f active.yml run django mypy scram
+
+## pass-reset: change admin's password
+.Phony: pass-reset
+pass-reset: active.yml
+	@docker-compose -f active.yml run django python manage.py changepassword admin
