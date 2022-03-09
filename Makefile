@@ -33,10 +33,11 @@ behave: active.yml
 behave-translator: active.yml
 	@docker-compose -f active.yml exec -T redis_to_gobgp_translator /usr/local/bin/behave /app/acceptance/features
 
-## build: rebuilds all your containers
+## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
 build: active.yml
-	@docker-compose -f active.yml build
+	@docker-compose -f active.yml up -d --no-deps --build $(CONTAINER)
+	@docker-compose -f active.yml restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
 coverage.xml: pytest behave-all behave-translator
@@ -73,6 +74,11 @@ django-addr: active.yml
 .Phony: django-url
 django-url: active.yml
 	@echo http://$$(make django-addr)
+
+## django-open: open a browser for http://$(make django-addr)
+.Phony: django-open
+django-open: active.yml
+	@open http://$$(make django-addr)
 
 ## down: turn down docker compose stack
 .Phony: down
@@ -126,3 +132,8 @@ stop: active.yml
 .Phony: type-check
 type-check: active.yml
 	@docker-compose -f active.yml run django mypy scram
+
+## pass-reset: change admin's password
+.Phony: pass-reset
+pass-reset: active.yml
+	@docker-compose -f active.yml run django python manage.py changepassword admin
