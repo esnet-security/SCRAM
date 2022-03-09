@@ -1,6 +1,7 @@
 import ipaddress
 
 import rest_framework.utils.serializer_helpers
+import walrus
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -11,7 +12,6 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
-import walrus
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
@@ -133,6 +133,7 @@ class EntryListView(ListView):
                 "total": queryset.count(),
             }
         return context
+
 
 @require_POST
 @permission_required(["route_manager.view_entry"])
