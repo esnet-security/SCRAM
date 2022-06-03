@@ -45,6 +45,14 @@ Accepted branch naming examples:
 
 We should be testing as much as we reasonably can. Currently, there is a mix of (behave-django)[https://behave-django.readthedocs.io/en/stable/] and pytest. If you are unsure which of the two to use, please feel free to ask.
 
+* To run all behave tests `make behave-all`
+* To run a specific set of behave tests `make behave FEATURE=$feature-name`
+* To run behave tests on translator `make behave-translator`
+* To run pytests `make pytest`
+* To run all tests you would have in gitlabCI `make ci-test`
+
+Ideally we would never have failing tests getting merged, so clearing up the `make ci-test` before a merge request is suggested.
+
 ## Troubleshooting
 
 There are a few troubleshooting tricks available to you.
