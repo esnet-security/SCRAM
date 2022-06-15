@@ -116,9 +116,19 @@ def get_status(ip, cidr_size, ip_version, redis_id):
 
     prefixes = [gobgp_pb2.TableLookupPrefix(prefix=ip)]
     family = get_family(ip_version)
-    response = stub.ListPath(gobgp_pb2.ListPathRequest(table_type=gobgp_pb2.GLOBAL, prefixes=prefixes, family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST), ), _TIMEOUT_SECONDS)
+    response = stub.ListPath(
+        gobgp_pb2.ListPathRequest(
+            table_type=gobgp_pb2.GLOBAL,
+            prefixes=prefixes,
+            family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+        ),
+        _TIMEOUT_SECONDS,
+    )
     current_dests = [d for d in response]
-    db.xadd("status_response", {"req_id": redis_id, "is_active": str(len(current_dests) > 0)})
+    db.xadd(
+        "status_response",
+        {"req_id": redis_id, "is_active": str(len(current_dests) > 0)},
+    )
 
 
 def unknown(ip, cidr_size, ip_version):
