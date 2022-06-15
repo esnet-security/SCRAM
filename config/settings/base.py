@@ -54,29 +54,27 @@ WSGI_APPLICATION = "config.wsgi.application"
 # APPS
 # ------------------------------------------------------------------------------
 DJANGO_APPS = [
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.messages",
     "django.contrib.sessions",
     "django.contrib.sites",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.humanize", # Handy template tags
-    "django.contrib.admin",
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
+    "corsheaders",
     "crispy_forms",
     "django_celery_beat",
+    "netfields",
     "rest_framework",
     "rest_framework.authtoken",
-    "corsheaders",
-    "netfields",
 ]
 
 LOCAL_APPS = [
-    "scram.users.apps.UsersConfig",
-    # Your stuff: custom apps go here
     "scram.route_manager.apps.RouteManagerConfig",
+    "scram.users.apps.UsersConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
