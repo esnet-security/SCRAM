@@ -11,6 +11,7 @@ uvicorn[standard]==0.17.6  # https://github.com/encode/uvicorn
 
 # Django
 # ------------------------------------------------------------------------------
+channels==3.0.4
 django==3.2.13  # pyup: < 4.0  # https://www.djangoproject.com/
 git+https://github.com/grigorescu/django-grip@e584507#egg=django-grip
 django-eventstream==4.4.1 # https://github.com/fanout/django-eventstream
@@ -29,10 +30,3 @@ drf-spectacular==0.22.1  # https://github.com/tfranzel/drf-spectacular
 # OIDC
 # ------------------------------------------------------------------------------
 mozilla_django_oidc==2.0.0 # https://github.com/mozilla/mozilla-django-oidc
-
-# Redis (to be removed)
-# ------------------------------------------------------------------------------
-walrus~=0.8.2
-redis==3.5.3 # https://github.com/andymccurdy/redis-py
-hiredis==1.1.0 # https://github.com/redis/hiredis-py
-django-redis==4.12.1 # https://github.com/jazzband/django-redis

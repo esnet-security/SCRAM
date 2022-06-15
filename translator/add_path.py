@@ -1,24 +1,19 @@
 #!/usr/bin/env python3
 
+import asyncio
 import ipaddress
 import logging
 
+from aiohttp_sse_client import client as sse_client
 import attribute_pb2
 import gobgp_pb2
 import gobgp_pb2_grpc
 import grpc
-import walrus
 from google.protobuf.any_pb2 import Any
 
 _TIMEOUT_SECONDS = 1000
 
 logging.basicConfig(level=logging.DEBUG)
-
-db = walrus.Database(host="redis")
-cg = db.consumer_group("cg-west", ["block_add", "block_remove", "status_request"])
-cg.create()
-cg.set_id("$")
-
 
 def get_family(ip_version):
     if ip_version == 6:
@@ -75,7 +70,7 @@ def build_path(ip, cidr_size, ip_version):
     )
 
 
-def block(ip, cidr_size, ip_version, redis_id):
+def block(ip, cidr_size, ip_version):
     logging.info(f"Blocking {ip}/{cidr_size}")
 
     # Connect to GoBGP (Docker) on gRPC
@@ -91,7 +86,7 @@ def block(ip, cidr_size, ip_version, redis_id):
     )
 
 
-def unblock(ip, cidr_size, ip_version, redis_id):
+def unblock(ip, cidr_size, ip_version):
     logging.info(f"Unblocking {ip}/{cidr_size}")
     print(f"Unblocking {ip}/{cidr_size}")
 
@@ -108,7 +103,7 @@ def unblock(ip, cidr_size, ip_version, redis_id):
     )
 
 
-def get_status(ip, cidr_size, ip_version, redis_id):
+def get_status(ip, cidr_size, ip_version):
     logging.warning("Received get_status call")
     # Connect to GoBGP (Docker) on gRPC
     channel = grpc.insecure_channel("gobgp:50051")
@@ -125,47 +120,30 @@ def get_status(ip, cidr_size, ip_version, redis_id):
         _TIMEOUT_SECONDS,
     )
     current_dests = [d for d in response]
-    db.xadd(
-        "status_response",
-        {"req_id": redis_id, "is_active": str(len(current_dests) > 0)},
-    )
 
 
 def unknown(ip, cidr_size, ip_version):
     logging.warning(f"Unknown action for {ip}/{cidr_size}")
 
 
-action_registry = {
-    "block_add": block,
-    "block_remove": unblock,
-    "status_request": get_status,
-}
-
-
-def run():
-    # TODO: block until we get a response
-    unacked_msgs = cg.read()
-    if not unacked_msgs:
-        return
-
-    logging.debug("Processing messages from redis")
-    for stream_name, stream_msgs in unacked_msgs:
-        stream_name = stream_name.decode("utf-8")
-        action = action_registry.get(stream_name, unknown)
-        for msg in stream_msgs:
-            print(stream_name, msg)
-            redis_id, data = msg
-            ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
-            try:
-                ip_address = ipaddress.ip_address(ip)
-            except:  # noqa E722
-                logging.error(f"Invalid IP address received: {ip}")
-                continue
-            action(ip, int(cidr_size), ip_address.version, redis_id)
-            getattr(cg, str(stream_name)).ack(redis_id)
+async def main():
+    async with sse_client.EventSource('http://django/events') as event_source:
+        async for event in event_source:
+            if event.type in ['add', 'remove']:
+                ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
+                try:
+                    ip_address = ipaddress.ip_address(ip)
+                except:  # noqa E722
+                    logging.error(f"Invalid IP address received: {ip}")
+                    continue
+                if event.type == 'add':
+                    block(ip, int(cidr_size), ip_address.version)
+                else:
+                    unblock(ip, int(cidr_size), ip_address.version)
 
 
 if __name__ == "__main__":
     logging.info("add_path started")
-    while True:
-        run()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    loop.close()

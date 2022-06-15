@@ -1,9 +1,9 @@
 import ipaddress
 
-import walrus
 from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
+from django_eventstream import send_event
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -26,7 +26,6 @@ class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
-    db = walrus.Database(host="redis")
 
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
@@ -36,9 +35,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
 
-        self.db.xadd(
-            f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
-        )
+        send_event(actiontype, 'add', {'route': str(route)})
 
         serializer.save()
 
@@ -90,8 +87,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.is_active = False
             entry.save()
 
-            self.db.xadd(
-                f"{actiontype}_remove", {"route": str(route), "actiontype": str(actiontype)}
-            )
+            send_event(actiontype, 'remove', {'route': str(route)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
