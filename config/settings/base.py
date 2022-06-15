@@ -64,9 +64,11 @@ DJANGO_APPS = [
     "django.forms",
 ]
 THIRD_PARTY_APPS = [
+    "channels",
     "corsheaders",
     "crispy_forms",
     "django_celery_beat",
+    "django_eventstream",
     "netfields",
     "rest_framework",
     "rest_framework.authtoken",
@@ -134,6 +136,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_grip.GripMiddleware",
 ]
 
 # STATIC
