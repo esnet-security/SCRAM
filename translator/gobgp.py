@@ -104,9 +104,8 @@ class GoBGP(object):
                 prefixes=prefixes,
                 family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
             ),
-         _TIMEOUT_SECONDS,
-       )
-
+            _TIMEOUT_SECONDS,
+        )
 
     def is_blocked(self, ip):
-       return len(self.get_prefixes(ip)) > 0
+        return len(self.get_prefixes(ip)) > 0
