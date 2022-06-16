@@ -94,3 +94,19 @@ class GoBGP(object):
             gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
             _TIMEOUT_SECONDS,
         )
+
+    def get_prefixes(self, ip):
+        prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
+        family = self._get_family(ip.ip.version)
+        return self.stub.ListPath(
+            gobgp_pb2.ListPathRequest(
+                table_type=gobgp_pb2.GLOBAL,
+                prefixes=prefixes,
+                family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+            ),
+         _TIMEOUT_SECONDS,
+       )
+
+
+    def is_blocked(self, ip):
+       return len(self.get_prefixes(ip)) > 0
