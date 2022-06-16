@@ -1,18 +1,23 @@
 import ipaddress
 import time
 
+from gobgp import GoBGP
 import gobgp_pb2
 from behave import then, when
 
 
-@when("we add {route} to the {actiontype} list")
-def xadd(context, route, actiontype):
-    context.db.xadd(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
+@when("we add {route} to the block list")
+def add_block(context, route):
+    with GoBGP('gobgp:50051') as g:
+        ip = ipaddress.ip_interface(route)
+        g.add_block(ip)
 
 
-@when("we delete {route} from the {actiontype} list")
-def xdel(context, route, actiontype):
-    context.db.xadd(f"{actiontype}_remove", {"route": route, "actiontype": actiontype})
+@when("we delete {route} to the block list")
+def del_block(context, route):
+    with GoBGP('gobgp:50051') as g:
+        ip = ipaddress.ip_interface(route)
+        g.del_block(ip)
 
 
 def get_block_status(context, ip):
