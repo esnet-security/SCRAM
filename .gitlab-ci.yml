@@ -39,9 +39,7 @@ pytest:
   - make clean
   artifacts:
     reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+      cobertura: coverage.xml
 gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt
