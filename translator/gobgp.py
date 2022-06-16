@@ -12,13 +12,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class GoBGP(object):
-    def __enter__(self, url):
+    def __init__(self, url):
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
-        return self
-
-    def __exit__(self):
-        pass
 
     def _get_family(self, ip_version):
         if ip_version == 6:
