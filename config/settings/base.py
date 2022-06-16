@@ -290,6 +290,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup

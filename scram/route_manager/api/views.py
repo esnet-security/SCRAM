@@ -59,6 +59,10 @@ class EntryViewSet(viewsets.ModelViewSet):
             # Maybe a CIDR? We want the ValueError at this point, if not.
             cidr = ipaddress.ip_network(arg, strict=False)
 
+            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
+            if cidr.prefixlen < min_prefix:
+                raise PrefixTooLarge()
+
             query = Q(route__route__net_overlaps=cidr)
 
         if active_filter is not None:
@@ -80,7 +84,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         if entries.count() == 1:
             # create history object with the associated entry including username
             entry = entries[0]
-            actiontype = entry.actiontype
+            actiontype = str(entry.actiontype)
             route = entry.route
             history = History(entry=entry, who=request.user, why="API destroy function")
             history.save()
