@@ -4,16 +4,17 @@ import asyncio
 import ipaddress
 import logging
 
-from aiohttp_sse_client import client as sse_client
 import attribute_pb2
 import gobgp_pb2
 import gobgp_pb2_grpc
 import grpc
+from aiohttp_sse_client import client as sse_client
 from google.protobuf.any_pb2 import Any
 
 _TIMEOUT_SECONDS = 1000
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 def get_family(ip_version):
     if ip_version == 6:
@@ -103,23 +104,23 @@ def unblock(ip, cidr_size, ip_version):
     )
 
 
-def get_status(ip, cidr_size, ip_version):
-    logging.warning("Received get_status call")
-    # Connect to GoBGP (Docker) on gRPC
-    channel = grpc.insecure_channel("gobgp:50051")
-    stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+# def get_status(ip, cidr_size, ip_version):
+#     logging.warning("Received get_status call")
+#     # Connect to GoBGP (Docker) on gRPC
+#     channel = grpc.insecure_channel("gobgp:50051")
+#     stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
-    prefixes = [gobgp_pb2.TableLookupPrefix(prefix=ip)]
-    family = get_family(ip_version)
-    response = stub.ListPath(
-        gobgp_pb2.ListPathRequest(
-            table_type=gobgp_pb2.GLOBAL,
-            prefixes=prefixes,
-            family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
-        ),
-        _TIMEOUT_SECONDS,
-    )
-    current_dests = [d for d in response]
+#     prefixes = [gobgp_pb2.TableLookupPrefix(prefix=ip)]
+#     family = get_family(ip_version)
+#     response = stub.ListPath(
+#         gobgp_pb2.ListPathRequest(
+#             table_type=gobgp_pb2.GLOBAL,
+#             prefixes=prefixes,
+#             family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+#         ),
+#         _TIMEOUT_SECONDS,
+#     )
+#     current_dests = [d for d in response]
 
 
 def unknown(ip, cidr_size, ip_version):
@@ -130,7 +131,7 @@ async def main():
     async with sse_client.EventSource('http://django/events') as event_source:
         async for event in event_source:
             if event.type in ['add', 'remove']:
-                ip, cidr_size = data[b"route"].decode("utf-8").split("/", 1)
+                ip, cidr_size = event.data[b"route"].decode("utf-8").split("/", 1)
                 try:
                     ip_address = ipaddress.ip_address(ip)
                 except:  # noqa E722

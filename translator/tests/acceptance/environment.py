@@ -1,5 +1,5 @@
-import grpc
 import gobgp_pb2_grpc
+import grpc
 
 
 def before_all(context):

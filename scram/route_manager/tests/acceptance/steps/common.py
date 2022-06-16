@@ -1,5 +1,5 @@
-from behave import given, then, when
 import django.conf as conf
+from behave import given, then, when
 from django.urls import reverse
 
 from scram.route_manager.models import ActionType
@@ -19,6 +19,7 @@ def step_impl(context):
 def step_impl(context, v4_minprefix, v6_minprefix):
     conf.settings.V4_MINPREFIX = v4_minprefix
     conf.settings.V6_MINPREFIX = v6_minprefix
+
 
 @then("we get a {status_code:d} status code")
 def step_impl(context, status_code):
