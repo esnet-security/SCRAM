@@ -7,13 +7,13 @@ from behave import then, when
 @when("we add {route} to the block list")
 def add_block(context, route):
     ip = ipaddress.ip_interface(route)
-    context.gobgp.add_block(ip)
+    context.gobgp.add_path(ip)
 
 
-@when("we delete {route} to the block list")
+@when("we delete {route} from the block list")
 def del_block(context, route):
     ip = ipaddress.ip_interface(route)
-    context.gobgp.del_block(ip)
+    context.gobgp.del_path(ip)
 
 
 def get_block_status(context, ip):
