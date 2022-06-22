@@ -53,6 +53,17 @@ We should be testing as much as we reasonably can. Currently, there is a mix of 
 
 Ideally we would never have failing tests getting merged, so clearing up the `make ci-test` before a merge request is suggested.
 
+#### Debugging Tests
+
+If you are seeing failed API calls, you can try to browse the API directly in a web browser. You can also try to run some curl commands.
+
+* Use curl with basic auth and json content type header 
+   1. Make sure you know the admin user password for basic auth `make pass-reset`
+   2. Get the correct port `make django-url`
+   3. Replace with the correct port `curl -XPOST --user admin:password http://0.0.0.0:62410/api/v1/entrys/ -H 'Content-Type: application/json' --data '{"route": "1.1.1.1/32", "actiontype": "block"}'; echo`
+
+Trying to write test output to a file is a challenge due to running in ephemeral docker containers, but you should be able to print to stderr to get some debug info as needed as well.
+
 ## Troubleshooting
 
 There are a few troubleshooting tricks available to you.
