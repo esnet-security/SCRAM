@@ -6,13 +6,6 @@ IPYTHONDIR=/app/.ipython
 # ------------------------------------------------------------------------------
 REDIS_URL=redis://redis:6379/0
 
-# Celery
-# ------------------------------------------------------------------------------
-
-# Flower
-CELERY_FLOWER_USER=debug
-CELERY_FLOWER_PASSWORD=debug
-
 # Django
 DATABASE_URL=sqlite:///django.db
 DJANGO_SETTINGS_MODULE=config.settings.local

@@ -3,15 +3,17 @@ include:
 - template: Security/Secret-Detection.gitlab-ci.yml
 - template: Code-Quality.gitlab-ci.yml
 - template: Security/SAST.gitlab-ci.yml
+
 stages:
 - lint
 - test
+
 variables:
   POSTGRES_USER: scram
   POSTGRES_PASSWORD: ''
   POSTGRES_DB: test_scram
   POSTGRES_HOST_AUTH_METHOD: trust
-  CELERY_BROKER_URL: redis://redis:6379/0
+
 flake8:
   stage: lint
   image: python:3.8-alpine
@@ -19,6 +21,7 @@ flake8:
   - pip install -q flake8
   script:
   - flake8
+
 pytest:
   stage: test
   image: docker/compose:latest
@@ -42,9 +45,11 @@ pytest:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+
 gemnasium-dependency_scanning:
   variables:
     PIP_REQUIREMENTS_FILE: requirements/base.txt
+
 code_quality_html:
   extends: code_quality
   variables:
@@ -52,5 +57,6 @@ code_quality_html:
   artifacts:
     paths:
     - gl-code-quality-report.html
+
 sast:
   stage: test
