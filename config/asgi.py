@@ -28,9 +28,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 # This application object is used by any ASGI server configured to use this file.
 django_application = get_asgi_application()
-# Apply ASGI middleware here.
-# from helloworld.asgi import HelloWorldApplication
-# application = HelloWorldApplication(application)
 
 # Events are published to a specific channel via api/views.py.
 # Publishing to an event that's not routed will result in events that go nowhere.
@@ -52,15 +49,3 @@ application = ProtocolTypeRouter(
         ),
     }
 )
-
-# # Import websocket application here, so apps from django_application are loaded first
-# from config.websocket import websocket_application  # noqa isort:skip
-
-
-# async def application(scope, receive, send):
-#     if scope["type"] == "http":
-#         await django_application(scope, receive, send)
-#     elif scope["type"] == "websocket":
-#         await websocket_application(scope, receive, send)
-#     else:
-#         raise NotImplementedError(f"Unknown scope type {scope['type']}")
