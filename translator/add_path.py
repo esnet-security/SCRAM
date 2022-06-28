@@ -21,8 +21,8 @@ async def main():
                 data = json.loads(event.data)
                 try:
                     ip = ipaddress.ip_interface(data["route"])
-                except KeyError:  # noqa E722
-                    logging.error(f"Invalid IP address received: {ip}")
+                except:  # noqa E722
+                    logging.error(f"Invalid IP address received: {data}")
                     continue
                 if event.type == "add":
                     g.add_path(ip)
