@@ -35,6 +35,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
 
+        # Must match a channel name defined in asgi.py
         send_event(actiontype, 'add', {'route': str(route)})
 
         serializer.save()

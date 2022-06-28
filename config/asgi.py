@@ -11,8 +11,12 @@ import os
 import sys
 from pathlib import Path
 
-from channels.routing import ProtocolTypeRouter
+from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
+from django.conf.urls import url
+from channels.auth import AuthMiddlewareStack
+import django_eventstream
+
 
 # This allows easy placement of apps within the interior
 # scram directory.
@@ -28,9 +32,17 @@ django_application = get_asgi_application()
 # from helloworld.asgi import HelloWorldApplication
 # application = HelloWorldApplication(application)
 
+# Events are published to a specific channel via api/views.py.
+# Publishing to an event that's not routed will result in events that go nowhere.
 application = ProtocolTypeRouter({
-    "http": django_application,
-    # Just HTTP for now. (We can add other protocols later.)
+    'http': URLRouter([
+        # Must match the URL used by add_path
+        url(r'^events/blocks/', AuthMiddlewareStack(
+            URLRouter(django_eventstream.routing.urlpatterns)
+            # Must match a channel name in api/views.py
+        ), { 'channels': ['block'] }),
+        url(r'', django_application),
+    ]),
 })
 
 # # Import websocket application here, so apps from django_application are loaded first
