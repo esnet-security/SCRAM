@@ -36,7 +36,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Must match a channel name defined in asgi.py
-        send_event(actiontype, 'add', {'route': str(route)})
+        send_event(actiontype, "add", {"route": str(route)})
 
         serializer.save()
 
@@ -92,6 +92,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.is_active = False
             entry.save()
 
-            send_event(actiontype, 'remove', {'route': str(route)})
+            send_event(actiontype, "remove", {"route": str(route)})
 
         return Response(status=status.HTTP_204_NO_CONTENT)

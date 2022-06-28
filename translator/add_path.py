@@ -10,7 +10,8 @@ from aiohttp_sse_client import client as sse_client
 from gobgp import GoBGP
 
 # Must match the URL in asgi.py, and needs a trailing slash
-url = os.environ.get('SCRAM_EVENTS_URL', 'http://django:8000/events/blocks/')
+url = os.environ.get("SCRAM_EVENTS_URL", "http://django:8000/events/blocks/")
+
 
 async def main():
     g = GoBGP("gobgp:50051")
@@ -19,7 +20,7 @@ async def main():
             if event.type in ["add", "remove"]:
                 data = json.loads(event.data)
                 try:
-                    ip = ipaddress.ip_interface(data['route'])
+                    ip = ipaddress.ip_interface(data["route"])
                 except KeyError:  # noqa E722
                     logging.error(f"Invalid IP address received: {ip}")
                     continue
