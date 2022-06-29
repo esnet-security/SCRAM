@@ -3,8 +3,9 @@ Feature: we can query the list of entries for a specific entry
 
   Scenario Outline: we can succesfully query our entry list
     When we're logged in
-    And  we add the entry <ip>
-    And  we query for <ip>
+    And the CIDR prefix limits are 8 and 32
+    And we add the entry <ip>
+    And we query for <ip>
     Then we get a 200 status code
 
     Examples: IPs
@@ -16,6 +17,7 @@ Feature: we can query the list of entries for a specific entry
 
   Scenario Outline: we can add a host and then query based on other parts of the CIDR
     When we're logged in
+    And the CIDR prefix limits are 8 and 32
     And we add the entry <ip>
     And we query for <cidr>
     Then we get a 200 status code
@@ -36,8 +38,10 @@ Feature: we can query the list of entries for a specific entry
 
   Scenario Outline: we cant query larger than our prefixmin
     When we're logged in
-    And  we add the entry <ip>
-    And  we query for <ip>
+    And the CIDR prefix limits are 1 and 1
+    And we add the entry <ip>
+    And the CIDR prefix limits are 8 and 32
+    And we query for <ip>
     Then we get a 400 status code
 
 
