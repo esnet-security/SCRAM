@@ -1,6 +1,7 @@
 import ipaddress
 
-import walrus
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
@@ -11,6 +12,8 @@ from rest_framework.response import Response
 from ..models import ActionType, Entry, History
 from .exceptions import PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer
+
+channel_layer = get_channel_layer()
 
 
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -26,7 +29,6 @@ class EntryViewSet(viewsets.ModelViewSet):
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
-    db = walrus.Database(host="redis")
 
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
@@ -36,8 +38,9 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
 
-        self.db.xadd(
-            f"{actiontype}_add", {"route": str(route), "actiontype": str(actiontype)}
+        # Must match a channel name defined in asgi.py
+        async_to_sync(channel_layer.group_send)(
+            "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
         )
 
         serializer.save()
@@ -62,6 +65,10 @@ class EntryViewSet(viewsets.ModelViewSet):
             # Maybe a CIDR? We want the ValueError at this point, if not.
             cidr = ipaddress.ip_network(arg, strict=False)
 
+            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
+            if cidr.prefixlen < min_prefix:
+                raise PrefixTooLarge()
+
             query = Q(route__route__net_overlaps=cidr)
 
         if active_filter is not None:
@@ -83,15 +90,15 @@ class EntryViewSet(viewsets.ModelViewSet):
         if entries.count() == 1:
             # create history object with the associated entry including username
             entry = entries[0]
-            actiontype = entry.actiontype
             route = entry.route
             history = History(entry=entry, who=request.user, why="API destroy function")
             history.save()
             entry.is_active = False
             entry.save()
 
-            self.db.xadd(
-                f"{actiontype}_remove", {"route": str(route), "actiontype": str(actiontype)}
+            async_to_sync(channel_layer.group_send)(
+                "xlator_block",
+                {"type": "remove_block", "message": {"route": str(route)}},
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,9 +1,5 @@
-import grpc
-import gobgp_pb2_grpc
-import walrus
+from gobgp import GoBGP
 
 
 def before_all(context):
-    context.db = walrus.Database(host="redis")
-    channel = grpc.insecure_channel("gobgp:50051")
-    context.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+    context.gobgp = GoBGP('gobgp:50051')
