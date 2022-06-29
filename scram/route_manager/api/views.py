@@ -39,7 +39,9 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Must match a channel name defined in asgi.py
-        async_to_sync(channel_layer.group_send)("xlator_block", {"type": "add_block", "message": {"route": str(route)}})
+        async_to_sync(channel_layer.group_send)(
+            "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
+        )
 
         serializer.save()
 
@@ -88,13 +90,15 @@ class EntryViewSet(viewsets.ModelViewSet):
         if entries.count() == 1:
             # create history object with the associated entry including username
             entry = entries[0]
-            actiontype = str(entry.actiontype)
             route = entry.route
             history = History(entry=entry, who=request.user, why="API destroy function")
             history.save()
             entry.is_active = False
             entry.save()
 
-            async_to_sync(channel_layer.group_send)("xlator_block", {"type": "remove_block", "message": {"route": str(route)}})
+            async_to_sync(channel_layer.group_send)(
+                "xlator_block",
+                {"type": "remove_block", "message": {"route": str(route)}},
+            )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

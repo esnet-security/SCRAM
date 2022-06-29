@@ -31,8 +31,9 @@ django_application = get_asgi_application()
 
 # Events are published to a specific channel via api/views.py.
 # Publishing to an event that's not routed will result in events that go nowhere.
-application = ProtocolTypeRouter({
-    "http": django_application,
-    "websocket": URLRouter(scram_routing.websocket_urlpatterns),
+application = ProtocolTypeRouter(
+    {
+        "http": django_application,
+        "websocket": URLRouter(scram_routing.websocket_urlpatterns),
     }
 )
