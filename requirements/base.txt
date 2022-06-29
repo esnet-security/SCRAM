@@ -12,6 +12,7 @@ uvicorn[standard]==0.17.6  # https://github.com/encode/uvicorn
 # Django
 # ------------------------------------------------------------------------------
 channels==3.0.4
+channels_redis==3.4.0
 django==3.2.13  # pyup: < 4.0  # https://www.djangoproject.com/
 git+https://github.com/grigorescu/django-grip@e584507#egg=django-grip
 django-eventstream==4.4.1 # https://github.com/fanout/django-eventstream

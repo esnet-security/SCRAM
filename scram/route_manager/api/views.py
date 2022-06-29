@@ -1,9 +1,10 @@
 import ipaddress
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
-from django_eventstream import send_event
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -11,6 +12,8 @@ from rest_framework.response import Response
 from ..models import ActionType, Entry, History
 from .exceptions import PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer
+
+channel_layer = get_channel_layer()
 
 
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,7 +39,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Must match a channel name defined in asgi.py
-        send_event(actiontype, "add", {"route": str(route)})
+        async_to_sync(channel_layer.group_send)("xlator_block", {"type": "add_block", "message": {"route": str(route)}})
 
         serializer.save()
 
@@ -92,6 +95,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.is_active = False
             entry.save()
 
-            send_event(actiontype, "remove", {"route": str(route)})
+            async_to_sync(channel_layer.group_send)("xlator_block", {"type": "remove_block", "message": {"route": str(route)}})
 
         return Response(status=status.HTTP_204_NO_CONTENT)
