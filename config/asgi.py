@@ -11,9 +11,9 @@ import os
 import sys
 from pathlib import Path
 
-from channels.auth import AuthMiddlewareStack
+# TODO: from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
+# TODO: from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
 from . import routing as scram_routing
