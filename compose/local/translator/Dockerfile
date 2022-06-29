@@ -21,6 +21,7 @@ RUN mkdir /app \
     && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/add_path.py /app
+COPY ./translator/gobgp.py /app
 COPY ./translator/tests /app
 RUN chmod +x /app/add_path.py
 

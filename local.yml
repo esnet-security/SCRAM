@@ -66,5 +66,4 @@ services:
       context: .
       dockerfile: ./compose/local/translator/Dockerfile
     depends_on:
-      - redis
       - gobgp

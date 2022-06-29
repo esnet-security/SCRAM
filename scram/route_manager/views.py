@@ -1,7 +1,6 @@
 import ipaddress
 
 import rest_framework.utils.serializer_helpers
-import walrus
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -138,14 +137,5 @@ class EntryListView(ListView):
 @require_POST
 @permission_required(["route_manager.view_entry"])
 def status_entry(request, pk):
-    db = walrus.Database(host="redis")
-    obj = Entry.objects.get(pk=pk)
-    req_id = db.xadd("status_request", {"route": str(obj.route)})
-    cg = db.consumer_group("cg-west", ["status_response"])
-    cg.create()
-    cg.set_id(req_id)
-    resp = cg.read(count=1, block=2000)
-    for msg_type, response in resp:
-        resp_id, data = response[0]
-        if data[b'req_id'] == req_id:
-            return JsonResponse({'is_active': data[b'is_active'] == b"True"})
+    # TODO: re-implement with SSE
+    return JsonResponse({'is_active': True})
