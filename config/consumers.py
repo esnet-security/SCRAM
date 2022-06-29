@@ -5,7 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 class RouteConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
-        self.group_name = "xlator_%s" % self.actiontype
+        self.group_name = f"xlator_{self.actiontype}"
 
         # Join group
         await self.channel_layer.group_add(self.group_name, self.channel_name)
