@@ -9,7 +9,6 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
-from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
@@ -17,6 +16,8 @@ from django.views.generic import DetailView, ListView
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
 from .models import ActionType, Entry
+
+channel_layer = get_channel_layer()
 
 
 def home_page(request, prefilter=Entry.objects.all()):
@@ -141,4 +142,3 @@ class EntryListView(ListView):
 def status_entry(request, pk):
     async_to_sync(channel_layer.group_send)(
         "xlator_block", {"type": "check_block", "message": {"route": "1.1.1.1/32"}})
-
