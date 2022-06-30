@@ -10,7 +10,8 @@ import websockets
 from gobgp import GoBGP
 
 # Must match the URL in asgi.py, and needs a trailing slash
-url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/block/")
+hostname = os.environ.get("SCRAM_HOSTNAME", "vlad_laptop")
+url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/xlator_block/")
 
 
 async def main():
@@ -21,7 +22,7 @@ async def main():
                 json_message = json.loads(message)
                 event_type = json_message.get('type')
                 event_data = json_message.get('message')
-                if event_type in ['add_block', 'remove_block']:
+                if event_type in ['add_block', 'remove_block', 'check_block']:
                     try:
                         ip = ipaddress.ip_interface(event_data['route'])
                     except:  # noqa E722
@@ -29,8 +30,13 @@ async def main():
                         continue
                     if event_type == "add_block":
                         g.add_path(ip)
-                    else:
+                    elif event_type == 'remove_block':
                         g.del_path(ip)
+                    elif event_type == 'check_block':
+                        json_message['type'] = 'check_block_resp'
+                        json_message['message']['is_blocked'] = g.is_blocked(ip)
+                        json_message['message']['xlator_name'] = hostname
+                        await websocket.send(json.dumps(json_message))
         except websockets.ConnectionClosed:
             continue
 

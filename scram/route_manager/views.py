@@ -1,6 +1,8 @@
 import ipaddress
 
 import rest_framework.utils.serializer_helpers
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -137,5 +139,6 @@ class EntryListView(ListView):
 @require_POST
 @permission_required(["route_manager.view_entry"])
 def status_entry(request, pk):
-    # TODO: re-implement with SSE
-    return JsonResponse({'is_active': True})
+    async_to_sync(channel_layer.group_send)(
+        "xlator_block", {"type": "check_block", "message": {"route": "1.1.1.1/32"}})
+
