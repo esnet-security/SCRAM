@@ -1,32 +1,54 @@
-import json
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
-class RouteConsumer(AsyncWebsocketConsumer):
+class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
-        self.group_name = f"xlator_{self.actiontype}"
+        self.xlator_group = f"xlator_{self.actiontype}"
 
-        # Join group
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-
+        await self.channel_layer.group_add(self.xlator_group, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        await self.channel_layer.group_discard(self.xlator_group, self.channel_name)
+
+    async def receive_json(self, content):
+        """Received a WebSocket message"""
+        if content['type'] == 'check_block_resp':
+            channel = content.pop('channel')
+            await self.channel_layer.send(channel, content)
+
+    async def add_block(self, event):
+        """Tell all translators of this actiontype of an addition of a route."""
+        await self.send_json(event)
+
+    async def remove_block(self, event):
+        """Tell all translators of this actiontype of a withdrawal of a route."""
+        await self.send_json(event)
+
+    async def check_block(self, event):
+        """Send a query to all translators if a route is announced."""
+        await self.send_json(event)
+
+
+class WebUIConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
+        self.xlator_group = f"xlator_{self.actiontype}"
+
+        await self.accept()
 
     # Receive message from WebSocket
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
+    async def receive_json(self, content):
+        if content['type'] == 'check_block_req':
+            await self.channel_layer.group_send(
+                self.xlator_group,
+                {"type": "check_block",
+                 "channel": self.channel_name,
+                 "message": content['message'],
+                 },
+            )
 
-        print(f"Got message: {message!r}.")
-
-    # Broadcast a new block
-    async def add_block(self, event):
-        await self.send(text_data=json.dumps(event))
-
-    # Broadcast the removal of a block
-    async def remove_block(self, event):
-        await self.send(text_data=json.dumps(event))
+    async def check_block_resp(self, event):
+        """Forward a message to the correct Websocket."""
+        await self.send_json(event)

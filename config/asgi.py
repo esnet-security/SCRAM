@@ -29,11 +29,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 # This application object is used by any ASGI server configured to use this file.
 django_application = get_asgi_application()
 
+ws_application = URLRouter(scram_routing.websocket_urlpatterns)
+
 # Events are published to a specific channel via api/views.py.
 # Publishing to an event that's not routed will result in events that go nowhere.
 application = ProtocolTypeRouter(
     {
         "http": django_application,
-        "websocket": URLRouter(scram_routing.websocket_urlpatterns),
+        "websocket": ws_application,
     }
 )

@@ -1,13 +1,13 @@
 import ipaddress
 
 import rest_framework.utils.serializer_helpers
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
-from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
@@ -15,6 +15,8 @@ from django.views.generic import DetailView, ListView
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
 from .models import ActionType, Entry
+
+channel_layer = get_channel_layer()
 
 
 def home_page(request, prefilter=Entry.objects.all()):
@@ -132,10 +134,3 @@ class EntryListView(ListView):
                 "total": queryset.count(),
             }
         return context
-
-
-@require_POST
-@permission_required(["route_manager.view_entry"])
-def status_entry(request, pk):
-    # TODO: re-implement with SSE
-    return JsonResponse({'is_active': True})

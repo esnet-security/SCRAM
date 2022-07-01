@@ -94,7 +94,7 @@ class GoBGP(object):
     def get_prefixes(self, ip):
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
         family = self._get_family(ip.ip.version)
-        return self.stub.ListPath(
+        result = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
                 table_type=gobgp_pb2.GLOBAL,
                 prefixes=prefixes,
@@ -102,6 +102,7 @@ class GoBGP(object):
             ),
             _TIMEOUT_SECONDS,
         )
+        return list(result)
 
     def is_blocked(self, ip):
         return len(self.get_prefixes(ip)) > 0
