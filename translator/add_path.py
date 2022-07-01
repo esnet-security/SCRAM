@@ -10,7 +10,7 @@ import websockets
 from gobgp import GoBGP
 
 # Must match the URL in asgi.py, and needs a trailing slash
-hostname = os.environ.get("SCRAM_HOSTNAME", "vlad_laptop")
+hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
 url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/xlator_block/")
 
 
