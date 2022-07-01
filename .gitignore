@@ -339,7 +339,7 @@ scram/media/
 .ipython/
 .envs/*
 !.envs/.local/
-compose.yaml
+docker-compose.yaml
 
 coverage.coverage
 coverage.xml
