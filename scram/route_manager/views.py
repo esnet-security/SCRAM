@@ -135,10 +135,3 @@ class EntryListView(ListView):
                 "total": queryset.count(),
             }
         return context
-
-
-@require_POST
-@permission_required(["route_manager.view_entry"])
-def status_entry(request, pk):
-    async_to_sync(channel_layer.group_send)(
-        "xlator_block", {"type": "check_block", "message": {"route": "1.1.1.1/32"}})

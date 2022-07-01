@@ -14,7 +14,6 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content):
         """Received a WebSocket message"""
-        print("xlator received", content)
         if content['type'] == 'check_block_resp':
             channel = content.pop('channel')
             await self.channel_layer.send(channel, content)
@@ -42,7 +41,6 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
     # Receive message from WebSocket
     async def receive_json(self, content):
         if content['type'] == 'check_block_req':
-            print("**", content)
             await self.channel_layer.group_send(
                 self.xlator_group,
                 {"type": "check_block",
