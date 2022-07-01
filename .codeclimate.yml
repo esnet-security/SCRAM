@@ -1,0 +1,20 @@
+---
+version: "2"
+plugins:
+  csslint:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - javascript
+        - python
+  radon:
+    enabled: true
+  eslint:
+    enabled: true
+    channel: __ESLINT_CHANNEL__
+  fixme:
+    enabled: true
+exclude_patterns:
+  - docs/
