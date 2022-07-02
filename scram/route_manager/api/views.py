@@ -46,7 +46,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             logging.info(f'{route} is in the ignore list, not blocking')
             raise IgnoredRoute
         else:
-            logging.info("test")
             # Must match a channel name defined in asgi.py
             async_to_sync(channel_layer.group_send)(
                 "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
