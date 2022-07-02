@@ -1,4 +1,5 @@
 import ipaddress
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -9,8 +10,8 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, History
-from .exceptions import PrefixTooLarge
+from ..models import ActionType, Entry, History, IgnoreEntry
+from .exceptions import IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer
 
 channel_layer = get_channel_layer()
@@ -38,19 +39,27 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
 
-        # Must match a channel name defined in asgi.py
-        async_to_sync(channel_layer.group_send)(
-            "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
-        )
+        # Don't block if we have the entry in the ignorelist
+        ignoredictlist = IgnoreEntry.objects.all().values('route')
+        ignorelist = [i['route'] for i in ignoredictlist]
+        if route in ignorelist:
+            logging.info(f'{route} is in the ignore list, not blocking')
+            raise IgnoredRoute
+        else:
+            logging.info("test")
+            # Must match a channel name defined in asgi.py
+            async_to_sync(channel_layer.group_send)(
+                "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
+            )
 
-        serializer.save()
+            serializer.save()
 
-        # create history object with the associated entry including username
-        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-        history = History(entry=entry, who=self.request.user, why="API perform create")
-        history.save()
-        entry.is_active = True
-        entry.save()
+            # create history object with the associated entry including username
+            entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
+            history = History(entry=entry, who=self.request.user, why="API perform create")
+            history.save()
+            entry.is_active = True
+            entry.save()
 
     @staticmethod
     def find_entries(arg, active_filter=None):
