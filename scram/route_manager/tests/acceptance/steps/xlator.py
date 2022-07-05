@@ -11,7 +11,7 @@ async def query_xlator(route, actiontype, is_announced=True):
     assert connected
 
     await communicator.send_json_to({"type": "check_block_req", "message": {"route": route}})
-    response = await communicator.receive_json_from()
+    response = await communicator.receive_json_from(timeout=3)
     assert response['type'] == 'check_block_resp'
     assert response['message']['is_blocked'] == is_announced
 
