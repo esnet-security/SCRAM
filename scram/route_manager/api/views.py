@@ -1,6 +1,5 @@
 import ipaddress
 import logging
-import netfields
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -49,9 +48,12 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Don't process if we have the entry in the ignorelist
-        c = IgnoreEntry.objects.filter(route__net_overlaps=route).count()
-        if c >= 1:
-            logging.info(f'{route} is in the ignore list, not blocking')
+        overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
+        if overlapping_ignore.count():
+            ignore_entries = []
+            for ignore_entry in overlapping_ignore.values():
+                ignore_entries.append(str(ignore_entry["route"]))
+            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
             raise IgnoredRoute
         else:
             # Must match a channel name defined in asgi.py
