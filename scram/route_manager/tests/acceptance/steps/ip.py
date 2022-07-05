@@ -5,9 +5,9 @@ from django.urls import reverse
 
 
 # This does a CIDR match
-@then("{route} is contained in our entrys")
-def step_impl(context, route):
-    objs = context.test.client.get(reverse("api:v1:entry-list"))
+@then("{route} is contained in our list of {model}s")
+def step_impl(context, route, model):
+    objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
     ip_target = ipaddress.ip_address(route)
 
     ip_found = False
