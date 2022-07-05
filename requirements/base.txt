@@ -31,3 +31,9 @@ drf-spectacular==0.22.1  # https://github.com/tfranzel/drf-spectacular
 # OIDC
 # ------------------------------------------------------------------------------
 mozilla_django_oidc==2.0.0 # https://github.com/mozilla/mozilla-django-oidc
+
+pytest~=7.1.2
+asgiref~=3.5.0
+behave~=1.2.6
+django-debug-toolbar~=3.4.0
+websockets~=10.3
