@@ -67,7 +67,7 @@ services:
       - "179:179"
       - "50051"
 
-  redis_to_gobgp_translator:
+  translator:
     build:
       context: .
       dockerfile: ./compose/local/translator/Dockerfile

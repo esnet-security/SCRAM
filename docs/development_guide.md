@@ -6,9 +6,8 @@ SCRAM utilizes `docker compose` to run the following stack in production:
 * nginx (as a webserver and static asset server)
 * django (web framework)
 * postgres (database)
-* redis (message bus using streams)
 * gobgp (communicating with networking gear for actions; blocking, shunting, redirecting, etc)
-* redis_to_gobgp_translator (a tool to pull information from redis and send to gobgp container over gRPC)
+* translator (a tool to pull information from SCRAM via websockets and send to gobgp container over gRPC)
 
 The last two could theoretically be pulled out and run separately from the rest of this stack, but for the time being, we are running them all on the same host(s).
 
