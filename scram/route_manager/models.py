@@ -43,12 +43,25 @@ class Entry(models.Model):
 
     class Meta:
         unique_together = ["route", "actiontype"]
+        verbose_name_plural = 'Entries'
 
     def __str__(self):
         desc = f"{self.route} ({self.actiontype})"
         if not self.is_active:
             desc += " (inactive)"
         return desc
+
+
+class IgnoreEntry(models.Model):
+    """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""
+    route = CidrAddressField(unique=True)
+    comment = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name_plural = 'Ignored Entries'
+
+    def __str__(self):
+        return str(self.route)
 
 
 class History(models.Model):
@@ -66,6 +79,9 @@ class History(models.Model):
         null=True,
         blank=True,
     )
+
+    class Meta:
+        verbose_name_plural = 'Histories'
 
     def __str__(self):
         desc = f"{self.entry.route}: {self.why}"

@@ -8,6 +8,7 @@ celery==5.2.7  # pyup: < 6.0  # https://github.com/celery/celery
 django-celery-beat==2.3.0  # https://github.com/celery/django-celery-beat
 flower==1.0.0  # https://github.com/mher/flower
 uvicorn[standard]==0.17.6  # https://github.com/encode/uvicorn
+asgiref~=3.5.0  # https://github.com/django/asgiref
 
 # Django
 # ------------------------------------------------------------------------------
@@ -31,3 +32,5 @@ drf-spectacular==0.22.1  # https://github.com/tfranzel/drf-spectacular
 # OIDC
 # ------------------------------------------------------------------------------
 mozilla_django_oidc==2.0.0 # https://github.com/mozilla/mozilla-django-oidc
+
+websockets~=10.3

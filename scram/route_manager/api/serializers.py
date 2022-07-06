@@ -3,7 +3,7 @@ import logging
 from netfields import rest_framework
 from rest_framework import serializers
 
-from ..models import ActionType, Entry, Route
+from ..models import ActionType, Entry, IgnoreEntry, Route
 
 logger = logging.getLogger(__name__)
 
@@ -44,3 +44,9 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             **validated_data, route=route_instance, actiontype=actiontype_instance
         )
         return entry_instance
+
+
+class IgnoreEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IgnoreEntry
+        fields = ["route", "comment"]
