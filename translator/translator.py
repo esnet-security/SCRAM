@@ -11,7 +11,7 @@ from gobgp import GoBGP
 
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
-url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/xlator_block/")
+url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/translator_block/")
 
 
 async def main():
@@ -35,14 +35,14 @@ async def main():
                     elif event_type == 'check_block':
                         json_message['type'] = 'check_block_resp'
                         json_message['message']['is_blocked'] = g.is_blocked(ip)
-                        json_message['message']['xlator_name'] = hostname
+                        json_message['message']['translator_name'] = hostname
                         await websocket.send(json.dumps(json_message))
         except websockets.ConnectionClosed:
             continue
 
 
 if __name__ == "__main__":
-    logging.info("add_path started")
+    logging.info("translator started")
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
     loop.close()

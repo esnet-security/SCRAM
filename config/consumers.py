@@ -4,13 +4,13 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
-        self.xlator_group = f"xlator_{self.actiontype}"
+        self.translator_group = f"translator_{self.actiontype}"
 
-        await self.channel_layer.group_add(self.xlator_group, self.channel_name)
+        await self.channel_layer.group_add(self.translator_group, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.xlator_group, self.channel_name)
+        await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):
         """Received a WebSocket message"""
@@ -34,7 +34,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
-        self.xlator_group = f"xlator_{self.actiontype}"
+        self.translator_group = f"translator_{self.actiontype}"
 
         await self.accept()
 
@@ -42,7 +42,7 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content):
         if content['type'] == 'check_block_req':
             await self.channel_layer.group_send(
-                self.xlator_group,
+                self.translator_group,
                 {"type": "check_block",
                  "channel": self.channel_name,
                  "message": content['message'],

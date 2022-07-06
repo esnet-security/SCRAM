@@ -20,11 +20,11 @@ RUN mkdir /app \
     && cd gobgp/api \
     && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
 
-COPY ./translator/add_path.py /app
+COPY ./translator/translator.py /app
 COPY ./translator/gobgp.py /app
 COPY ./translator/tests /app
-RUN chmod +x /app/add_path.py
+RUN chmod +x /app/translator.py
 
 WORKDIR /app
 
-ENTRYPOINT ["/app/add_path.py"]
+ENTRYPOINT ["/app/translator.py"]
