@@ -33,6 +33,13 @@ def step_impl(context, value):
     )
 
 
+@when("we add the ignore entry {value}")
+def step_impl(context, value):
+    context.response = context.test.client.post(
+        reverse("api:v1:ignoreentry-list"), {"route": value, "comment": "test api"}
+    )
+
+
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
     context.response = context.test.client.delete(

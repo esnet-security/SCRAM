@@ -1,4 +1,5 @@
 import ipaddress
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -9,9 +10,9 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, History
-from .exceptions import PrefixTooLarge
-from .serializers import ActionTypeSerializer, EntrySerializer
+from ..models import ActionType, Entry, History, IgnoreEntry
+from .exceptions import IgnoredRoute, PrefixTooLarge
+from .serializers import ActionTypeSerializer, EntrySerializer, IgnoreEntrySerializer
 
 channel_layer = get_channel_layer()
 
@@ -23,6 +24,13 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "name"
 
 
+class IgnoreEntryViewSet(viewsets.ModelViewSet):
+    queryset = IgnoreEntry.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = IgnoreEntrySerializer
+    lookup_field = "route"
+
+
 class EntryViewSet(viewsets.ModelViewSet):
     queryset = Entry.objects.filter(is_active=True)
     permission_classes = (IsAuthenticated,)
@@ -31,6 +39,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def perform_create(self, serializer):
+
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
 
@@ -38,19 +47,28 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
 
-        # Must match a channel name defined in asgi.py
-        async_to_sync(channel_layer.group_send)(
-            "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
-        )
+        # Don't process if we have the entry in the ignorelist
+        overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
+        if overlapping_ignore.count():
+            ignore_entries = []
+            for ignore_entry in overlapping_ignore.values():
+                ignore_entries.append(str(ignore_entry["route"]))
+            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
+            raise IgnoredRoute
+        else:
+            # Must match a channel name defined in asgi.py
+            async_to_sync(channel_layer.group_send)(
+                "xlator_block", {"type": "add_block", "message": {"route": str(route)}}
+            )
 
-        serializer.save()
+            serializer.save()
 
-        # create history object with the associated entry including username
-        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-        history = History(entry=entry, who=self.request.user, why="API perform create")
-        history.save()
-        entry.is_active = True
-        entry.save()
+            # create history object with the associated entry including username
+            entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
+            history = History(entry=entry, who=self.request.user, why="API perform create")
+            history.save()
+            entry.is_active = True
+            entry.save()
 
     @staticmethod
     def find_entries(arg, active_filter=None):
