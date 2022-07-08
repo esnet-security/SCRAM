@@ -49,7 +49,8 @@ class Entry(models.Model):
             return
 
         # Expire ALL history objects for this route
-        self.history_set.delete()
+        for h in self.history_set.all():
+            h.delete()
 
     class Meta:
         unique_together = ["route", "actiontype"]
