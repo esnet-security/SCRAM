@@ -1,4 +1,5 @@
 import ipaddress
+import json
 
 import rest_framework.utils.serializer_helpers
 from channels.layers import get_channel_layer
@@ -8,6 +9,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -125,9 +128,14 @@ def add_entry(request):
 def process_expired(request):
     current_time = timezone.now()
     with transaction.atomic():
+        entries_start = Entry.objects.filter(is_active=True).count()
         for obj in History.objects.filter(is_active=True, expiration__lt=current_time):
             obj.delete()
-    return home_page(request)
+        entries_end = Entry.objects.filter(is_active=True).count()
+
+    return HttpResponse(json.dumps({'entries_deleted': entries_start - entries_end,
+                                    'active_entries': entries_end}),
+                        content_type='application/json')
 
 
 class EntryListView(ListView):

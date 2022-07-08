@@ -4,8 +4,8 @@ FROM python:3.8-slim-buster
 ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
-  # dependencies for building Python packages
-  && apt-get install -y build-essential \
+  # dependencies for building Python packages and Docker healthcheck
+  && apt-get install -y build-essential curl \
   # psycopg2 dependencies
   && apt-get install -y libpq-dev \
   # Translations dependencies
