@@ -1,6 +1,7 @@
 import datetime
-import django.conf as conf
 import time
+
+import django.conf as conf
 from behave import given, step, then, when
 from django.urls import reverse
 
@@ -56,6 +57,7 @@ def step_impl(context, value, secs):
                                        "expiration": expiration,
                                        }
     )
+
 
 @step("we wait {secs:d} seconds")
 def step_impl(context, secs):

@@ -105,7 +105,8 @@ class History(models.Model):
 
         # We have no other active History objects pointing to the same object
         if self.entry.is_active and \
-            not History.objects.filter(entry=self.entry_id, is_active=True).count():
+            not History.objects.filter(entry=self.entry_id,
+                                       is_active=True).count():
 
             self.entry.is_active = False
             self.entry.save()
