@@ -9,12 +9,13 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
-from .models import ActionType, Entry
+from .models import ActionType, Entry, History
 
 channel_layer = get_channel_layer()
 
@@ -119,6 +120,16 @@ def add_entry(request):
     with transaction.atomic():
         home = home_page(request)
     return home
+
+
+def process_expired(request):
+    current_time = timezone.now()
+    # 1. Find entries that have expired
+    expired_objs = History.objects.filter(entry__is_active=True,
+                                          expiration__lt=current_time)
+
+    # 2. Call the API delete function on them (set is_active to False,
+    #    update history, and send unblock to translators)
 
 
 class EntryListView(ListView):

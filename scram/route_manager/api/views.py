@@ -103,20 +103,6 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        entries = self.find_entries(pk, active_filter=True)
-        # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
-        if entries.count() == 1:
-            # create history object with the associated entry including username
-            entry = entries[0]
-            route = entry.route
-            history = History(entry=entry, who=request.user, why="API destroy function")
-            history.save()
-            entry.is_active = False
-            entry.save()
-
-            async_to_sync(channel_layer.group_send)(
-                "translator_block",
-                {"type": "remove_block", "message": {"route": str(route)}},
-            )
+        self.find_entries(pk, active_filter=True).delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
