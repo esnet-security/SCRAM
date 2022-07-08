@@ -1,5 +1,7 @@
+import datetime
 import django.conf as conf
-from behave import given, then, when
+import time
+from behave import given, step, then, when
 from django.urls import reverse
 
 from scram.route_manager.models import ActionType
@@ -26,14 +28,48 @@ def step_impl(context, status_code):
     context.test.assertEqual(context.response.status_code, status_code)
 
 
-@when("we add the entry {value}")
+@when("we add the entry {value:S}")
 def step_impl(context, value):
     context.response = context.test.client.post(
         reverse("api:v1:entry-list"), {"route": value, "actiontype": "block"}
     )
 
 
-@when("we add the ignore entry {value}")
+@when("we add the entry {value:S} with expiration {exp:S}")
+def step_impl(context, value, exp):
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"), {"route": value,
+                                       "actiontype": "block",
+                                       "expiration": exp,
+                                       }
+    )
+
+
+@when("we add the entry {value:S} with expiration in {secs:d} seconds")
+def step_impl(context, value, secs):
+    td = datetime.timedelta(seconds=secs)
+    expiration = datetime.datetime.now() + td
+
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"), {"route": value,
+                                       "actiontype": "block",
+                                       "expiration": expiration,
+                                       }
+    )
+
+@step("we wait {secs:d} seconds")
+def step_impl(context, secs):
+    time.sleep(secs)
+
+
+@then("we remove expired entries")
+def step_impl(context):
+    context.response = context.test.client.get(
+        reverse("route_manager:process-expired")
+    )
+
+
+@when("we add the ignore entry {value:S}")
 def step_impl(context, value):
     context.response = context.test.client.post(
         reverse("api:v1:ignoreentry-list"), {"route": value, "comment": "test api"}

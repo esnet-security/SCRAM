@@ -124,12 +124,10 @@ def add_entry(request):
 
 def process_expired(request):
     current_time = timezone.now()
-    # 1. Find entries that have expired
-    expired_objs = History.objects.filter(entry__is_active=True,
-                                          expiration__lt=current_time)
-
-    # 2. Call the API delete function on them (set is_active to False,
-    #    update history, and send unblock to translators)
+    with transaction.atomic():
+        for obj in History.objects.filter(is_active=True, expiration__lt=current_time):
+            obj.delete()
+    return home_page(request)
 
 
 class EntryListView(ListView):
