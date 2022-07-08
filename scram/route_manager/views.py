@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.http import HttpResponse
-from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -133,9 +132,15 @@ def process_expired(request):
             obj.delete()
         entries_end = Entry.objects.filter(is_active=True).count()
 
-    return HttpResponse(json.dumps({'entries_deleted': entries_start - entries_end,
-                                    'active_entries': entries_end}),
-                        content_type='application/json')
+    return HttpResponse(
+        json.dumps(
+            {
+                "entries_deleted": entries_start - entries_end,
+                "active_entries": entries_end,
+            }
+        ),
+        content_type="application/json",
+    )
 
 
 class EntryListView(ListView):
