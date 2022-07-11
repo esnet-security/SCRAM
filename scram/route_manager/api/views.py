@@ -6,6 +6,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
+from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -39,9 +40,15 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def perform_create(self, serializer):
-
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
+        why = serializer.validated_data.get("why", "API perform create")
+        tmp_exp = self.request.POST.get("expiration", "")
+
+        try:
+            expiration = parse_datetime(tmp_exp)
+        except ValueError:
+            logging.info(f"Could not parse expiration DateTime string {tmp_exp!r}.")
 
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
         if route.prefixlen < min_prefix:
@@ -65,7 +72,14 @@ class EntryViewSet(viewsets.ModelViewSet):
 
             # create history object with the associated entry including username
             entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-            history = History(entry=entry, who=self.request.user, why="API perform create")
+            history_data = {'entry': entry,
+                            'who': self.request.user,
+                            'why': why,
+                            }
+            if expiration:
+                history_data['expiration'] = expiration
+
+            history = History(**history_data)
             history.save()
             entry.is_active = True
             entry.save()
@@ -103,20 +117,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
-        entries = self.find_entries(pk, active_filter=True)
-        # TODO: What happens if we get multiple? Is that ok? I think no, and don't delete them all?
-        if entries.count() == 1:
-            # create history object with the associated entry including username
-            entry = entries[0]
-            route = entry.route
-            history = History(entry=entry, who=request.user, why="API destroy function")
-            history.save()
-            entry.is_active = False
-            entry.save()
-
-            async_to_sync(channel_layer.group_send)(
-                "translator_block",
-                {"type": "remove_block", "message": {"route": str(route)}},
-            )
+        for entry in self.find_entries(pk, active_filter=True):
+            entry.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

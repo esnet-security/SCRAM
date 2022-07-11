@@ -1,5 +1,7 @@
 import uuid as uuid_lib
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
@@ -41,6 +43,15 @@ class Entry(models.Model):
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
     is_active = models.BooleanField(default=True)
 
+    def delete(self, *args, **kwargs):
+        if not self.is_active:
+            # We've already expired this route, don't send another message
+            return
+
+        # Expire ALL history objects for this route
+        for h in self.history_set.all():
+            h.delete()
+
     class Meta:
         unique_together = ["route", "actiontype"]
         verbose_name_plural = 'Entries'
@@ -64,6 +75,9 @@ class IgnoreEntry(models.Model):
         return str(self.route)
 
 
+channel_layer = get_channel_layer()
+
+
 class History(models.Model):
     """Who, what, when, why"""
 
@@ -79,6 +93,31 @@ class History(models.Model):
         null=True,
         blank=True,
     )
+
+    remove_why = models.CharField("Comment for the removal action", max_length=200, null=True, blank=True)
+    remove_when = models.DateTimeField("When did it get removed", null=True, blank=True)
+    remove_who = models.CharField("Username for the removal", max_length=30, null=True, blank=True)
+
+    is_active = models.BooleanField(default=True)
+
+    def delete(self, *args, **kwargs):
+        self.is_active = False
+        self.save()
+
+        # We have no other active History objects pointing to the same object
+        if self.entry.is_active and \
+            not History.objects.filter(entry=self.entry_id,
+                                       is_active=True).count():
+
+            self.entry.is_active = False
+            self.entry.save()
+
+            # Unblock it
+            async_to_sync(channel_layer.group_send)(
+                f"translator_{self.entry.actiontype}",
+                {"type": f"remove_{self.entry.actiontype}",
+                 "message": {"route": str(self.entry.route)}},
+            )
 
     class Meta:
         verbose_name_plural = 'Histories'
