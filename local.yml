@@ -5,7 +5,7 @@ volumes:
   local_postgres_data_backups: {}
 
 services:
-  django: &django
+  django:
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
@@ -67,30 +67,3 @@ services:
       dockerfile: ./compose/local/translator/Dockerfile
     depends_on:
       - gobgp
-
-  celeryworker:
-    <<: *django
-    image: scram_local_celeryworker
-    depends_on:
-      - redis
-      - postgres
-
-    ports: []
-    command: /start-celeryworker
-
-  celerybeat:
-    <<: *django
-    image: scram_local_celerybeat
-    depends_on:
-      - redis
-      - postgres
-
-    ports: []
-    command: /start-celerybeat
-
-  flower:
-    <<: *django
-    image: scram_local_flower
-    ports:
-      - "5555"
-    command: /start-flower
