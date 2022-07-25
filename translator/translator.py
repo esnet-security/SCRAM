@@ -22,21 +22,25 @@ async def main():
                 json_message = json.loads(message)
                 event_type = json_message.get('type')
                 event_data = json_message.get('message')
-                if event_type in ['add_block', 'remove_block', 'check_block']:
+                if event_type not in ['translator_add', 'translator_remove', 'translator_check']:
+                    logging.error(f"Unknown event type received: {event_type!r}")
+                else:
                     try:
                         ip = ipaddress.ip_interface(event_data['route'])
                     except:  # noqa E722
                         logging.error(f"Error parsing message: {message!r}")
                         continue
-                    if event_type == "add_block":
+
+                    if event_type == "translator_add":
                         g.add_path(ip)
-                    elif event_type == 'remove_block':
+                    elif event_type == 'translator_remove':
                         g.del_path(ip)
-                    elif event_type == 'check_block':
-                        json_message['type'] = 'check_block_resp'
+                    elif event_type == 'translator_check':
+                        json_message['type'] = 'translator_check_resp'
                         json_message['message']['is_blocked'] = g.is_blocked(ip)
                         json_message['message']['translator_name'] = hostname
                         await websocket.send(json.dumps(json_message))
+
         except websockets.ConnectionClosed:
             continue
 

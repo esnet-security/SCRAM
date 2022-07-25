@@ -10,9 +10,9 @@ async def query_translator(route, actiontype, is_announced=True):
     connected, subprotocol = await communicator.connect()
     assert connected
 
-    await communicator.send_json_to({"type": "check_block_req", "message": {"route": route}})
+    await communicator.send_json_to({"type": f"wui_check_req", "message": {"route": route}})
     response = await communicator.receive_json_from(timeout=3)
-    assert response['type'] == 'check_block_resp'
+    assert response['type'] == f'wui_check_resp'
     assert response['message']['is_blocked'] == is_announced
 
     await communicator.disconnect()
