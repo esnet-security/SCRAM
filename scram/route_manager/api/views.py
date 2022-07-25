@@ -65,7 +65,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         else:
             # Must match a channel name defined in asgi.py
             async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}", {"type": f"translator_add", "message": {"route": str(route)}}
+                f"translator_{actiontype}", {"type": "translator_add", "message": {"route": str(route)}}
             )
 
             serializer.save()

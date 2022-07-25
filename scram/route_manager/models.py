@@ -115,7 +115,7 @@ class History(models.Model):
             # Unblock it
             async_to_sync(channel_layer.group_send)(
                 f"translator_{self.entry.actiontype}",
-                {"type": f"translator_remove",
+                {"type": "translator_remove",
                  "message": {"route": str(self.entry.route)}},
             )
 

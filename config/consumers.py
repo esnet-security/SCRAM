@@ -1,5 +1,6 @@
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
 from scram.route_manager.models import Entry
 
 
@@ -16,7 +17,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
         # Avoid lazy evaluation
         routes = await sync_to_async(list)(Entry.objects.filter(is_active=True).values_list('route__route', flat=True))
         for route in routes:
-            await self.send_json({"type": f"translator_add", "message": {"route": str(route)}})
+            await self.send_json({"type": "translator_add", "message": {"route": str(route)}})
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
@@ -49,7 +50,7 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, content):
-        if content['type'] == f'wui_check_req':
+        if content['type'] == 'wui_check_req':
             # Web UI asks us to check; forward to translator(s)
             await self.channel_layer.group_send(
                 self.translator_group,

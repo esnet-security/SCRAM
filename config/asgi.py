@@ -27,7 +27,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 # This application object is used by any ASGI server configured to use this file.
 django_application = get_asgi_application()
 
-from . import routing as scram_routing
+from . import routing as scram_routing  # noqa: E402
 
 ws_application = URLRouter(scram_routing.websocket_urlpatterns)
 
