@@ -1,4 +1,6 @@
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from scram.route_manager.models import Entry
 
 
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
@@ -8,6 +10,13 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
         await self.channel_layer.group_add(self.translator_group, self.channel_name)
         await self.accept()
+
+        # TODO: Filter by our actiontype
+
+        # Avoid lazy evaluation
+        routes = await sync_to_async(list)(Entry.objects.filter(is_active=True).values_list('route__route', flat=True))
+        for route in routes:
+            await self.send_json({"type": f"translator_add", "message": {"route": str(route)}})
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
