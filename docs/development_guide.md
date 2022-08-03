@@ -2,12 +2,6 @@
 
 This project is based off of [this cookiecutter](https://github.com/cookiecutter/cookiecutter-django), which is based off of the book [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x). This book provides an opinionated take on Django. If you are working on this project, and stuck on the "how" for a given situation, your first step should be to see if the book has a suggestion.
 
-SCRAM utilizes `docker compose` to run the following stack in production:
-* nginx (as a webserver and static asset server)
-* django (web framework)
-* postgres (database)
-* gobgp (communicating with networking gear for actions; blocking, shunting, redirecting, etc)
-* translator (a tool to pull information from SCRAM via websockets and send to gobgp container over gRPC)
 
 The last two could theoretically be pulled out and run separately from the rest of this stack, but for the time being, we are running them all on the same host(s).
 
