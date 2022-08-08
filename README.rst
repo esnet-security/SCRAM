@@ -38,6 +38,8 @@ You can add any other actiontypes via the admin page of the web interface dynami
 Installation
 ====
 
+To get a basic implementation up and running locally:
+
 - Pull this repository to start: ``git clone``
 - ``cd scram``
 - Create ``$scram_home/.envs/.production/.django`` a template exists in the docs/templates directory
@@ -48,4 +50,8 @@ Installation
     - By default this template assumes you have a service defined in docker compose file called postgres. If you use another postgres server, make sure to update that setting as well
 - ``make build``
 - ``make toggle-prod``
+    - This will turn off debug mode in django and start using nginx to reverse proxy for the app
+        - you should add some certs as well and pass them into the nginx container
+- ``make run``
+- ``make django-open``
 
