@@ -1,0 +1,41 @@
+## Design Decisions
+An ever-growing document that holds information about choices we have made, so we can remember why we ended up designing
+things this way.
+
+#### nginx
+The [cookiecutter](https://github.com/cookiecutter/cookiecutter-django) this repo is based off of, came with `traefik` as
+the reverse proxy used for `django`. We decided to move to nginx because
+1. That would handle serving static files for us
+2. It follows suit with how ESnet generally runs webservers
+
+We did decide to run nginx inside a container instead of on the host because we would like to avoid dependency on the
+underlying OS as much as possible. 
+
+#### Expiration
+Expiration is actually handled by a `docker-compose` healthcheck on the `django` container. We knew we'd need some sort
+of job to run at a given interval. We initially thought of something like `celery`, but that seemed way too heavyweight
+for our needs. `Cron` came to mind as well, but it seemed like we'd have to use the host OS to run the cronjob, and
+we were trying to avoid caring about the underlying host as much as possible. The healthcheck allows us to run inside
+docker, as well verify/autofix our django container if something goes wrong.
+
+#### Database and State
+We quickly identified a need for a highly available and shared postgres server to share data between instances in the 
+same group (ie wan-scram, dc-scram, netlab-scram). Initially, we had planned on using Redis Streams to handle 
+communication between instances in the same group, however, we discovered that redis does not handle IP addresses in any
+form except for a string, which would not work for our purposes. We also investigaged running our own postgres cluster
+via docker, using posgresql's new pub/sub features, and sharing the blocks via API. All of these options failed to 
+meet our needs, so we have chosen to use [CloudSQL](https://cloud.google.com/sql) as a highly available, shared postgres
+database.
+
+We also liked this method as it allowed us to keep our state in the hosted postgres that is highly avaiable, easy to get
+to from anywhere in our network, and backed up regularly. With state being so well protected, it means we can treat each
+SCRAM instance as ephemeral. In fact, our Ansible deployment actually fully blows away a running instance and replaces 
+it with a new one.
+
+#### Websockets/Channels/Redis
+While redis did not pan out for data sharing, it does serve well to back 
+[`django channels` layers](https://channels.readthedocs.io/en/latest/topics/channel_layers.html). We use channel layers
+to set up our "instance groups" of SCRAMs. Websockets is the method in which `translator` talks to `django` to get
+information about what actions should be taken on what CIDRs. This was chosen because this application inherently 
+uses ongoing updates coming in at ad-hoc, unknown times to communicate bidirectionally between the `translator` and 
+`django`.
