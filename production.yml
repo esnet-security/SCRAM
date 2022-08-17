@@ -73,6 +73,8 @@ services:
     depends_on:
       - redis
       - gobgp
+    env_file:
+      - ./.envs/.production/.translator
 
 networks:
   peering:
