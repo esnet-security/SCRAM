@@ -34,4 +34,4 @@ drf-spectacular==0.22.1  # https://github.com/tfranzel/drf-spectacular
 mozilla_django_oidc==2.0.0 # https://github.com/mozilla/mozilla-django-oidc
 
 websockets~=10.3
-django-redis~=4.12.1
+django-simple-history~=3.1.1
