@@ -72,6 +72,7 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "django_eventstream",
     "netfields",
+    "simple_history",
     "rest_framework",
     "rest_framework.authtoken",
 ]
@@ -139,6 +140,7 @@ MIDDLEWARE = [
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_grip.GripMiddleware",
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 # STATIC
@@ -289,6 +291,13 @@ CORS_URLS_REGEX = r"^/api/.*$"
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
+
+# enable composite indexing on history_date and model pk (to improve as_of queries)
+# the string is case-insensitive
+SIMPLE_HISTORY_DATE_INDEX = "Composite"
+SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
+# Take in comment to show with history changes on models
+SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
 
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
