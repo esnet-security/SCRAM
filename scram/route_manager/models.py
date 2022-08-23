@@ -5,6 +5,7 @@ from channels.layers import get_channel_layer
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
+from simple_history.models import HistoricalRecords
 
 
 class Route(models.Model):
@@ -29,6 +30,7 @@ class ActionType(models.Model):
     available = models.BooleanField(
         help_text="Is this a valid choice for new entries?", default=True
     )
+    history = HistoricalRecords()
 
     def __str__(self):
         if not self.available:
@@ -42,6 +44,7 @@ class Entry(models.Model):
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
     is_active = models.BooleanField(default=True)
+    history = HistoricalRecords()
 
     def delete(self, *args, **kwargs):
         if not self.is_active:
@@ -67,6 +70,7 @@ class IgnoreEntry(models.Model):
     """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""
     route = CidrAddressField(unique=True)
     comment = models.CharField(max_length=100)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name_plural = 'Ignored Entries'
