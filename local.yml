@@ -1,4 +1,4 @@
-version: '3'
+version: '3.4'
 
 volumes:
   local_postgres_data: {}
@@ -21,6 +21,12 @@ services:
     ports:
       - "8000"
     command: /start
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://django:8000/process_expired/" ]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 5
 
   postgres:
     build:
