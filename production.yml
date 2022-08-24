@@ -1,4 +1,4 @@
-version: '2.4'
+version: '3.4'
 
 volumes:
   production_postgres_data: {}
@@ -22,6 +22,12 @@ services:
       - ./.envs/.production/.postgres
       - /etc/vault.d/secrets/kv_root_security.env
     command: /start
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 5
 
   postgres:
     build:
