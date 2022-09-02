@@ -65,6 +65,10 @@ class Entry(models.Model):
             desc += " (inactive)"
         return desc
 
+    def get_change_reason(self):
+        hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
+        return hist_mgr.order_by('-history_date').first().history_change_reason
+
 
 class IgnoreEntry(models.Model):
     """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""

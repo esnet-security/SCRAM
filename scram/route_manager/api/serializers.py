@@ -2,6 +2,7 @@ import logging
 
 from netfields import rest_framework
 from rest_framework import serializers
+from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Entry, IgnoreEntry, Route
 
@@ -30,21 +31,24 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
+    comment = serializers.SerializerMethodField()
 
     class Meta:
         model = Entry
-        fields = ["route", "actiontype", "url"]
+        fields = ["route", "actiontype", "url", "comment"]
+
+    def get_comment(self, obj):
+        return obj.get_change_reason()
 
     def create(self, validated_data):
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, created = Entry.objects.get_or_create(
-            **validated_data, route=route_instance, actiontype=actiontype_instance
-        )
-        return entry_instance
+        entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
+        update_change_reason(entry_instance, validated_data["comment"])
 
+        return entry_instance
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
     class Meta:

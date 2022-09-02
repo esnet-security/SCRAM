@@ -36,6 +36,14 @@ def step_impl(context, value):
     )
 
 
+@when("we add the entry {value:S} with comment {comment}")
+def step_impl(context, value, comment):
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"), {"route": value, "actiontype": "block",
+                                       "comment": comment}
+    )
+
+
 @when("we add the entry {value:S} with expiration {exp:S}")
 def step_impl(context, value, exp):
     context.response = context.test.client.post(

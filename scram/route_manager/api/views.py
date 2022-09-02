@@ -11,7 +11,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, History, IgnoreEntry
+from ..models import ActionType, Entry, History, IgnoreEntry, Route
 from .exceptions import IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer, IgnoreEntrySerializer
 
@@ -42,7 +42,8 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-        why = serializer.validated_data.get("why", "API perform create")
+        # This should probably be mandatory, but will break the tests right now.
+        comment = self.request.POST.get("comment", "No comment provided")
         tmp_exp = self.request.POST.get("expiration", "")
 
         try:
@@ -67,22 +68,20 @@ class EntryViewSet(viewsets.ModelViewSet):
             async_to_sync(channel_layer.group_send)(
                 f"translator_{actiontype}", {"type": "translator_add", "message": {"route": str(route)}}
             )
-
-            serializer.save()
-
-            # create history object with the associated entry including username
-            entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-            history_data = {'entry': entry,
-                            'who': self.request.user,
-                            'why': why,
-                            }
-            if expiration:
-                history_data['expiration'] = expiration
-
-            history = History(**history_data)
-            history.save()
-            entry.is_active = True
-            entry.save()
+            #
+            # # create history object with the associated entry including username
+            # history_data = {'entry': entry,
+            #                 'who': self.request.user,
+            #                 'why': why,
+            #                 }
+            # if expiration:
+            #     history_data['expiration'] = expiration
+            #
+            # history = History(**history_data)
+            # history.save()
+            # entry.is_active = True
+            # entry.save()
+        serializer.save(comment=comment)
 
     @staticmethod
     def find_entries(arg, active_filter=None):

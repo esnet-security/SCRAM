@@ -21,19 +21,23 @@ class TestEntryHistory(TestCase):
         self.atype = ActionType.objects.create(name="Block")
         for r in self.routes:
             route = Route.objects.create(route=r)
-            Entry.objects.create(route=route, actiontype=self.atype)
+            entry = Entry.objects.create(route=route, actiontype=self.atype)
+            create_reason = "Zeek detected a scan from 1.1.1.1."
+            update_change_reason(entry, create_reason)
+            self.assertEqual(entry.get_change_reason(), create_reason)
 
     def test_comments(self):
         for r in self.routes:
             route_old = Route.objects.get(route=r)
             e = Entry.objects.get(route=route_old)
+            self.assertEqual(e.get_change_reason(), "Zeek detected a scan from 1.1.1.1.")
+
             route_new = str(route_old).replace("6", "7")
             e.route = Route.objects.create(route=route_new)
 
-            reason = "I meant 7, not 6."
-            e._change_reason = reason
+            change_reason = "I meant 7, not 6."
+            e._change_reason = change_reason
             e.save()
 
             self.assertEqual(len(e.history.all()), 2)
-
-            self.assertEqual(get_change_reason_from_object(e), reason)
+            self.assertEqual(e.get_change_reason(), change_reason)
