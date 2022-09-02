@@ -50,6 +50,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
         return entry_instance
 
+
 class IgnoreEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = IgnoreEntry
