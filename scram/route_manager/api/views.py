@@ -11,7 +11,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, History, IgnoreEntry, Route
+from ..models import ActionType, Entry, IgnoreEntry
 from .exceptions import IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer, IgnoreEntrySerializer
 
@@ -47,7 +47,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         tmp_exp = self.request.POST.get("expiration", "")
 
         try:
-            expiration = parse_datetime(tmp_exp)
+            expiration = parse_datetime(tmp_exp)  # noqa: F841
         except ValueError:
             logging.info(f"Could not parse expiration DateTime string {tmp_exp!r}.")
 
@@ -61,12 +61,15 @@ class EntryViewSet(viewsets.ModelViewSet):
             ignore_entries = []
             for ignore_entry in overlapping_ignore.values():
                 ignore_entries.append(str(ignore_entry["route"]))
-            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
+            logging.info(
+                f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}"
+            )
             raise IgnoredRoute
         else:
             # Must match a channel name defined in asgi.py
             async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}", {"type": "translator_add", "message": {"route": str(route)}}
+                f"translator_{actiontype}",
+                {"type": "translator_add", "message": {"route": str(route)}},
             )
             #
             # # create history object with the associated entry including username
