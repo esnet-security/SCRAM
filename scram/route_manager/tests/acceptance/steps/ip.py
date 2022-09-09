@@ -1,5 +1,4 @@
 import ipaddress
-import json
 
 from behave import then, when
 from django.urls import reverse
@@ -41,10 +40,8 @@ def step_impl(context):
 @then("the change entry for {value:S} is {comment}")
 def step_impl(context, value, comment):
     try:
-        objs = context.test.client.get(
-            reverse("api:v1:entry-detail", args=[value])
-        )
-        context.test.assertEqual(objs.json()[0]['comment'], comment)
+        objs = context.test.client.get(reverse("api:v1:entry-detail", args=[value]))
+        context.test.assertEqual(objs.json()[0]["comment"], comment)
     except ValueError as e:
         context.response = None
         context.queryException = e

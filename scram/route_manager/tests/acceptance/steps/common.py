@@ -39,18 +39,20 @@ def step_impl(context, value):
 @when("we add the entry {value:S} with comment {comment}")
 def step_impl(context, value, comment):
     context.response = context.test.client.post(
-        reverse("api:v1:entry-list"), {"route": value, "actiontype": "block",
-                                       "comment": comment}
+        reverse("api:v1:entry-list"),
+        {"route": value, "actiontype": "block", "comment": comment},
     )
 
 
 @when("we add the entry {value:S} with expiration {exp:S}")
 def step_impl(context, value, exp):
     context.response = context.test.client.post(
-        reverse("api:v1:entry-list"), {"route": value,
-                                       "actiontype": "block",
-                                       "expiration": exp,
-                                       }
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "expiration": exp,
+        },
     )
 
 
@@ -60,10 +62,12 @@ def step_impl(context, value, secs):
     expiration = datetime.datetime.now() + td
 
     context.response = context.test.client.post(
-        reverse("api:v1:entry-list"), {"route": value,
-                                       "actiontype": "block",
-                                       "expiration": expiration,
-                                       }
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "expiration": expiration,
+        },
     )
 
 
@@ -74,9 +78,7 @@ def step_impl(context, secs):
 
 @then("we remove expired entries")
 def step_impl(context):
-    context.response = context.test.client.get(
-        reverse("route_manager:process-expired")
-    )
+    context.response = context.test.client.get(reverse("route_manager:process-expired"))
 
 
 @when("we add the ignore entry {value:S}")
