@@ -55,9 +55,12 @@ class Entry(models.Model):
         for h in self.history_set.all():
             h.delete()
 
+        self.is_active = False
+        self.save()
+
     class Meta:
         unique_together = ["route", "actiontype"]
-        verbose_name_plural = 'Entries'
+        verbose_name_plural = "Entries"
 
     def __str__(self):
         desc = f"{self.route} ({self.actiontype})"
@@ -67,17 +70,18 @@ class Entry(models.Model):
 
     def get_change_reason(self):
         hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
-        return hist_mgr.order_by('-history_date').first().history_change_reason
+        return hist_mgr.order_by("-history_date").first().history_change_reason
 
 
 class IgnoreEntry(models.Model):
     """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""
+
     route = CidrAddressField(unique=True)
     comment = models.CharField(max_length=100)
     history = HistoricalRecords()
 
     class Meta:
-        verbose_name_plural = 'Ignored Entries'
+        verbose_name_plural = "Ignored Entries"
 
     def __str__(self):
         return str(self.route)
@@ -102,9 +106,13 @@ class History(models.Model):
         blank=True,
     )
 
-    remove_why = models.CharField("Comment for the removal action", max_length=200, null=True, blank=True)
+    remove_why = models.CharField(
+        "Comment for the removal action", max_length=200, null=True, blank=True
+    )
     remove_when = models.DateTimeField("When did it get removed", null=True, blank=True)
-    remove_who = models.CharField("Username for the removal", max_length=30, null=True, blank=True)
+    remove_who = models.CharField(
+        "Username for the removal", max_length=30, null=True, blank=True
+    )
 
     is_active = models.BooleanField(default=True)
 
@@ -113,9 +121,10 @@ class History(models.Model):
         self.save()
 
         # We have no other active History objects pointing to the same object
-        if self.entry.is_active and \
-            not History.objects.filter(entry=self.entry_id,
-                                       is_active=True).count():
+        if (
+            self.entry.is_active
+            and not History.objects.filter(entry=self.entry_id, is_active=True).count()
+        ):
 
             self.entry.is_active = False
             self.entry.save()
@@ -123,12 +132,14 @@ class History(models.Model):
             # Unblock it
             async_to_sync(channel_layer.group_send)(
                 f"translator_{self.entry.actiontype}",
-                {"type": "translator_remove",
-                 "message": {"route": str(self.entry.route)}},
+                {
+                    "type": "translator_remove",
+                    "message": {"route": str(self.entry.route)},
+                },
             )
 
     class Meta:
-        verbose_name_plural = 'Histories'
+        verbose_name_plural = "Histories"
 
     def __str__(self):
         desc = f"{self.entry.route}: {self.why}"
