@@ -32,7 +32,8 @@ def step_impl(context, status_code):
 @when("we add the entry {value:S}")
 def step_impl(context, value):
     context.response = context.test.client.post(
-        reverse("api:v1:entry-list"), {"route": value, "actiontype": "block"}
+        reverse("api:v1:entry-list"),
+        {"route": value, "actiontype": "block", "comment": "behave"},
     )
 
 

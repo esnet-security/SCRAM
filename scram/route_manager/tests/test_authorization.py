@@ -40,13 +40,14 @@ class AuthzTest(TestCase):
     def create_entry(self):
         self.client.force_login(self.admin_user)
         self.client.post(
-            reverse("route_manager:add"), {"route": "3.2.3.4/32", "actiontype": "block"}
+            reverse("route_manager:add"),
+            {"route": "3.2.3.4/32", "actiontype": "block", "comment": "create entry"},
         )
         self.client.logout()
         return Entry.objects.latest("id").id
 
     def test_unauthorized_add_entry(self):
-        """ Unauthorized users should not be able to add an entry"""
+        """Unauthorized users should not be able to add an entry"""
 
         for user in self.write_blocked_users:
             if user:
