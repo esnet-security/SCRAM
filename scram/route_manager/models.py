@@ -1,3 +1,4 @@
+import logging
 import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
@@ -43,7 +44,9 @@ class Entry(models.Model):
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
+    comment = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # TODO: fix name if this works
     history = HistoricalRecords()
 
     def delete(self, *args, **kwargs):
@@ -52,11 +55,10 @@ class Entry(models.Model):
             return
 
         # Expire ALL history objects for this route
+        # We don't actually send the remove action to the translators until we hit the last one
         for h in self.history_set.all():
+            logging.info(f"Deleting history {h}")
             h.delete()
-
-        self.is_active = False
-        self.save()
 
     class Meta:
         unique_together = ["route", "actiontype"]
@@ -117,6 +119,7 @@ class History(models.Model):
     is_active = models.BooleanField(default=True)
 
     def delete(self, *args, **kwargs):
+        # Deactivate the history object
         self.is_active = False
         self.save()
 
@@ -125,7 +128,9 @@ class History(models.Model):
             self.entry.is_active
             and not History.objects.filter(entry=self.entry_id, is_active=True).count()
         ):
-
+            logging.info(
+                f"We have no more history objects, deactivating {self.entry.route}"
+            )
             self.entry.is_active = False
             self.entry.save()
 
