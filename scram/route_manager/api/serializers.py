@@ -31,7 +31,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
-    comment = serializers.SerializerMethodField()
+    comment = serializers.CharField()
 
     class Meta:
         model = Entry
@@ -43,10 +43,14 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
+        comment = validated_data.pop("comment")
         route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
-        update_change_reason(entry_instance, validated_data["comment"])
+        entry_instance, created = Entry.objects.get_or_create(
+            route=route_instance, actiontype=actiontype_instance
+        )
+
+        update_change_reason(entry_instance, comment)
 
         return entry_instance
 
