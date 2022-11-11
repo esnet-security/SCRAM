@@ -15,7 +15,7 @@ async def query_translator(route, actiontype, is_announced=True):
     await communicator.send_json_to(
         {"type": "wui_check_req", "message": {"route": route}}
     )
-    response = await communicator.receive_json_from(timeout=3)
+    response = await communicator.receive_json_from(timeout=10)
     assert response["type"] == "wui_check_resp"
     assert response["message"]["is_blocked"] == is_announced
 
