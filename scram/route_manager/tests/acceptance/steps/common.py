@@ -52,6 +52,7 @@ def step_impl(context, value, exp):
         {
             "route": value,
             "actiontype": "block",
+            "comment": "test",
             "expiration": exp,
         },
     )
@@ -67,6 +68,7 @@ def step_impl(context, value, secs):
         {
             "route": value,
             "actiontype": "block",
+            "comment": "test",
             "expiration": expiration,
         },
     )
