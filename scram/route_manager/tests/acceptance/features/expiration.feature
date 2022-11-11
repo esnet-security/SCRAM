@@ -16,7 +16,7 @@ Feature: entries auto-expire
     And the number of entrys is 2
     And 1.2.3.1/32 is not announced by block translators
     And 1.2.3.3/32 is announced by block translators
-    And we wait 2 seconds
+    And we wait 12 seconds
     And we remove expired entries
     And the number of entrys is 1
 
