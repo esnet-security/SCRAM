@@ -1,3 +1,4 @@
+import logging
 import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
@@ -43,7 +44,9 @@ class Entry(models.Model):
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
+    comment = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # TODO: fix name if this works
     history = HistoricalRecords()
 
     def delete(self, *args, **kwargs):
@@ -52,12 +55,14 @@ class Entry(models.Model):
             return
 
         # Expire ALL history objects for this route
+        # We don't actually send the remove action to the translators until we hit the last one
         for h in self.history_set.all():
+            logging.info(f"Deleting history {h}")
             h.delete()
 
     class Meta:
         unique_together = ["route", "actiontype"]
-        verbose_name_plural = 'Entries'
+        verbose_name_plural = "Entries"
 
     def __str__(self):
         desc = f"{self.route} ({self.actiontype})"
@@ -65,15 +70,20 @@ class Entry(models.Model):
             desc += " (inactive)"
         return desc
 
+    def get_change_reason(self):
+        hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
+        return hist_mgr.order_by("-history_date").first().history_change_reason
+
 
 class IgnoreEntry(models.Model):
     """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""
+
     route = CidrAddressField(unique=True)
     comment = models.CharField(max_length=100)
     history = HistoricalRecords()
 
     class Meta:
-        verbose_name_plural = 'Ignored Entries'
+        verbose_name_plural = "Ignored Entries"
 
     def __str__(self):
         return str(self.route)
@@ -98,33 +108,43 @@ class History(models.Model):
         blank=True,
     )
 
-    remove_why = models.CharField("Comment for the removal action", max_length=200, null=True, blank=True)
+    remove_why = models.CharField(
+        "Comment for the removal action", max_length=200, null=True, blank=True
+    )
     remove_when = models.DateTimeField("When did it get removed", null=True, blank=True)
-    remove_who = models.CharField("Username for the removal", max_length=30, null=True, blank=True)
+    remove_who = models.CharField(
+        "Username for the removal", max_length=30, null=True, blank=True
+    )
 
     is_active = models.BooleanField(default=True)
 
     def delete(self, *args, **kwargs):
+        # Deactivate the history object
         self.is_active = False
         self.save()
 
         # We have no other active History objects pointing to the same object
-        if self.entry.is_active and \
-            not History.objects.filter(entry=self.entry_id,
-                                       is_active=True).count():
-
+        if (
+            self.entry.is_active
+            and not History.objects.filter(entry=self.entry_id, is_active=True).count()
+        ):
+            logging.info(
+                f"We have no more history objects, deactivating {self.entry.route}"
+            )
             self.entry.is_active = False
             self.entry.save()
 
             # Unblock it
             async_to_sync(channel_layer.group_send)(
                 f"translator_{self.entry.actiontype}",
-                {"type": "translator_remove",
-                 "message": {"route": str(self.entry.route)}},
+                {
+                    "type": "translator_remove",
+                    "message": {"route": str(self.entry.route)},
+                },
             )
 
     class Meta:
-        verbose_name_plural = 'Histories'
+        verbose_name_plural = "Histories"
 
     def __str__(self):
         desc = f"{self.entry.route}: {self.why}"

@@ -44,7 +44,7 @@ LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # URLS
 # ------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ MIDDLEWARE = [
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_grip.GripMiddleware",
-    'simple_history.middleware.HistoryRequestMiddleware',
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 # STATIC
@@ -298,6 +298,7 @@ SIMPLE_HISTORY_DATE_INDEX = "Composite"
 SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 # Take in comment to show with history changes on models
 SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
+SIMPLE_HISTORY_ENABLED = True
 
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")

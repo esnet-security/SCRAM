@@ -39,14 +39,15 @@ class EntryViewSet(viewsets.ModelViewSet):
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
 
+    # noinspection PyTypeChecker
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-        why = serializer.validated_data.get("why", "API perform create")
+        comment = serializer.validated_data["comment"]
         tmp_exp = self.request.POST.get("expiration", "")
 
         try:
-            expiration = parse_datetime(tmp_exp)
+            expiration = parse_datetime(tmp_exp)  # noqa: F841
         except ValueError:
             logging.info(f"Could not parse expiration DateTime string {tmp_exp!r}.")
 
@@ -60,28 +61,34 @@ class EntryViewSet(viewsets.ModelViewSet):
             ignore_entries = []
             for ignore_entry in overlapping_ignore.values():
                 ignore_entries.append(str(ignore_entry["route"]))
-            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
+            logging.info(
+                f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}"
+            )
             raise IgnoredRoute
         else:
             # Must match a channel name defined in asgi.py
             async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}", {"type": "translator_add", "message": {"route": str(route)}}
+                f"translator_{actiontype}",
+                {"type": "translator_add", "message": {"route": str(route)}},
             )
 
             serializer.save()
 
             # create history object with the associated entry including username
             entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-            history_data = {'entry': entry,
-                            'who': self.request.user,
-                            'why': why,
-                            }
+            history_data = {
+                "entry": entry,
+                "who": self.request.user,
+                "why": comment,
+            }
             if expiration:
-                history_data['expiration'] = expiration
+                history_data["expiration"] = expiration
 
             history = History(**history_data)
             history.save()
             entry.is_active = True
+            entry.comment = comment
+            logging.info(f"{entry}")
             entry.save()
 
     @staticmethod

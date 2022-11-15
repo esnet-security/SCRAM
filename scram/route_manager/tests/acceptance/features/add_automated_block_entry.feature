@@ -25,6 +25,13 @@ Feature: an automated source adds a block entry
       | 2000:: | 2000::/128 |
       | ::1    | ::1/128    |
 
+  @history
+  Scenario: add a block entry with a comment
+    When we're logged in
+    And  we add the entry 127.0.0.2 with comment it's coming from inside the house
+    Then we get a 201 status code
+    And  the change entry for 127.0.0.2 is it's coming from inside the house
+
   Scenario Outline: add a block entry multiple times and it's accepted
     When we're logged in
     And  we add the entry <ip>

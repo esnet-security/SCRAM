@@ -13,21 +13,31 @@ class TestAddRemoveIP(APITestCase):
         self.client.login(username="admin", password="admintestpassword")
 
     def test_block_ipv4(self):
-        response = self.client.post(self.url, {"route": "1.2.3.4"}, format="json")
+        response = self.client.post(
+            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv4(self):
-        self.client.post(self.url, {"route": "1.2.3.4"}, format="json")
-        response = self.client.post(self.url, {"route": "1.2.3.4"}, format="json")
+        self.client.post(
+            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+        )
+        response = self.client.post(
+            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_ipv6(self):
-        response = self.client.post(self.url, {"route": "1::"}, format="json")
+        response = self.client.post(
+            self.url, {"route": "1::", "comment": "test"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv6(self):
-        self.client.post(self.url, {"route": "1::"}, format="json")
-        response = self.client.post(self.url, {"route": "1::"}, format="json")
+        self.client.post(self.url, {"route": "1::", "comment": "test"}, format="json")
+        response = self.client.post(
+            self.url, {"route": "1::", "comment": "test"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 
@@ -41,7 +51,9 @@ class TestUnauthenticatedAccess(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
-        response = self.client.post(self.ignore_url, {"entry": "1.2.3.4"}, format="json")
+        response = self.client.post(
+            self.ignore_url, {"entry": "1.2.3.4"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_list_access(self):
