@@ -12,5 +12,4 @@ urlpatterns = [
     path(route="<int:pk>/", view=views.EntryDetailView.as_view(), name="detail"),
     path("entries/", views.EntryListView.as_view(), name="entry-list"),
     path("add/", views.add_entry, name="add"),
-    path("status/<int:pk>/", views.status_entry, name="status"),
 ]
