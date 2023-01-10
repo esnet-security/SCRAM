@@ -2,6 +2,7 @@ import ipaddress
 import json
 
 import rest_framework.utils.serializer_helpers
+from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
@@ -141,6 +142,16 @@ def process_expired(request):
         ),
         content_type="application/json",
     )
+
+
+@require_POST
+@permission_required(["route_manager.view_entry"])
+def status_entry(request, pk):
+    async_to_sync(channel_layer.group_send)(
+        "translator_block",
+        {"type": "translator_check", "message": "test"},
+    )
+    return
 
 
 class EntryListView(ListView):
