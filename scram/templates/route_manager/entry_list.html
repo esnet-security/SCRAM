@@ -3,33 +3,73 @@
 {% block javascript %}
     {% csrf_token %}
     <script>
-    function getStatus(entry_id) {
-        fetch("{% url 'route_manager:status' pk='0000001000' %}".replace('0000001000', entry_id), {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
-            },
-            mode: 'same-origin',
+    {# Make sure we are connected to the websocket #}
+    const waitForOpenConnection = (socket) => {
+      return new Promise((resolve, reject) => {
+          const maxNumberOfAttempts = 10
+          const intervalTime = 200 //ms
+
+          let currentAttempt = 0
+          const interval = setInterval(() => {
+              if (currentAttempt > maxNumberOfAttempts - 1) {
+                  clearInterval(interval)
+                  reject(new Error('Maximum number of attempts exceeded'))
+              } else if (socket.readyState === socket.OPEN) {
+                  clearInterval(interval)
+                  resolve()
+              }
+              currentAttempt++
+          }, intervalTime)
+      })
+    }
+
+    {# Send the message once the websocket is connected #}
+    const sendMessage = async (socket, msg) => {
+        if (socket.readyState !== socket.OPEN) {
+            try {
+                await waitForOpenConnection(socket)
+                socket.send(msg)
+            } catch (err) { console.error(err) }
+        } else {
+            socket.send(msg)
         }
-        ).then(response =>
-            response.json().then(data => ({
-                data: data,
-                status: response.status
-            }))
-       ).then(res => {
-                var elem = document.getElementById("entry_status_" + entry_id);
-                elem.classList.remove('fa-question-circle');
-                if ( res.data.is_active ) {
-                    elem.classList.add('fa-bullhorn', 'text-success');
-                    elem.setAttribute('title', "Currently being announced");
-                }
-                else {
-                    elem.classList.add('fa-bug', 'text-warning');
-                    elem.setAttribute('title', "Currently NOT being announced");
-                }
-            });
+    }
+
+    {# Build our websocket connection string #}
+    var loc = window.location, wss_uri;
+    if (loc.protocol === "https:") {
+        wss_uri = "wss:";
+    } else {
+        wss_uri = "ws:";
+    }
+    wss_uri += "//" + loc.host;
+
+    {# Open connection to the websocket #}
+    let socket = new WebSocket(wss_uri + "/ws/route_manager/webui_block/")
+
+    {# Send status request message #}
+    function getStatus(route, pk) {
+      let data = {"type": "wui_check_req", "message": {"route": route, "row": pk}};
+      sendMessage(socket, JSON.stringify(data))
+    }
+
+    // Handle the response message and change icons based on status
+    // the bullhorn lets us know it is announced (and tool tip shows by which translator)
+    // the bug lets us know SCRAM is trying to announce the route, but gobgp is reporting it is not currently announced
+    // this failure scenario means something is wrong internal to the SCRAM system
+    socket.onmessage = function(msg) {
+      var resp_data = JSON.parse(msg.data).message;
+      var elem = document.getElementById("entry_status_" + resp_data.row);
+
+      elem.classList.remove('fa-question-circle');
+      if ( resp_data.is_blocked ) {
+          elem.classList.add('fa-bullhorn', 'text-success');
+          elem.setAttribute('title', "Currently being announced by " + resp_data.translator_name);
+      }
+      else {
+          elem.classList.add('fa-bug', 'text-warning');
+          elem.setAttribute('title', "Currently NOT being announced by " + resp_data.translator_name);
+      }
     }
     </script>
 {% endblock %}
@@ -47,7 +87,7 @@
               <li class="list-group-item list-group-item-light text-center">
                 <a class="link" href="{% url 'route_manager:detail' entry.id %}">
                   {{ entry }}</a>
-             <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.pk }}");</script>
+             <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.route }}", "{{ entry.pk }}");</script>
              </li>
             {% endif %}
         {% endfor %}
