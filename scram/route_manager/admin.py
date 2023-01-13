@@ -1,7 +1,7 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import ActionType, Entry, History, IgnoreEntry, Route
+from .models import ActionType, Entry, IgnoreEntry, Route
 
 
 @admin.register(ActionType)
@@ -11,6 +11,5 @@ class ActionTypeAdmin(SimpleHistoryAdmin):
 
 
 admin.site.register(Entry, SimpleHistoryAdmin)
-admin.site.register(History)
 admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
