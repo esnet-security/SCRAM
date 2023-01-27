@@ -12,17 +12,14 @@ def create_groups(apps, schema_editor):
     Permission = apps.get_model('auth', 'Permission')
 
     view_entry = Permission.objects.get(name="Can view entry")
-    view_history = Permission.objects.get(name="Can view history")
     view_route = Permission.objects.get(name="Can view route")
 
-    read_perms = [view_entry, view_history, view_route]
+    read_perms = [view_entry, view_route]
 
     add_entry = Permission.objects.get(name="Can add entry")
-    add_history = Permission.objects.get(name="Can add history")
     add_route = Permission.objects.get(name="Can add route")
-    change_history = Permission.objects.get(name="Can change history")
 
-    write_perms = [add_entry, add_history, add_route, change_history]
+    write_perms = [add_entry, add_route]
 
     ro = Group(name="readonly")
     ro.save()
