@@ -48,6 +48,15 @@ class Entry(models.Model):
     is_active = models.BooleanField(default=True)
     # TODO: fix name if this works
     history = HistoricalRecords()
+    when = models.DateTimeField(auto_now_add=True)
+    who = models.CharField("Username", default="Unknown", max_length=30)
+    expiration = models.DateTimeField(default="9999-12-31 00:00")
+    expiration_reason = models.CharField(
+        help_text="Optional reason for the expiration",
+        max_length=200,
+        null=True,
+        blank=True,
+    )
 
     def delete(self, *args, **kwargs):
         if not self.is_active:
@@ -56,9 +65,31 @@ class Entry(models.Model):
 
         # Expire ALL history objects for this route
         # We don't actually send the remove action to the translators until we hit the last one
-        for h in self.history_set.all():
+        for h in self.history:
             logging.info(f"Deleting history {h}")
-            h.delete()
+            # Deactivate the history object
+            self.is_active = False
+            self.save()
+
+            # We have no other active History objects pointing to the same object
+            if (
+                self.is_active
+                and not self.objects.filter(entry=self.entry_id, is_active=True).count()
+            ):
+                logging.info(
+                    f"We have no more history objects, deactivating {self.route}"
+                )
+                self.is_active = False
+                self.save()
+
+                # Unblock it
+                async_to_sync(channel_layer.group_send)(
+                    f"translator_{self.actiontype}",
+                    {
+                        "type": "translator_remove",
+                        "message": {"route": str(self.route)},
+                    },
+                )
 
     class Meta:
         unique_together = ["route", "actiontype"]
@@ -90,64 +121,3 @@ class IgnoreEntry(models.Model):
 
 
 channel_layer = get_channel_layer()
-
-
-class History(models.Model):
-    """Who, what, when, why"""
-
-    entry = models.ForeignKey("Entry", on_delete=models.CASCADE)
-
-    why = models.CharField("Comment for the action", max_length=200)
-    when = models.DateTimeField(auto_now_add=True)
-    who = models.CharField("Username", default="Unknown", max_length=30)
-    expiration = models.DateTimeField(default="9999-12-31 00:00")
-    expiration_reason = models.CharField(
-        help_text="Optional reason for the expiration",
-        max_length=200,
-        null=True,
-        blank=True,
-    )
-
-    remove_why = models.CharField(
-        "Comment for the removal action", max_length=200, null=True, blank=True
-    )
-    remove_when = models.DateTimeField("When did it get removed", null=True, blank=True)
-    remove_who = models.CharField(
-        "Username for the removal", max_length=30, null=True, blank=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    def delete(self, *args, **kwargs):
-        # Deactivate the history object
-        self.is_active = False
-        self.save()
-
-        # We have no other active History objects pointing to the same object
-        if (
-            self.entry.is_active
-            and not History.objects.filter(entry=self.entry_id, is_active=True).count()
-        ):
-            logging.info(
-                f"We have no more history objects, deactivating {self.entry.route}"
-            )
-            self.entry.is_active = False
-            self.entry.save()
-
-            # Unblock it
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{self.entry.actiontype}",
-                {
-                    "type": "translator_remove",
-                    "message": {"route": str(self.entry.route)},
-                },
-            )
-
-    class Meta:
-        verbose_name_plural = "Histories"
-
-    def __str__(self):
-        desc = f"{self.entry.route}: {self.why}"
-        if not self.entry.is_active:
-            desc += " (inactive)"
-        return desc
