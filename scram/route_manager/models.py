@@ -62,34 +62,20 @@ class Entry(models.Model):
         if not self.is_active:
             # We've already expired this route, don't send another message
             return
-
-        # Expire ALL history objects for this route
-        # We don't actually send the remove action to the translators until we hit the last one
-        for h in self.history:
-            logging.info(f"Deleting history {h}")
-            # Deactivate the history object
+        else:
+            # We don't actually delete records; we set them to inactive and then tell the translator to remove them
+            logging.info(f"Deactivating {self.route}")
             self.is_active = False
             self.save()
 
-            # We have no other active History objects pointing to the same object
-            if (
-                self.is_active
-                and not self.objects.filter(entry=self.entry_id, is_active=True).count()
-            ):
-                logging.info(
-                    f"We have no more history objects, deactivating {self.route}"
-                )
-                self.is_active = False
-                self.save()
-
-                # Unblock it
-                async_to_sync(channel_layer.group_send)(
-                    f"translator_{self.actiontype}",
-                    {
-                        "type": "translator_remove",
-                        "message": {"route": str(self.route)},
-                    },
-                )
+            # Unblock it
+            async_to_sync(channel_layer.group_send)(
+                f"translator_{self.actiontype}",
+                {
+                    "type": "translator_remove",
+                    "message": {"route": str(self.route)},
+                },
+            )
 
     class Meta:
         unique_together = ["route", "actiontype"]
