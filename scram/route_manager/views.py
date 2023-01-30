@@ -17,7 +17,7 @@ from django.views.generic import DetailView, ListView
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
-from .models import ActionType, Entry, History
+from .models import ActionType, Entry
 
 channel_layer = get_channel_layer()
 
@@ -84,7 +84,7 @@ def delete_entry(request, pk):
 
 
 class EntryDetailView(PermissionRequiredMixin, DetailView):
-    permission_required = ["route_manager.view_entry", "route_manager.view_history"]
+    permission_required = ["route_manager.view_entry"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
 
@@ -128,7 +128,7 @@ def process_expired(request):
     current_time = timezone.now()
     with transaction.atomic():
         entries_start = Entry.objects.filter(is_active=True).count()
-        for obj in History.objects.filter(is_active=True, expiration__lt=current_time):
+        for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
             obj.delete()
         entries_end = Entry.objects.filter(is_active=True).count()
 

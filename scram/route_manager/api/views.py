@@ -11,7 +11,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, History, IgnoreEntry
+from ..models import ActionType, Entry, IgnoreEntry
 from .exceptions import IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, EntrySerializer, IgnoreEntrySerializer
 
@@ -74,19 +74,11 @@ class EntryViewSet(viewsets.ModelViewSet):
 
             serializer.save()
 
-            # create history object with the associated entry including username
             entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-            history_data = {
-                "entry": entry,
-                "who": self.request.user,
-                "why": comment,
-            }
             if expiration:
-                history_data["expiration"] = expiration
-
-            history = History(**history_data)
-            history.save()
+                entry.expiration = expiration
             entry.is_active = True
+            entry.who = self.request.user.username
             entry.comment = comment
             logging.info(f"{entry}")
             entry.save()
