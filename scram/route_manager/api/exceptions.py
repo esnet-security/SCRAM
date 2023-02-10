@@ -16,3 +16,9 @@ class IgnoredRoute(APIException):
         "This CIDR is on the ignore list. You are not allowed to add it here."
     )
     default_code = "ignored_route"
+
+
+class ActiontypeNotAllowed(APIException):
+    status_code = 403
+    default_detail = "This client is not allowed to use this actiontype"
+    default_code = "actiontype_not_allowed"
