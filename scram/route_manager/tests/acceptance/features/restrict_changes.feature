@@ -2,6 +2,7 @@ Feature: restrict changing entries
   We do not want users updating a route after it has been added; a change should be a new object.
 
   Scenario: user can't update a route
+    Given a client with block authorization
     When we're logged in
     And we add the entry 1.2.3.4
     And we update the entry 1.2.3.4 to 1.2.3.5

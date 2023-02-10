@@ -19,6 +19,7 @@ Feature: The ignorelist keeps us from blocking a cidr we have ignorelisted
       | ::1    |
 
   Scenario Outline: we can't block an entry from the ignore list
+    Given a client with block authorization
     When we're logged in
     And  we add the ignore entry <ignore>
     And  we add the entry <entry>

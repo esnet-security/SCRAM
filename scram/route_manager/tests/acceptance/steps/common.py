@@ -5,12 +5,30 @@ import django.conf as conf
 from behave import given, step, then, when
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType
+from scram.route_manager.models import ActionType, Client
 
 
 @given("a {name} actiontype is defined")
 def define_block(context, name):
     at, created = ActionType.objects.get_or_create(name=name)
+
+
+@given("a client with block authorization")
+def define_block(context):
+    authorized_client = Client.objects.create(
+        hostname="authorized_client.es.net",
+        uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        is_authorized=True,
+    )
+    authorized_client.authorized_actiontypes.set([1])
+
+
+@given("a client without block authorization")
+def define_block(context):
+    Client.objects.create(
+        hostname="unauthorized_client.es.net",
+        uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
+    )
 
 
 @when("we're logged in")
@@ -33,7 +51,13 @@ def step_impl(context, status_code):
 def step_impl(context, value):
     context.response = context.test.client.post(
         reverse("api:v1:entry-list"),
-        {"route": value, "actiontype": "block", "comment": "behave"},
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": "behave",
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
     )
 
 
@@ -41,7 +65,13 @@ def step_impl(context, value):
 def step_impl(context, value, comment):
     context.response = context.test.client.post(
         reverse("api:v1:entry-list"),
-        {"route": value, "actiontype": "block", "comment": comment},
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": comment,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
     )
 
 
@@ -54,6 +84,8 @@ def step_impl(context, value, exp):
             "actiontype": "block",
             "comment": "test",
             "expiration": exp,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
         },
     )
 
@@ -70,6 +102,8 @@ def step_impl(context, value, secs):
             "actiontype": "block",
             "comment": "test",
             "expiration": expiration,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
         },
     )
 
@@ -105,9 +139,6 @@ def step_impl(context, model):
 
 @when("we update the {model} {value_from} to {value_to}")
 def step_impl(context, model, value_from, value_to):
-    """
-    :type context: behave.runner.Context
-    """
     context.response = context.test.client.patch(
         reverse(f"api:v1:{model.lower()}-detail", args=[value_from]),
         {model.lower(): value_to},
@@ -136,3 +167,14 @@ def step_impl(context, value, model):
             break
 
     context.test.assertTrue(found)
+
+
+@when("we register a client named {hostname} with the uuid of {uuid}")
+def step_impl(context, hostname, uuid):
+    context.response = context.test.client.post(
+        reverse("api:v1:client-list"),
+        {
+            "hostname": hostname,
+            "uuid": uuid,
+        },
+    )
