@@ -84,7 +84,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             "is_authorized"
         )
         if not authorized_client or actiontype not in authorized_actiontypes:
-            logging.info(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
+            logging.debug(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
             logging.info(
                 f"{client_uuid} is not allowed to add an entry to the {actiontype} list"
             )
