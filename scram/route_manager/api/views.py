@@ -8,12 +8,17 @@ from django.db.models import Q
 from django.http import Http404
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Entry, IgnoreEntry
-from .exceptions import IgnoredRoute, PrefixTooLarge
-from .serializers import ActionTypeSerializer, EntrySerializer, IgnoreEntrySerializer
+from ..models import ActionType, Client, Entry, IgnoreEntry
+from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
+from .serializers import (
+    ActionTypeSerializer,
+    ClientSerializer,
+    EntrySerializer,
+    IgnoreEntrySerializer,
+)
 
 channel_layer = get_channel_layer()
 
@@ -32,6 +37,14 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
     lookup_field = "route"
 
 
+class ClientViewSet(viewsets.ModelViewSet):
+    queryset = Client.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = ClientSerializer
+    lookup_field = "hostname"
+    http_method_names = ["post"]
+
+
 class EntryViewSet(viewsets.ModelViewSet):
     queryset = Entry.objects.filter(is_active=True)
     permission_classes = (IsAuthenticated,)
@@ -43,6 +56,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
+
         comment = serializer.validated_data["comment"]
         tmp_exp = self.request.POST.get("expiration", "")
 
@@ -51,9 +65,25 @@ class EntryViewSet(viewsets.ModelViewSet):
         except ValueError:
             logging.info(f"Could not parse expiration DateTime string {tmp_exp!r}.")
 
+        # Make sure we put in an acceptable sized prefix
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge()
+
+        # Make sure this client is authorized to add this entry with this actiontype
+        client_uuid = self.request.data["uuid"]
+        authorized_actiontypes = Client.objects.filter(uuid=client_uuid).values_list(
+            "authorized_actiontypes__name", flat=True
+        )
+        authorized_client = Client.objects.filter(uuid=client_uuid).values(
+            "is_authorized"
+        )
+        if not authorized_client or actiontype not in authorized_actiontypes:
+            logging.info(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
+            logging.info(
+                f"{client_uuid} is not allowed to add an entry to the {actiontype} list"
+            )
+            raise ActiontypeNotAllowed()
 
         # Don't process if we have the entry in the ignorelist
         overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
