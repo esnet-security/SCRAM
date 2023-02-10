@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.http import Http404
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -39,6 +40,7 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
+    # We want to allow a client to be registered from anywhere
     permission_classes = (AllowAny,)
     serializer_class = ClientSerializer
     lookup_field = "hostname"
@@ -52,6 +54,9 @@ class EntryViewSet(viewsets.ModelViewSet):
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
 
+    # Ovveride the permissions classes for POST method since we want to accept Entry creates from any client
+    # Note: We make authorization decisions on whether to actually create the object in this method later
+    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     # noinspection PyTypeChecker
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
