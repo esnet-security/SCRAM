@@ -44,7 +44,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
         comment = serializer.validated_data["comment"]
-        tmp_exp = self.request.POST.get("expiration", "")
+        tmp_exp = self.request.data.get("expiration", "")
 
         try:
             expiration = parse_datetime(tmp_exp)  # noqa: F841
