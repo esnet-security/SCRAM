@@ -36,7 +36,8 @@ Accepted branch naming examples:
 
 ## Testing
 
-We should be testing as much as we reasonably can. Currently, there is a mix of (behave-django)[https://behave-django.readthedocs.io/en/stable/] and pytest. If you are unsure which of the two to use, please feel free to ask.
+We should be testing as much as we reasonably can. Currently, there is a mix of [behave-django](https://behave-django.readthedocs.io/en/stable/) and pytest. 
+If you are unsure which of the two to use, please feel free to ask.
 
 * To run all behave tests `make behave-all`
 * To run a specific set of behave tests `make behave FEATURE=$feature-name`
@@ -49,11 +50,23 @@ Ideally we would never have failing tests getting merged, so clearing up the `ma
 #### Debugging Tests
 
 If you are seeing failed API calls, you can try to browse the API directly in a web browser. You can also try to run some curl commands.
+You will need to create and authorize a client before you can make any API calls to affect change.
 
-* Use curl with basic auth and json content type header 
-   1. Make sure you know the admin user password for basic auth `make pass-reset`
-   2. Get the correct port `make django-url`
-   3. Replace with the correct port `curl -XPOST --user admin:password http://0.0.0.0:62410/api/v1/entrys/ -H 'Content-Type: application/json' --data '{"route": "1.1.1.1/32", "actiontype": "block"}'; echo`
+* To create a UUID for use with a client you can use python in an interactive terminal:
+    1. ```python
+      import uuid
+      print(str(uuid.uuid4()))
+      ```
+* To create a client
+    1. Make sure you know the admin user password for basic auth `make pass-reset`
+    2. `make django-open`
+    3. Log into admin site
+    4. Create a client using the uuid you made in the last step
+
+* Use curl with basic auth and json content type header
+    1. Get the correct port `make django-url`
+    2. Replace with the correct port `curl -XPOST http://0.0.0.0:62410/api/v1/entrys/ -H 'Content-Type: application/json' 
+       --data '{"route": "1.1.1.1/32", "actiontype": "block", "comment": "testing", "uuid": "UUID GOES HERE"}'; echo`
 
 Trying to write test output to a file is a challenge due to running in ephemeral docker containers, but you should be able to print to stderr to get some debug info as needed as well.
 

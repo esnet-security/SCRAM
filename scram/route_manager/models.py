@@ -106,4 +106,17 @@ class IgnoreEntry(models.Model):
         return str(self.route)
 
 
+class Client(models.Model):
+    """Any client that would like to hit the API to add entries (e.g. Zeek)"""
+
+    hostname = models.CharField(max_length=50, unique=True)
+    uuid = models.UUIDField()
+
+    is_authorized = models.BooleanField(null=True, blank=True, default=False)
+    authorized_actiontypes = models.ManyToManyField(ActionType)
+
+    def __str__(self):
+        return str(self.hostname)
+
+
 channel_layer = get_channel_layer()

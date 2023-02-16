@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Entry, IgnoreEntry, Route
+from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,12 @@ class RouteSerializer(serializers.ModelSerializer):
         fields = [
             "route",
         ]
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["hostname", "uuid"]
 
 
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
@@ -46,6 +52,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         comment = validated_data.pop("comment")
+
         route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
         entry_instance, created = Entry.objects.get_or_create(

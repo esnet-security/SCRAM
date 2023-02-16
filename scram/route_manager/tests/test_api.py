@@ -3,6 +3,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from scram.route_manager.models import Client
+
 
 class TestAddRemoveIP(APITestCase):
     def setUp(self):
@@ -11,32 +13,76 @@ class TestAddRemoveIP(APITestCase):
             "admin", "admin@es.net", "admintestpassword"
         )
         self.client.login(username="admin", password="admintestpassword")
+        self.authorized_client = Client.objects.create(
+            hostname="authorized_client.es.net",
+            uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            is_authorized=True,
+        )
+        self.authorized_client.authorized_actiontypes.set([1])
 
     def test_block_ipv4(self):
         response = self.client.post(
-            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+            self.url,
+            {
+                "route": "1.2.3.4",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv4(self):
         self.client.post(
-            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+            self.url,
+            {
+                "route": "1.2.3.4",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
         )
         response = self.client.post(
-            self.url, {"route": "1.2.3.4", "comment": "test"}, format="json"
+            self.url,
+            {
+                "route": "1.2.3.4",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_ipv6(self):
         response = self.client.post(
-            self.url, {"route": "1::", "comment": "test"}, format="json"
+            self.url,
+            {
+                "route": "1::",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv6(self):
-        self.client.post(self.url, {"route": "1::", "comment": "test"}, format="json")
+        self.client.post(
+            self.url,
+            {
+                "route": "1::",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
+        )
         response = self.client.post(
-            self.url, {"route": "1::", "comment": "test"}, format="json"
+            self.url,
+            {
+                "route": "1::",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 

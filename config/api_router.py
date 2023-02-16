@@ -2,6 +2,7 @@ from rest_framework.routers import DefaultRouter
 
 from scram.route_manager.api.views import (
     ActionTypeViewSet,
+    ClientViewSet,
     EntryViewSet,
     IgnoreEntryViewSet,
 )
@@ -11,6 +12,7 @@ router = DefaultRouter()
 
 router.register("users", UserViewSet)
 router.register("actiontypes", ActionTypeViewSet)
+router.register("register_client", ClientViewSet)
 router.register("entries", EntryViewSet)
 router.register("ignore_entries", IgnoreEntryViewSet)
 
