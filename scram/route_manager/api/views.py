@@ -4,6 +4,7 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import Http404
 from django.utils.dateparse import parse_datetime
@@ -54,10 +55,10 @@ class EntryViewSet(viewsets.ModelViewSet):
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
 
+    # noinspection PyTypeChecker
     # Ovveride the permissions classes for POST method since we want to accept Entry creates from any client
     # Note: We make authorization decisions on whether to actually create the object in this method later
     @action(detail=True, methods=["post"], permission_classes=[AllowAny])
-    # noinspection PyTypeChecker
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
@@ -76,19 +77,24 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Make sure this client is authorized to add this entry with this actiontype
-        client_uuid = self.request.data["uuid"]
-        authorized_actiontypes = Client.objects.filter(uuid=client_uuid).values_list(
-            "authorized_actiontypes__name", flat=True
-        )
-        authorized_client = Client.objects.filter(uuid=client_uuid).values(
-            "is_authorized"
-        )
-        if not authorized_client or actiontype not in authorized_actiontypes:
-            logging.debug(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
-            logging.info(
-                f"{client_uuid} is not allowed to add an entry to the {actiontype} list"
+        if self.request.data.get("uuid", False):
+            client_uuid = self.request.data["uuid"]
+            authorized_actiontypes = Client.objects.filter(
+                uuid=client_uuid
+            ).values_list("authorized_actiontypes__name", flat=True)
+            authorized_client = Client.objects.filter(uuid=client_uuid).values(
+                "is_authorized"
             )
-            raise ActiontypeNotAllowed()
+            if not authorized_client or actiontype not in authorized_actiontypes:
+                logging.debug(
+                    f"Client {client_uuid} actiontypes: {authorized_actiontypes}"
+                )
+                logging.info(
+                    f"{client_uuid} is not allowed to add an entry to the {actiontype} list"
+                )
+                raise ActiontypeNotAllowed()
+        elif not self.request.user.has_perm("route_manager.can_add_entry"):
+            raise PermissionDenied()
 
         # Don't process if we have the entry in the ignorelist
         overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
