@@ -86,7 +86,7 @@
             {% if actiontype.name|lower == entry.actiontype|lower %}
               <li class="list-group-item list-group-item-light text-center">
                 <a class="link" href="{% url 'route_manager:detail' entry.id %}">
-                  {{ entry }}</a>
+                  {{ entry.route }} - Expires: {{ entry.expiration }}</a>
              <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i><script>getStatus("{{ entry.route }}", "{{ entry.pk }}");</script>
              </li>
             {% endif %}
