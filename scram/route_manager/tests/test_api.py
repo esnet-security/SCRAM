@@ -93,12 +93,20 @@ class TestUnauthenticatedAccess(APITestCase):
         self.ignore_url = reverse("api:v1:ignoreentry-list")
 
     def test_unauthenticated_users_have_no_create_access(self):
-        response = self.client.post(self.entry_url, {"entry": "1.2.3.4"}, format="json")
+        response = self.client.post(
+            self.entry_url,
+            {
+                "route": "1.2.3.4",
+                "comment": "test",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
+            format="json",
+        )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
         response = self.client.post(
-            self.ignore_url, {"entry": "1.2.3.4"}, format="json"
+            self.ignore_url, {"route": "1.2.3.4"}, format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
