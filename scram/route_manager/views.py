@@ -1,7 +1,5 @@
 import ipaddress
 import json
-import logging
-import uuid
 
 import rest_framework.utils.serializer_helpers
 from channels.layers import get_channel_layer
@@ -19,7 +17,7 @@ from django.views.generic import DetailView, ListView
 
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
-from .models import ActionType, Client, Entry
+from .models import ActionType, Entry
 
 channel_layer = get_channel_layer()
 
@@ -37,14 +35,6 @@ def home_page(request, prefilter=Entry.objects.all()):
             "objs": queryset[:num_entries],
             "total": queryset.count(),
         }
-
-    # Autocreate webUI client if it doesn't already exist
-    if not Client.objects.filter(hostname="Web Client").exists():
-        web_client = Client.objects.create(
-            hostname="Web Client", uuid=uuid.uuid4(), is_authorized=True
-        )
-        web_client.authorized_actiontypes.set([1])
-        logging.info("Created local web client")
 
     if settings.AUTOCREATE_ADMIN:
         if User.objects.count() == 0:
