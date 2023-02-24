@@ -9,7 +9,6 @@ from django.db.models import Q
 from django.http import Http404
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -55,10 +54,13 @@ class EntryViewSet(viewsets.ModelViewSet):
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
 
-    # noinspection PyTypeChecker
     # Ovveride the permissions classes for POST method since we want to accept Entry creates from any client
-    # Note: We make authorization decisions on whether to actually create the object in this method later
-    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
+    # Note: We make authorization decisions on whether to actually create the object in the perform_create method later
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [AllowAny()]
+        return super().get_permissions()
+
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
@@ -77,7 +79,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge()
 
         # Make sure this client is authorized to add this entry with this actiontype
-        if self.request.data.get("uuid", False):
+        if self.request.data.get("uuid"):
             client_uuid = self.request.data["uuid"]
             authorized_actiontypes = Client.objects.filter(
                 uuid=client_uuid
