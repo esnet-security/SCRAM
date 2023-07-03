@@ -96,11 +96,12 @@ exec: docker-compose.yaml
 help: Makefile
 	@sed -n 's/^##//p' $<
 
+# TODO: When we move to flowspec this -a flag with change
 ## list-routes: list gobgp routes
 .Phony: list-routes
 list-routes: docker-compose.yaml
-	@docker-compose exec gobgp gobgp global rib
-
+	@docker-compose exec gobgp gobgp global rib -a ipv4
+	@docker-compose exec gobgp gobgp global rib -a ipv6
 
 ## tail-log: tail a docker container's logs (append CONTAINER=container_name_here)
 .Phony: tail-log
