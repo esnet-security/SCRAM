@@ -12,6 +12,8 @@ services:
     image: scram_local_django
     depends_on:
       - postgres
+    networks:
+      default: {}
     volumes:
       - $CI_PROJECT_DIR:/app:z
       - /tmp/profile_data:/tmp/profile_data
@@ -33,6 +35,8 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: scram_production_postgres
+    networks:
+      default: {}
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
       - local_postgres_data_backups:/backups:z
@@ -46,6 +50,8 @@ services:
       dockerfile: ./compose/local/docs/Dockerfile
     env_file:
       - ./.envs/.local/.django
+    networks:
+      default: {}
     volumes:
       - $CI_PROJECT_DIR/docs:/docs:z
       - $CI_PROJECT_DIR/config:/app/config:z
@@ -61,6 +67,8 @@ services:
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
+    networks:
+      default: {}
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:
@@ -71,5 +79,15 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/translator/Dockerfile
+    networks:
+      default: {}
     depends_on:
       - gobgp
+
+networks:
+  default:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 0200:c0:ff:ee::/48
