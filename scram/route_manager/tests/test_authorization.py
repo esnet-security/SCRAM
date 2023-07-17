@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from scram.route_manager.authentication_backends import ESnetAuthBackend
+from scram.route_manager.models import Client as ClientModel
 from scram.route_manager.models import Entry
 from scram.users.models import User
 
@@ -37,23 +38,45 @@ class AuthzTest(TestCase):
             self.admin_user,
         ]
 
+        self.authorized_client = ClientModel.objects.create(
+            hostname="authorized_client.es.net",
+            uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            is_authorized=True,
+        )
+        self.authorized_client.authorized_actiontypes.set([1])
+
+        self.unauthorized_client = ClientModel.objects.create(
+            hostname="unauthorized_client.es.net",
+            uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
+        )
+
     def create_entry(self):
         self.client.force_login(self.admin_user)
         self.client.post(
-            reverse("route_manager:add"), {"route": "3.2.3.4/32", "actiontype": "block"}
+            reverse("route_manager:add"),
+            {
+                "route": "3.2.3.4/32",
+                "actiontype": "block",
+                "comment": "create entry",
+                "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            },
         )
         self.client.logout()
         return Entry.objects.latest("id").id
 
     def test_unauthorized_add_entry(self):
-        """ Unauthorized users should not be able to add an entry"""
+        """Unauthorized users should not be able to add an entry"""
 
         for user in self.write_blocked_users:
             if user:
                 self.client.force_login(user)
             response = self.client.post(
                 reverse("route_manager:add"),
-                {"route": "1.2.3.4/32", "actiontype": "block"},
+                {
+                    "route": "1.2.3.4/32",
+                    "actiontype": "block",
+                    "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+                },
             )
             self.assertEqual(response.status_code, 302)
 
@@ -62,7 +85,11 @@ class AuthzTest(TestCase):
             self.client.force_login(user)
             response = self.client.post(
                 reverse("route_manager:add"),
-                {"route": "1.2.3.4/32", "actiontype": "block"},
+                {
+                    "route": "1.2.3.4/32",
+                    "actiontype": "block",
+                    "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+                },
             )
             self.assertEqual(response.status_code, 200)
 

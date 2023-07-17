@@ -13,93 +13,64 @@ Security Catch and Release Automation Manager
 
 :License: BSD
 
+====
 
-Settings
---------
+Overview
+====
 
-Moved to settings_.
+SCRAM is a web based service to assist in automation of security data. There is a web interface as well as a REST API available.
+The idea is to create actiontypes which allow you to take actions on the IPs/cidr networks you provide.
 
-.. _settings: http://cookiecutter-django.readthedocs.io/en/latest/settings.html
+Components
+====
+SCRAM utilizes ``docker compose`` to run the following stack in production:
 
-Basic Commands
---------------
+- nginx (as a webserver and static asset server)
+- django (web framework)
+- postgres (database)
+- redis (backs django channel layers)
+- gobgp (communicating with networking gear over bgp for actions; blocking, shunting, redirecting, etc)
+- translator (a tool to pull information from SCRAM via websockets and send to gobgp container over gRPC)
 
-Setting Up Your Users
-^^^^^^^^^^^^^^^^^^^^^
+A predefined actiontype of "block" exists which utilizes bgp nullrouting to effectivley block any traffic you want to apply.
+You can add any other actiontypes via the admin page of the web interface dynamically, but keep in mind translator support would need to be added as well.
 
-* To create a **normal user account**, just go to Sign Up and fill out the form. Once you submit it, you'll see a "Verify Your E-mail Address" page. Go to your console to see a simulated email verification message. Copy the link into your browser. Now the user's email should be verified and ready to go.
+Installation
+====
 
-* To create an **superuser account**, use this command::
+To get a basic implementation up and running locally:
 
-    $ python manage.py createsuperuser
-
-For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
-
-Type checks
-^^^^^^^^^^^
-
-Running type checks with mypy:
-
-::
-
-  $ mypy scram
-
-Test coverage
-^^^^^^^^^^^^^
-
-To run the tests, check your test coverage, and generate an HTML coverage report::
-
-    $ coverage run -m pytest
-    $ coverage html
-    $ open htmlcov/index.html
-
-Running tests with py.test
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-
-  $ pytest
-
-Live reloading and Sass CSS compilation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Moved to `Live reloading and SASS compilation`_.
-
-.. _`Live reloading and SASS compilation`: http://cookiecutter-django.readthedocs.io/en/latest/live-reloading-and-sass-compilation.html
+- Pull this repository to start: ``git clone``
+- ``cd scram``
+- Create ``$scram_home/.envs/.production/.django`` a template exists in the docs/templates directory
+    - Make sure to update all the settings in the file
+    - Remove the OIDC parts if you do not want to use OIDC
+- Create ``$scram_home/.envs/.production/.postgres`` a template exists in the docs/templates directory
+    - Make sure to set the right credentials
+    - By default this template assumes you have a service defined in docker compose file called postgres. If you use another postgres server, make sure to update that setting as well
+- ``make build``
+- ``make toggle-prod``
+    - This will turn off debug mode in django and start using nginx to reverse proxy for the app
+        - you should add some certs as well and pass them into the nginx container
+- ``make run``
+- ``make django-open``
 
 
+*** Copyright Notice ***
+====
 
-Celery
-^^^^^^
+Security Catch and Release Automation Manager (SCRAM) Copyright (c) 2022,
+The Regents of the University of California, through Lawrence Berkeley
+National Laboratory (subject to receipt of any required approvals from the
+U.S. Dept. of Energy). All rights reserved.
 
-This app comes with Celery.
+If you have questions about your rights to use or distribute this software,
+please contact Berkeley Lab's Intellectual Property Office at
+IPO@lbl.gov.
 
-To run a celery worker:
-
-.. code-block:: bash
-
-    cd scram
-    celery -A config.celery_app worker -l info
-
-Please note: For Celery's import magic to work, it is important *where* the celery commands are run. If you are in the same folder with *manage.py*, you should be right.
-
-
-
-
-
-Deployment
-----------
-
-The following details how to deploy this application.
-
-
-
-Docker
-^^^^^^
-
-See detailed `cookiecutter-django Docker documentation`_.
-
-.. _`cookiecutter-django Docker documentation`: http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html
-
-
-
+NOTICE.  This Software was developed under funding from the U.S. Department
+of Energy and the U.S. Government consequently retains certain rights.  As
+such, the U.S. Government has been granted for itself and others acting on
+its behalf a paid-up, nonexclusive, irrevocable, worldwide license in the
+Software to reproduce, distribute copies to the public, prepare derivative
+works, and perform publicly and display publicly, and to permit others to do so.

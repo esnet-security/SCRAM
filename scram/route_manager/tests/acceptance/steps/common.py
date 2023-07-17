@@ -1,7 +1,11 @@
-from behave import given, then, when
+import datetime
+import time
+
+import django.conf as conf
+from behave import given, step, then, when
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType
+from scram.route_manager.models import ActionType, Client
 
 
 @given("a {name} actiontype is defined")
@@ -9,9 +13,33 @@ def define_block(context, name):
     at, created = ActionType.objects.get_or_create(name=name)
 
 
+@given("a client with block authorization")
+def define_block(context):
+    authorized_client = Client.objects.create(
+        hostname="authorized_client.es.net",
+        uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        is_authorized=True,
+    )
+    authorized_client.authorized_actiontypes.set([1])
+
+
+@given("a client without block authorization")
+def define_block(context):
+    Client.objects.create(
+        hostname="unauthorized_client.es.net",
+        uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
+    )
+
+
 @when("we're logged in")
 def step_impl(context):
     context.test.client.login(username="user", password="password")
+
+
+@when("the CIDR prefix limits are {v4_minprefix:d} and {v6_minprefix:d}")
+def step_impl(context, v4_minprefix, v6_minprefix):
+    conf.settings.V4_MINPREFIX = v4_minprefix
+    conf.settings.V6_MINPREFIX = v6_minprefix
 
 
 @then("we get a {status_code:d} status code")
@@ -19,10 +47,81 @@ def step_impl(context, status_code):
     context.test.assertEqual(context.response.status_code, status_code)
 
 
-@when("we add the entry {value}")
+@when("we add the entry {value:S}")
 def step_impl(context, value):
     context.response = context.test.client.post(
-        reverse("api:v1:entry-list"), {"route": value, "actiontype": "block"}
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": "behave",
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
+    )
+
+
+@when("we add the entry {value:S} with comment {comment}")
+def step_impl(context, value, comment):
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": comment,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
+    )
+
+
+@when("we add the entry {value:S} with expiration {exp:S}")
+def step_impl(context, value, exp):
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": "test",
+            "expiration": exp,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
+    )
+
+
+@when("we add the entry {value:S} with expiration in {secs:d} seconds")
+def step_impl(context, value, secs):
+    td = datetime.timedelta(seconds=secs)
+    expiration = datetime.datetime.now() + td
+
+    context.response = context.test.client.post(
+        reverse("api:v1:entry-list"),
+        {
+            "route": value,
+            "actiontype": "block",
+            "comment": "test",
+            "expiration": expiration,
+            # Authorized uuid
+            "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+        },
+    )
+
+
+@step("we wait {secs:d} seconds")
+def step_impl(context, secs):
+    time.sleep(secs)
+
+
+@then("we remove expired entries")
+def step_impl(context):
+    context.response = context.test.client.get(reverse("route_manager:process-expired"))
+
+
+@when("we add the ignore entry {value:S}")
+def step_impl(context, value):
+    context.response = context.test.client.post(
+        reverse("api:v1:ignoreentry-list"), {"route": value, "comment": "test api"}
     )
 
 
@@ -40,9 +139,6 @@ def step_impl(context, model):
 
 @when("we update the {model} {value_from} to {value_to}")
 def step_impl(context, model, value_from, value_to):
-    """
-    :type context: behave.runner.Context
-    """
     context.response = context.test.client.patch(
         reverse(f"api:v1:{model.lower()}-detail", args=[value_from]),
         {model.lower(): value_to},
@@ -71,3 +167,14 @@ def step_impl(context, value, model):
             break
 
     context.test.assertTrue(found)
+
+
+@when("we register a client named {hostname} with the uuid of {uuid}")
+def step_impl(context, hostname, uuid):
+    context.response = context.test.client.post(
+        reverse("api:v1:client-list"),
+        {
+            "hostname": hostname,
+            "uuid": uuid,
+        },
+    )

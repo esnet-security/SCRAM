@@ -1,35 +1,28 @@
 import ipaddress
 import time
 
-import gobgp_pb2
 from behave import then, when
 
 
-@when("we add {route} to the {actiontype} list")
-def xadd(context, route, actiontype):
-    context.db.xadd(f"{actiontype}_add", {"route": route, "actiontype": actiontype})
+@when("we add {route} to the block list")
+def add_block(context, route):
+    ip = ipaddress.ip_interface(route)
+    context.gobgp.add_path(ip)
 
 
-@when("we delete {route} from the {actiontype} list")
-def xdel(context, route, actiontype):
-    context.db.xadd(f"{actiontype}_remove", {"route": route, "actiontype": actiontype})
+@when("we delete {route} from the block list")
+def del_block(context, route):
+    ip = ipaddress.ip_interface(route)
+    context.gobgp.del_path(ip)
 
 
 def get_block_status(context, ip):
     # Allow our add/delete requests to settle
     time.sleep(1)
 
-    ip_obj = ipaddress.ip_address(ip)
-    if ip_obj.version == 6:
-        family = gobgp_pb2.Family.AFI_IP6
-    else:
-        family = gobgp_pb2.Family.AFI_IP
+    ip_obj = ipaddress.ip_interface(ip)
 
-    request = gobgp_pb2.ListPathRequest(
-        family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST)
-    )
-
-    for path in context.stub.ListPath(request):
+    for path in context.gobgp.get_prefixes(ip_obj):
         if ip_obj in ipaddress.ip_network(path.destination.prefix):
             return True
 

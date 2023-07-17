@@ -16,13 +16,15 @@
       {% csrf_token %}
       <div class="form-group inline mb-2">
         <input class="form-control mb-2 mr-2" name="route" placeholder="cidr" type="text">
-        <select class="form-control mb-2" name="actiontype">
+        <select class="form-control mb-2 mr-2" name="actiontype">
           {% for at in entries.keys %}
             {% if at.available %}
               <option>{{ at }}</option>
             {% endif %}
           {% endfor %}
         </select>
+        <input class="form-control mb-2 mr-2" name="comment" placeholder="comment" type="text">
+        <input class="form-control mb-2 mr-2" name="expiration" type="datetime-local">
         <button class="btn btn-info mb-2 ml-2" style="background-color:#2ba6c8!important;" type="submit">Add Entry</button>
       </div>
     </form>

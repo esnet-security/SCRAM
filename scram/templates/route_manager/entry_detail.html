@@ -2,18 +2,20 @@
 
 {% block content %}
   <div class="row d-flex mt-4">
-    <div class="col col-md-4 offset-md-4">
-      <table class="table table-striped">
+    <div class="col col-md-4 offset-md-2">
+      <table class="table table-striped" style="white-space:nowrap;">
         <tr>
           <th>Entry</th>
           <th>Actiontype</th>
-          <th>Is Active</th>
+          <th class="text-center">Expiration</th>
+          <th>Active</th>
           <th></th>
         </tr>
         <tr>
           <td>{{ entry.route }}</td>
           <td class="text-center">{{ entry.actiontype.name }}</td>
-          <td>{{ entry.is_active }}</td>
+          <td>{{ entry.expiration }}</td>
+          <td class="text-center">{{ entry.is_active }}</td>
           <td>
             <form class="form-inline" action="{% url 'route_manager:delete' entry.id %}" method="POST">
             {% csrf_token %}

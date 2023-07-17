@@ -6,14 +6,15 @@ Feature: an automated source adds a block entry
     Then we get a 403 status code
 
   Scenario Outline: add a block entry
+    Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>
     And  we list the entrys
 
     Then the number of entrys is 1
-    And  <cidr> is one of our list of entrys
-    And  <ip> is contained in our entrys
-
+    And <cidr> is one of our list of entrys
+    And <ip> is contained in our list of entrys
+    And <cidr> is announced by block translators
 
     Examples: v4 IPs
       | ip          | cidr           |
@@ -25,7 +26,16 @@ Feature: an automated source adds a block entry
       | 2000:: | 2000::/128 |
       | ::1    | ::1/128    |
 
+  @history
+  Scenario: add a block entry with a comment
+    Given a client with block authorization
+    When we're logged in
+    And  we add the entry 127.0.0.2 with comment it's coming from inside the house
+    Then we get a 201 status code
+    And  the change entry for 127.0.0.2 is it's coming from inside the house
+
   Scenario Outline: add a block entry multiple times and it's accepted
+    Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>
     And  we add the entry <ip>
@@ -41,6 +51,7 @@ Feature: an automated source adds a block entry
       | ::1         |
 
   Scenario Outline: invalid block entries can't be added
+    Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>
 
@@ -58,14 +69,18 @@ Feature: an automated source adds a block entry
       | 2000::/129  |
 
   Scenario Outline: add a block entry as a cidr address
+    Given a client with block authorization
     When we're logged in
-    And  we add the entry <ip>
-    And  we list the entrys
+    And the CIDR prefix limits are 8 and 32
+    And we add the entry <ip>
+    And we list the entrys
 
     Then the number of entrys is 1
+    And <ip> is announced by block translators
+
     Examples:
       | ip                 |
       | 1.2.3.4/32         |
-      | 10.1.0.0/16         |
+      | 10.1.0.0/16        |
       | 2000::1/128        |
       | 2001:4f8:3:ba::/64 |

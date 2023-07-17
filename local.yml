@@ -1,17 +1,21 @@
-version: '3'
+version: '3.4'
 
 volumes:
   local_postgres_data: {}
   local_postgres_data_backups: {}
 
 services:
-  django: &django
+  django:
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
     depends_on:
       - postgres
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - $CI_PROJECT_DIR:/app:z
       - /tmp/profile_data:/tmp/profile_data
@@ -21,77 +25,61 @@ services:
     ports:
       - "8000"
     command: /start
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://django:8000/process_expired/" ]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 5
 
   postgres:
     build:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: scram_production_postgres
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
 
-  docs:
-    image: scram_local_docs
-    build:
-      context: .
-      dockerfile: ./compose/local/docs/Dockerfile
-    env_file:
-      - ./.envs/.local/.django
-    volumes:
-      - $CI_PROJECT_DIR/docs:/docs:z
-      - $CI_PROJECT_DIR/config:/app/config:z
-      - $CI_PROJECT_DIR/scram:/app/scram:z
-    ports:
-      - "7000"
-    command: /start-docs
-
   redis:
     image: redis:5.0
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     ports:
       - "6379"
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:
       - "179"
       - "50051"
 
-  redis_to_gobgp_translator:
+  translator:
     build:
       context: .
       dockerfile: ./compose/local/translator/Dockerfile
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     depends_on:
-      - redis
       - gobgp
 
-  celeryworker:
-    <<: *django
-    image: scram_local_celeryworker
-    depends_on:
-      - redis
-      - postgres
-
-    ports: []
-    command: /start-celeryworker
-
-  celerybeat:
-    <<: *django
-    image: scram_local_celerybeat
-    depends_on:
-      - redis
-      - postgres
-
-    ports: []
-    command: /start-celerybeat
-
-  flower:
-    <<: *django
-    image: scram_local_flower
-    ports:
-      - "5555"
-    command: /start-flower
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 0200:c0:ff:ee::/48

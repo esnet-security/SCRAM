@@ -1,13 +1,20 @@
 from rest_framework.routers import DefaultRouter
 
-from scram.route_manager.api.views import ActionTypeViewSet, EntryViewSet
+from scram.route_manager.api.views import (
+    ActionTypeViewSet,
+    ClientViewSet,
+    EntryViewSet,
+    IgnoreEntryViewSet,
+)
 from scram.users.api.views import UserViewSet
 
 router = DefaultRouter()
 
 router.register("users", UserViewSet)
 router.register("actiontypes", ActionTypeViewSet)
-router.register("entrys", EntryViewSet)
+router.register("register_client", ClientViewSet)
+router.register("entries", EntryViewSet)
+router.register("ignore_entries", IgnoreEntryViewSet)
 
 
 app_name = "api"

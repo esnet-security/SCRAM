@@ -70,9 +70,6 @@ target/
 # pyenv
 .python-version
 
-# celery beat schedule file
-celerybeat-schedule
-
 # Environments
 .venv
 venv/
@@ -339,7 +336,7 @@ scram/media/
 .ipython/
 .envs/*
 !.envs/.local/
-active.yml
+docker-compose.yaml
 
 coverage.coverage
 coverage.xml

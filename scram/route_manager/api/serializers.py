@@ -2,8 +2,10 @@ import logging
 
 from netfields import rest_framework
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
+from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Entry, Route
+from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
 logger = logging.getLogger(__name__)
 
@@ -24,23 +26,46 @@ class RouteSerializer(serializers.ModelSerializer):
         ]
 
 
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = ["hostname", "uuid"]
+
+
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
     )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
+    who = CurrentUserDefault()
+    comment = serializers.CharField()
 
     class Meta:
         model = Entry
-        fields = ["route", "actiontype", "url"]
+        fields = ["route", "actiontype", "url", "comment", "who"]
+
+    def get_comment(self, obj):
+        return obj.get_change_reason()
 
     def create(self, validated_data):
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
+        comment = validated_data.pop("comment")
+
         route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
         entry_instance, created = Entry.objects.get_or_create(
-            **validated_data, route=route_instance, actiontype=actiontype_instance
+            route=route_instance, actiontype=actiontype_instance
         )
+
+        logger.debug(f"{comment}")
+        update_change_reason(entry_instance, comment)
+
         return entry_instance
+
+
+class IgnoreEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IgnoreEntry
+        fields = ["route", "comment"]

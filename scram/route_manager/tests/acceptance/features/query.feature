@@ -2,9 +2,11 @@ Feature: we can query the list of entries for a specific entry
   The api should be able to return information about specific entries
 
   Scenario Outline: we can succesfully query our entry list
+    Given a client with block authorization
     When we're logged in
-    And  we add the entry <ip>
-    And  we query for <ip>
+    And the CIDR prefix limits are 8 and 32
+    And we add the entry <ip>
+    And we query for <ip>
     Then we get a 200 status code
 
     Examples: IPs
@@ -15,7 +17,9 @@ Feature: we can query the list of entries for a specific entry
       | 201::0/32     |
 
   Scenario Outline: we can add a host and then query based on other parts of the CIDR
+    Given a client with block authorization
     When we're logged in
+    And the CIDR prefix limits are 8 and 32
     And we add the entry <ip>
     And we query for <cidr>
     Then we get a 200 status code
@@ -35,9 +39,12 @@ Feature: we can query the list of entries for a specific entry
       | 2001::/32   | 2001::1/64  |
 
   Scenario Outline: we cant query larger than our prefixmin
+    Given a client with block authorization
     When we're logged in
-    And  we add the entry <ip>
-    And  we query for <ip>
+    And the CIDR prefix limits are 1 and 1
+    And we add the entry <ip>
+    And the CIDR prefix limits are 8 and 32
+    And we query for <ip>
     Then we get a 400 status code
 
 
@@ -47,6 +54,7 @@ Feature: we can query the list of entries for a specific entry
       | 201::0/31     |
 
   Scenario Outline: we cant enter malformed IPs
+    Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>
     And  we query for <ip>
