@@ -17,6 +17,8 @@ services:
       - redis
     networks:
       default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - ./staticfiles:/staticfiles
     env_file:
@@ -38,6 +40,8 @@ services:
     image: scram_production_postgres
     networks:
       default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
@@ -51,6 +55,8 @@ services:
       - django
     networks:
       default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/scram/ssl/server.crt:/etc/ssl/server.crt
@@ -64,6 +70,8 @@ services:
     image: redis:5.0
     networks:
       default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - production_redis_data:/var/lib/redis:Z
 
@@ -71,6 +79,8 @@ services:
     image: jauderho/gobgp:v2.32.0
     volumes:
       - ./gobgp_config:/config:z
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     networks:
       default: {}
       peering:
@@ -89,12 +99,13 @@ services:
       - gobgp
     networks:
       default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     env_file:
       - ./.envs/.production/.translator
 
 networks:
   default:
-    enable_ipv6: true
     ipam:
       driver: default
       config:
