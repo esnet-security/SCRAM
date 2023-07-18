@@ -106,6 +106,7 @@ services:
 
 networks:
   default:
+    enable_ipv6: true
     ipam:
       driver: default
       config:
