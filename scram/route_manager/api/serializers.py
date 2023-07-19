@@ -38,7 +38,11 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     )
     route = rest_framework.CidrAddressField()
     actiontype = serializers.CharField(default="block")
-    who = CurrentUserDefault()
+    if CurrentUserDefault():
+        # This is set if we are calling this serializer from WUI
+        who = CurrentUserDefault()
+    else:
+        who = serializers.CharField()
     comment = serializers.CharField()
 
     class Meta:
