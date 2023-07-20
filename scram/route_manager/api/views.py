@@ -64,7 +64,12 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-
+        if self.request.user.username:
+            # This is set if our request comes through the WUI path
+            who = self.request.user.username
+        else:
+            # This is set if we pass the "who" through the json data in an API call (like from Zeek)
+            who = serializer.validated_data["who"]
         comment = serializer.validated_data["comment"]
         tmp_exp = self.request.data.get("expiration", "")
 
@@ -120,8 +125,8 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
             if expiration:
                 entry.expiration = expiration
+            entry.who = who
             entry.is_active = True
-            entry.who = self.request.user.username
             entry.comment = comment
             logging.info(f"{entry}")
             entry.save()

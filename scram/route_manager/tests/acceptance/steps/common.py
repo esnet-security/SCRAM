@@ -57,6 +57,7 @@ def step_impl(context, value):
             "comment": "behave",
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 

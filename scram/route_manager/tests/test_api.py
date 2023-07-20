@@ -99,6 +99,7 @@ class TestUnauthenticatedAccess(APITestCase):
                 "route": "1.2.3.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+                "who": "person",
             },
             format="json",
         )
