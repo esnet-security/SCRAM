@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := help
+
 ## toggle-prod: configure make to use the production stack
 .Phony: toggle-prod
 toggle-prod:
@@ -80,7 +82,8 @@ down: docker-compose.yaml
 ## exec: executes a given command on a given container (append CONTAINER=container_name_here and COMMAND=command_here)
 .Phony: exec
 exec: docker-compose.yaml
-	@docker compose
+	@docker compose exec $(CONTAINER) $(COMMAND)
+
 # This automatically builds the help target based on commands prepended with a double hashbang
 ## help: print this help output
 .Phony: help
