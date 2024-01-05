@@ -45,7 +45,7 @@ class WebSocketMessage(models.Model):
     )
 
     def __str__(self):
-        return f"{msg_type}: {msg_data} with the route in key {msg_data_route_field}"
+        return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
 
 
 class WebSocketSequenceElement(models.Model):
