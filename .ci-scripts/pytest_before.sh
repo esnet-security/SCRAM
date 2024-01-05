@@ -2,6 +2,8 @@
 
 set -e
 
+env
+
 if [ -z "${CI_REGISTRY}" ]; then
     # GitHub uses Ubuntu
     apk add make
