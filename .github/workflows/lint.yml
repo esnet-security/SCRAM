@@ -19,17 +19,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: flake8: before
+      - name: "[flake8]: before"
         run: "./.ci-scripts/flake8_before.sh"
 
-      - name: flake8: run
+      - name: "[flake8]: run"
         run: "./.ci-scripts/flake8_run.sh"
 
-      - name: pytest: before
+      - name: "[pytest]: before"
         run: "./.ci-scripts/pytest_before.sh"
 
-      - name: pytest: run
+      - name: "[pytest]: run"
         run: "./.ci-scripts/pytest_run.sh"
 
-      - name: pytest: after
+      - name: "[pytest]: after"
         run: "./.ci-scripts/pytest_after.sh"
