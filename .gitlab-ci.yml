@@ -18,9 +18,9 @@ flake8:
   stage: lint
   image: python:3.8-alpine
   before_script:
-  - pip install -q flake8
+  - ./.ci_scripts/flake8_before.sh
   script:
-  - flake8
+  - ./.ci_scripts/flake8_run.sh
 
 pytest:
   stage: test
@@ -28,18 +28,11 @@ pytest:
   services:
   - docker:dind
   before_script:
-  - apk add make
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
-  - ".ci-scripts/pull_images.sh"
-  - make build
-  - ".ci-scripts/push_images.sh"
-  - make migrate
-  - make run
+    - ./.ci_scripts/pytest_before.sh
   script:
-  - make coverage.xml
+    - ./.ci_scripts/pytest_run.sh
   after_script:
-  - make clean
+    - ./.ci_scripts/pytest_after.sh
   artifacts:
     reports:
       coverage_report:

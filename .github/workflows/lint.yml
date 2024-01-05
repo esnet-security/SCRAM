@@ -3,7 +3,7 @@ name: Python package
 on: [push]
 
 jobs:
-  build:
+  lint:
 
     runs-on: ubuntu-latest
     strategy:
@@ -18,10 +18,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+      - name: [flake8] before
+        run: ./.ci-scripts/flake8_before.sh
 
-      - name: Test with Flake8
-        run: flake8
+      - name: [flake8] run
+        run: ./.ci-scripts/flake8_run.sh
+
+      - name: [pytest] before
+        run: ./.ci-scripts/pytest_before.sh
+
+      - name: [pytest] run
+        run: ./.ci-scripts/pytest_run.sh
+
+      - name: [pytest] after
+        run: ./.ci-scripts/pytest_after.sh
