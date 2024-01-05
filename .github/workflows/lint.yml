@@ -28,7 +28,7 @@ jobs:
       - name: Cache Docker images.
         uses: ScribeMD/docker-cache@0.3.7
         with:
-          key: docker-${{ runner.os }}-${{ hashFiles(paths) }}
+          key: docker-${{ runner.os }}-${{ hashFiles('docker-compose.yaml') }}
 
       - name: "[pytest]: before"
         run: "./.ci-scripts/pytest_before.sh"
