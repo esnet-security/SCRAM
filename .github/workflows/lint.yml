@@ -6,6 +6,7 @@ jobs:
   lint:
 
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python: ["3.8", "3.9", "3.10", "3.11"]
@@ -19,16 +20,16 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: flake8: before
-        run: ./.ci-scripts/flake8_before.sh
+        run: "./.ci-scripts/flake8_before.sh"
 
       - name: flake8: run
-        run: ./.ci-scripts/flake8_run.sh
+        run: "./.ci-scripts/flake8_run.sh"
 
       - name: pytest: before
-        run: ./.ci-scripts/pytest_before.sh
+        run: "./.ci-scripts/pytest_before.sh"
 
       - name: pytest: run
-        run: ./.ci-scripts/pytest_run.sh
+        run: "./.ci-scripts/pytest_run.sh"
 
       - name: pytest: after
-        run: ./.ci-scripts/pytest_after.sh
+        run: "./.ci-scripts/pytest_after.sh"
