@@ -6,7 +6,7 @@ env
 
 if [ -z "${CI_REGISTRY}" ]; then
     # Running in GitHub
-    export COMPOSE_PROJECT_NAME=$GITHUB_REPOSITORY
+    export COMPOSE_PROJECT_NAME=$GITHUB_RUN_ID
 else
     # Running in Gitlab
     apk add make
