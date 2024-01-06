@@ -23,9 +23,7 @@ def step_impl(context, route, model):
 @when("we query for {ip}")
 def step_impl(context, ip):
     try:
-        context.response = context.test.client.get(
-            reverse("api:v1:entry-detail", args=[ip])
-        )
+        context.response = context.test.client.get(reverse("api:v1:entry-detail", args=[ip]))
         context.queryException = None
     except ValueError as e:
         context.response = None

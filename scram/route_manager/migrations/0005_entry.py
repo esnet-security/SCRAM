@@ -7,16 +7,19 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0004_actiontype'),
+        ("route_manager", "0004_actiontype"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Entry',
+            name="Entry",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('actiontype', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='route_manager.actiontype')),
-                ('route', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='route_manager.route')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "actiontype",
+                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="route_manager.actiontype"),
+                ),
+                ("route", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to="route_manager.route")),
             ],
         ),
     ]

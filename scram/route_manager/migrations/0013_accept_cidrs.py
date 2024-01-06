@@ -7,13 +7,13 @@ import netfields.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0012_unique_entries'),
+        ("route_manager", "0012_unique_entries"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='route',
-            name='route',
+            model_name="route",
+            name="route",
             field=netfields.fields.CidrAddressField(max_length=43, unique=True),
         ),
     ]

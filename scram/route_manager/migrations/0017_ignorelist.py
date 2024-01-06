@@ -7,16 +7,16 @@ import netfields.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0016_auto_20211202_1933'),
+        ("route_manager", "0016_auto_20211202_1933"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='IgnoreList',
+            name="IgnoreList",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('route', netfields.fields.CidrAddressField(max_length=43, unique=True)),
-                ('comment', models.CharField(max_length=100)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("route", netfields.fields.CidrAddressField(max_length=43, unique=True)),
+                ("comment", models.CharField(max_length=100)),
             ],
         ),
     ]
