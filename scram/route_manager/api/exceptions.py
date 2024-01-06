@@ -12,9 +12,7 @@ class PrefixTooLarge(APIException):
 
 class IgnoredRoute(APIException):
     status_code = 400
-    default_detail = (
-        "This CIDR is on the ignore list. You are not allowed to add it here."
-    )
+    default_detail = "This CIDR is on the ignore list. You are not allowed to add it here."
     default_code = "ignored_route"
 
 

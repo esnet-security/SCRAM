@@ -8,8 +8,8 @@ def create_groups(apps, schema_editor):
     db_alias = schema_editor.connection.alias
     emit_post_migrate_signal(2, False, db_alias)
 
-    Group = apps.get_model('auth', 'Group')
-    Permission = apps.get_model('auth', 'Permission')
+    Group = apps.get_model("auth", "Group")
+    Permission = apps.get_model("auth", "Permission")
 
     view_entry = Permission.objects.get(name="Can view entry")
     view_route = Permission.objects.get(name="Can view route")
@@ -31,14 +31,13 @@ def create_groups(apps, schema_editor):
     rw.permissions.set(read_perms + write_perms)
     rw.save()
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contenttypes', '__latest__'),
-        ('sites', '__latest__'),
-        ('route_manager', '0013_accept_cidrs'),
+        ("contenttypes", "__latest__"),
+        ("sites", "__latest__"),
+        ("route_manager", "0013_accept_cidrs"),
     ]
 
-    operations = [
-        migrations.RunPython(create_groups)
-    ]
+    operations = [migrations.RunPython(create_groups)]

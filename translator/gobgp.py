@@ -44,9 +44,7 @@ class GoBGP(object):
         if ip.ip.version == 6:
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
-                    family=gobgp_pb2.Family(
-                        afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST
-                    ),
+                    family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
                     next_hops=["100::1"],
                     nlris=[nlri],
                 )

@@ -9,9 +9,7 @@ from scram.route_manager.models import Client
 class TestAddRemoveIP(APITestCase):
     def setUp(self):
         self.url = reverse("api:v1:entry-list")
-        self.superuser = get_user_model().objects.create_superuser(
-            "admin", "admin@es.net", "admintestpassword"
-        )
+        self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
             hostname="authorized_client.es.net",
@@ -106,9 +104,7 @@ class TestUnauthenticatedAccess(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
-        response = self.client.post(
-            self.ignore_url, {"route": "1.2.3.4"}, format="json"
-        )
+        response = self.client.post(self.ignore_url, {"route": "1.2.3.4"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_list_access(self):

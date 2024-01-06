@@ -7,10 +7,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_user_detail(user: User):
-    assert (
-        reverse("api:v1:user-detail", kwargs={"username": user.username})
-        == f"/api/v1/users/{user.username}/"
-    )
+    assert reverse("api:v1:user-detail", kwargs={"username": user.username}) == f"/api/v1/users/{user.username}/"
     assert resolve(f"/api/v1/users/{user.username}/").view_name == "api:v1:user-detail"
 
 

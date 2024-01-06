@@ -116,9 +116,7 @@ PASSWORD_HASHERS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -222,9 +220,7 @@ X_FRAME_OPTIONS = "DENY"
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
-EMAIL_BACKEND = env(
-    "DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend"
-)
+EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 5
 
@@ -246,10 +242,7 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(message)s"
-        }
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(process)d %(thread)d %(message)s"}
     },
     "handlers": {
         "console": {
@@ -316,12 +309,7 @@ SCRAM_READONLY_GROUPS = ["svc_scram_readonly"]
 SCRAM_DENIED_GROUPS = ["svc_scram_denied"]
 
 # This is the set of all the groups
-SCRAM_GROUPS = (
-    SCRAM_ADMIN_GROUPS
-    + SCRAM_READWRITE_GROUPS
-    + SCRAM_READONLY_GROUPS
-    + SCRAM_DENIED_GROUPS
-)
+SCRAM_GROUPS = SCRAM_ADMIN_GROUPS + SCRAM_READWRITE_GROUPS + SCRAM_READONLY_GROUPS + SCRAM_DENIED_GROUPS
 
 # This is the full set of groups
 

@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0008_default_block_actiontype'),
+        ("route_manager", "0008_default_block_actiontype"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='history',
-            name='expiration',
-            field=models.DateTimeField(default='9999, 12, 31, tz=timezone.utc'),
+            model_name="history",
+            name="expiration",
+            field=models.DateTimeField(default="9999, 12, 31, tz=timezone.utc"),
         ),
     ]

@@ -128,9 +128,7 @@ def step_impl(context, value):
 
 @when("we remove the {model} {value}")
 def step_impl(context, model, value):
-    context.response = context.test.client.delete(
-        reverse(f"api:v1:{model.lower()}-detail", args=[value])
-    )
+    context.response = context.test.client.delete(reverse(f"api:v1:{model.lower()}-detail", args=[value]))
 
 
 @when("we list the {model}s")

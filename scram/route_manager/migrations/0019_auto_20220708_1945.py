@@ -6,28 +6,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0018_auto_20220702_0203'),
+        ("route_manager", "0018_auto_20220702_0203"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='history',
-            name='is_active',
+            model_name="history",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='history',
-            name='remove_when',
-            field=models.DateTimeField(blank=True, null=True, verbose_name='When did it get removed'),
+            model_name="history",
+            name="remove_when",
+            field=models.DateTimeField(blank=True, null=True, verbose_name="When did it get removed"),
         ),
         migrations.AddField(
-            model_name='history',
-            name='remove_who',
-            field=models.CharField(blank=True, max_length=30, null=True, verbose_name='Username for the removal'),
+            model_name="history",
+            name="remove_who",
+            field=models.CharField(blank=True, max_length=30, null=True, verbose_name="Username for the removal"),
         ),
         migrations.AddField(
-            model_name='history',
-            name='remove_why',
-            field=models.CharField(blank=True, max_length=200, null=True, verbose_name='Comment for the removal action'),
+            model_name="history",
+            name="remove_why",
+            field=models.CharField(
+                blank=True, max_length=200, null=True, verbose_name="Comment for the removal action"
+            ),
         ),
     ]
