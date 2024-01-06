@@ -100,6 +100,7 @@ list-routes: docker-compose.yaml
 ## migrate: makemigrations and then migrate
 .Phony: migrate
 migrate: docker-compose.yaml
+	@docker compose run django ls
 	@docker compose run django python manage.py makemigrations
 	@docker compose run django python manage.py migrate
 
