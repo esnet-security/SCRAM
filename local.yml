@@ -12,6 +12,9 @@ services:
     image: scram_local_django
     depends_on:
       - postgres
+        condition: service_healthy
+      - redis
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
@@ -46,6 +49,8 @@ services:
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
 
   redis:
     image: redis:5.0
@@ -53,6 +58,8 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     ports:
       - "6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
