@@ -6,13 +6,13 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0024_alter_client_is_authorized'),
+        ("route_manager", "0024_alter_client_is_authorized"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='client',
-            old_name='UUID',
-            new_name='uuid',
+            model_name="client",
+            old_name="UUID",
+            new_name="uuid",
         ),
     ]

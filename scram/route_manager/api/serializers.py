@@ -59,9 +59,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
         route_instance, created = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, created = Entry.objects.get_or_create(
-            route=route_instance, actiontype=actiontype_instance
-        )
+        entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
 
         logger.debug(f"{comment}")
         update_change_reason(entry_instance, comment)

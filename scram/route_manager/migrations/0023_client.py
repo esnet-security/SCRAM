@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0022_auto_20230117_1930'),
+        ("route_manager", "0022_auto_20230117_1930"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Client',
+            name="Client",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('hostname', models.CharField(max_length=50)),
-                ('UUID', models.UUIDField()),
-                ('is_authorized', models.BooleanField(blank=True, null=True)),
-                ('authorized_actiontypes', models.ManyToManyField(to='route_manager.ActionType')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("hostname", models.CharField(max_length=50)),
+                ("UUID", models.UUIDField()),
+                ("is_authorized", models.BooleanField(blank=True, null=True)),
+                ("authorized_actiontypes", models.ManyToManyField(to="route_manager.ActionType")),
             ],
         ),
     ]

@@ -43,9 +43,7 @@ def home_page(request, prefilter=Entry.objects.all()):
                 allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*",
             )
             User.objects.create_superuser("admin", "admin@example.com", password)
-            authenticated_admin = authenticate(
-                request, username="admin", password=password
-            )
+            authenticated_admin = authenticate(request, username="admin", password=password)
             login(request, authenticated_admin)
             messages.add_message(
                 request,
@@ -116,9 +114,7 @@ def add_entry(request):
     elif res.status_code == 403:
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
-        messages.add_message(
-            request, messages.WARNING, f"Something went wrong: {res.status_code}"
-        )
+        messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     with transaction.atomic():
         home = home_page(request)
     return home

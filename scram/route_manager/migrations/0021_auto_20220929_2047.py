@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0020_historicalactiontype_historicalentry_historicalignoreentry'),
+        ("route_manager", "0020_historicalactiontype_historicalentry_historicalignoreentry"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='entry',
-            name='comment',
+            model_name="entry",
+            name="comment",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='historicalentry',
-            name='comment',
+            model_name="historicalentry",
+            name="comment",
             field=models.TextField(blank=True, null=True),
         ),
     ]
