@@ -50,7 +50,7 @@ class Entry(models.Model):
     history = HistoricalRecords()
     when = models.DateTimeField(auto_now_add=True)
     who = models.CharField("Username", default="Unknown", max_length=30)
-    expiration = models.DateTimeField(default="9999-12-31 00:00")
+    expiration = models.DateTimeField(default="9999-12-31 00:00Z")
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
         max_length=200,
