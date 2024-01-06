@@ -6,6 +6,8 @@ include:
 
 stages:
 - lint
+- pytest
+# Run code quality and other stuff later
 - test
 
 variables:
@@ -23,7 +25,7 @@ flake8:
   - ./.ci-scripts/flake8_run.sh
 
 pytest:
-  stage: test
+  stage: pytest
   image: docker:24.0.6-dind
   services:
   - docker:dind
