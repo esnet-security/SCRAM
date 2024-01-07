@@ -12,7 +12,7 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Client, Entry, IgnoreEntry
+from ..models import ActionType, Client, Entry, IgnoreEntry, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
 from .serializers import (
     ActionTypeSerializer,
@@ -106,11 +106,17 @@ class EntryViewSet(viewsets.ModelViewSet):
             logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
             raise IgnoredRoute
         else:
-            # Must match a channel name defined in asgi.py
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}",
-                {"type": "translator_add", "message": {"route": str(route)}},
-            )
+            for element in WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num"):
+                msg = element.websocketmessage
+                if msg.msg_data_route_field not in msg.msg_data.keys():
+                    logging.error(f"msg_data_route_field not found in {msg}")
+
+                else:
+                    msg.msg_data[msg.msg_data_route_field] = str(route)
+                    # Must match a channel name defined in asgi.py
+                    async_to_sync(channel_layer.group_send)(
+                        f"translator_{actiontype}", {"type": msg.msg_type, "message": msg.msg_data}
+                    )
 
             serializer.save()
 

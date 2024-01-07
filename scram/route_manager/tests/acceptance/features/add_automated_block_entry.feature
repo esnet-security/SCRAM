@@ -6,7 +6,8 @@ Feature: an automated source adds a block entry
     Then we get a 403 status code
 
   Scenario Outline: add a block entry
-    Given a client with block authorization
+    Given a block actiontype is defined
+    And a client with block authorization
     When we're logged in
     And  we add the entry <ip>
     And  we list the entrys
@@ -69,7 +70,8 @@ Feature: an automated source adds a block entry
       | 2000::/129  |
 
   Scenario Outline: add a block entry as a cidr address
-    Given a client with block authorization
+    Given a block actiontype is defined
+    And a client with block authorization
     When we're logged in
     And the CIDR prefix limits are 8 and 32
     And we add the entry <ip>

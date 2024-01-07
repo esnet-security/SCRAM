@@ -5,12 +5,14 @@ import django.conf as conf
 from behave import given, step, then, when
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType, Client
+from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
 
 
 @given("a {name} actiontype is defined")
 def define_block(context, name):
     at, created = ActionType.objects.get_or_create(name=name)
+    wsm, created = WebSocketMessage.objects.get_or_create(msg_type=f"{name}_add", msg_data={"route": ""}, msg_data_route_field="route")
+    wsse, created = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=at)
 
 
 @given("a client with block authorization")
