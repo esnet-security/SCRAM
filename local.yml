@@ -47,6 +47,23 @@ services:
     env_file:
       - ./.envs/.local/.postgres
 
+  docs:
+    image: scram_local_docs
+    build:
+      context: .
+      dockerfile: ./compose/local/docs/Dockerfile
+    env_file:
+      - ./.envs/.local/.django
+    networks:
+      default: {}
+    volumes:
+      - $CI_PROJECT_DIR/docs:/docs:z
+      - $CI_PROJECT_DIR/config:/app/config:z
+      - $CI_PROJECT_DIR/scram:/app/scram:z
+    ports:
+      - "7000"
+    command: /start-docs
+
   redis:
     image: redis:5.0
     sysctls:
