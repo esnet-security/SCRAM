@@ -11,26 +11,29 @@ from scram.route_manager.models import ActionType, Client, WebSocketMessage, Web
 @given("a {name} actiontype is defined")
 def define_block(context, name):
     at, created = ActionType.objects.get_or_create(name=name)
-    wsm, created = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="route")
-    wsse, created = WebSocketSequenceElement.objects.create(websocketmessage=wsm, verb="A", action_type=at)
+    wsm, created = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
+    wsm.save()
+    wsse, created = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=at)
+    wsse.save()
 
-
-@given("a client with block authorization")
-def define_block(context):
+@given("a client with {name} authorization")
+def define_block(context, name):
+    at, created = ActionType.objects.get_or_create(name=name)
     authorized_client = Client.objects.create(
         hostname="authorized_client.es.net",
         uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
         is_authorized=True,
     )
-    authorized_client.authorized_actiontypes.set([1])
+    authorized_client.authorized_actiontypes.set([at])
 
 
-@given("a client without block authorization")
-def define_block(context):
-    Client.objects.create(
+@given("a client without {name} authorization")
+def define_block(context, name):
+    unauthorized_client = Client.objects.create(
         hostname="unauthorized_client.es.net",
         uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
     )
+    unauthorized_client.authorized_actiontypes.set([])
 
 
 @when("we're logged in")
@@ -61,6 +64,7 @@ def step_impl(context, value):
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             "who": "person",
         },
+        format="json",
     )
 
 
@@ -74,6 +78,7 @@ def step_impl(context, value, comment):
             "comment": comment,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 
@@ -89,6 +94,7 @@ def step_impl(context, value, exp):
             "expiration": exp,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 
@@ -107,6 +113,7 @@ def step_impl(context, value, secs):
             "expiration": expiration,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 

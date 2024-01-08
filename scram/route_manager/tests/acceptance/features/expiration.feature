@@ -2,6 +2,7 @@ Feature: entries auto-expire
   Entries get semi-auto-expired
 
   Scenario: Adding an IP expires after calling process-expiration
+    Given a block actiontype is defined
     Given a client with block authorization
     When we're logged in
     And we add the entry 1.2.3.1/32 with expiration 1970-01-01T00:00:00Z
@@ -22,6 +23,7 @@ Feature: entries auto-expire
     And the number of entrys is 1
 
   Scenario: Adding an IP expires after calling process-expiration
+    Given a block actiontype is defined
     Given a client with block authorization
     When we're logged in
     And we add the entry 1.2.3.1/32 with expiration 1970-01-01T00:00:00Z
@@ -37,6 +39,7 @@ Feature: entries auto-expire
 
 
   Scenario: Adding an IP twice gets expired after the last entry expires
+    Given a block actiontype is defined
     Given a client with block authorization
     When we're logged in
     And we add the entry 1.2.3.1/32 with expiration 1970-01-01T00:00:00Z
@@ -46,6 +49,7 @@ Feature: entries auto-expire
     And 1.2.3.1/32 is announced by block translators
 
   Scenario: Adding an IP twice gets expired after the last entry expires in 2 seconds
+    Given a block actiontype is defined
     Given a client with block authorization
     When we're logged in
     And we add the entry 1.2.3.1/32 with expiration 1970-01-01T00:00:00Z

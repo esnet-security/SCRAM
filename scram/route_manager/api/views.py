@@ -106,7 +106,11 @@ class EntryViewSet(viewsets.ModelViewSet):
             logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
             raise IgnoredRoute
         else:
-            for element in WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num"):
+            elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
+            if not elements:
+                logging.warning(f"No elements found for actiontype={actiontype}.")
+
+            for element in elements:
                 msg = element.websocketmessage
                 msg.msg_data[msg.msg_data_route_field] = str(route)
                 # Must match a channel name defined in asgi.py
