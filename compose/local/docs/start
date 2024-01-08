@@ -4,4 +4,5 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+make apidocs
 make livehtml
