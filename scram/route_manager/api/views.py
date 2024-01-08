@@ -108,15 +108,11 @@ class EntryViewSet(viewsets.ModelViewSet):
         else:
             for element in WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num"):
                 msg = element.websocketmessage
-                if msg.msg_data_route_field not in msg.msg_data.keys():
-                    logging.error(f"msg_data_route_field not found in {msg}")
-
-                else:
-                    msg.msg_data[msg.msg_data_route_field] = str(route)
-                    # Must match a channel name defined in asgi.py
-                    async_to_sync(channel_layer.group_send)(
-                        f"translator_{actiontype}", {"type": msg.msg_type, "message": msg.msg_data}
-                    )
+                msg.msg_data[msg.msg_data_route_field] = str(route)
+                # Must match a channel name defined in asgi.py
+                async_to_sync(channel_layer.group_send)(
+                    f"translator_{actiontype}", {"type": msg.msg_type, "message": msg.msg_data}
+                )
 
             serializer.save()
 
