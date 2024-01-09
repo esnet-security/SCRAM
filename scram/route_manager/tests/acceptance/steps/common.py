@@ -16,6 +16,7 @@ def define_block(context, name):
     wsse, created = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=at)
     wsse.save()
 
+
 @given("a client with {name} authorization")
 def define_block(context, name):
     at, created = ActionType.objects.get_or_create(name=name)

@@ -11,8 +11,10 @@ from config.routing import websocket_urlpatterns
 from scram.route_manager.models import ActionType, Client, Entry, Route, WebSocketMessage, WebSocketSequenceElement
 
 from _pytest.assertion import truncate
+
 truncate.DEFAULT_MAX_LINES = 9999
 truncate.DEFAULT_MAX_CHARS = 9999
+
 
 class TestTranslator(TestCase):
     def setUp(self):
@@ -36,7 +38,6 @@ class TestTranslator(TestCase):
 
         wsm = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="route")
         wsse = WebSocketSequenceElement.objects.create(websocketmessage=wsm, verb="A", action_type=self.actiontype)
-
 
     async def create_communicator(self, name):
         # Each one needs its own, so we can't do this in setUp
