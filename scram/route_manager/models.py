@@ -25,12 +25,8 @@ class Route(models.Model):
 class ActionType(models.Model):
     """Defines an action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
 
-    name = models.CharField(
-        help_text="One-word description of the action", max_length=30
-    )
-    available = models.BooleanField(
-        help_text="Is this a valid choice for new entries?", default=True
-    )
+    name = models.CharField(help_text="One-word description of the action", max_length=30)
+    available = models.BooleanField(help_text="Is this a valid choice for new entries?", default=True)
     history = HistoricalRecords()
 
     def __str__(self):

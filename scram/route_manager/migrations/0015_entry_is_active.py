@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0014_create_groups'),
+        ("route_manager", "0014_create_groups"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='entry',
-            name='is_active',
+            model_name="entry",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
     ]

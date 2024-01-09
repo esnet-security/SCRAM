@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0010_actiontype_helptext'),
+        ("route_manager", "0010_actiontype_helptext"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='history',
-            name='expiration_reason',
-            field=models.CharField(blank=True, help_text='Optional reason for the expiration', max_length=200, null=True),
+            model_name="history",
+            name="expiration_reason",
+            field=models.CharField(
+                blank=True, help_text="Optional reason for the expiration", max_length=200, null=True
+            ),
         ),
     ]

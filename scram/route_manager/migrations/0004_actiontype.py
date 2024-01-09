@@ -6,16 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0003_auto_20210408_0413'),
+        ("route_manager", "0003_auto_20210408_0413"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ActionType',
+            name="ActionType",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=30, verbose_name='One-word description of the action')),
-                ('available', models.BooleanField(default=True, verbose_name='Is this a valid choice for new entries?')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=30, verbose_name="One-word description of the action")),
+                (
+                    "available",
+                    models.BooleanField(default=True, verbose_name="Is this a valid choice for new entries?"),
+                ),
             ],
         ),
     ]

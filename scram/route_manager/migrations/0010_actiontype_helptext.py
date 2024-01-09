@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0009_expiration_to_datetime'),
+        ("route_manager", "0009_expiration_to_datetime"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='actiontype',
-            name='available',
-            field=models.BooleanField(default=True, help_text='Is this a valid choice for new entries?'),
+            model_name="actiontype",
+            name="available",
+            field=models.BooleanField(default=True, help_text="Is this a valid choice for new entries?"),
         ),
         migrations.AlterField(
-            model_name='actiontype',
-            name='name',
-            field=models.CharField(help_text='One-word description of the action', max_length=30),
+            model_name="actiontype",
+            name="name",
+            field=models.CharField(help_text="One-word description of the action", max_length=30),
         ),
     ]
