@@ -111,20 +111,18 @@ class TranslatorSimpleTestCase(TranslatorBaseCase):
         await self.add_ip("2001::", 128)
 
 
-# class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
-#     """Ensure we're only sending messages to the translators we want."""
-#     async def add_ip(self, ip, mask):
-#         communicator = await self.create_communicator(f"translator_{self.action_name}")
+class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
+    """Two translators in the same group, two in another group, single IP, ensure we get only the messages we expect."""
+    def setUp(self):
+        # First call TranslatorBaseCase.setUp()
+        super().setUp()
 
-#         await self.api_create_entry(ip)
-#         response = json.loads(await communicator.receive_from())
-#         # Keep in sync with translator API
-#         assert response == {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+        self.actiontypes = ["block", "block", "noop", "noop"]
+        self.should_match = [True, True, False, False]
+        self.generate_add_msg = lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
 
-#         await communicator.disconnect()
+    async def test_add_v4(self):
+        await self.add_ip("1.2.3.4", 32)
 
-#     async def test_add_v4(self):
-#         await self.add_ip("1.2.3.4", 32)
-
-#     async def test_add_v6(self):
-#         await self.add_ip("2001::", 128)
+    async def test_add_v6(self):
+        await self.add_ip("2001::", 128)
