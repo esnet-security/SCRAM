@@ -63,18 +63,19 @@ class TranslatorBaseCase(TestCase):
         wsm = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="route")
         wsse = WebSocketSequenceElement.objects.create(websocketmessage=wsm, verb="A", action_type=self.actiontype)
 
-    async def get_message(self, communicator, msg, should_match=True):
-        """Receive a message from the WebSocket and validate it."""
-        response = json.loads(await communicator.receive_from())
-        match = response == msg
-        assert match == should_match
+    async def get_messages(self, communicator, messages, should_match):
+        """Receive a number of messages from the WebSocket and validate them."""
+        for msg in messages:
+            response = json.loads(await communicator.receive_from())
+            match = response == msg
+            assert match == should_match
 
     async def add_ip(self, ip, mask):
         async with get_communicators(self.actiontypes, self.should_match) as communicators:
             await self.api_create_entry(ip)
 
             # A list of that many function calls to verify the response
-            get_message_func_calls = [self.get_message(c, self.generate_add_msg(ip, mask), should_match) for c, should_match in communicators]
+            get_message_func_calls = [self.get_messages(c, self.generate_add_msgs(ip, mask), should_match) for c, should_match in communicators]
 
             # Turn our list into parameters to the function and await them all
             await gather(*get_message_func_calls)
@@ -102,7 +103,7 @@ class TranslatorSimpleTestCase(TranslatorBaseCase):
 
         self.actiontypes = ["block"] * 3
         self.should_match = [True] * 3
-        self.generate_add_msg = lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
 
     async def test_add_v4(self):
         await self.add_ip("1.2.3.4", 32)
@@ -119,7 +120,7 @@ class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
 
         self.actiontypes = ["block", "block", "noop", "noop"]
         self.should_match = [True, True, False, False]
-        self.generate_add_msg = lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
 
     async def test_add_v4(self):
         await self.add_ip("1.2.3.4", 32)
