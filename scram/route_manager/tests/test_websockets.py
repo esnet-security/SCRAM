@@ -1,6 +1,8 @@
 from asgiref.sync import sync_to_async
+from asyncio import gather
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
+from contextlib import asynccontextmanager
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -10,13 +12,35 @@ from config.consumers import TranslatorConsumer
 from config.routing import websocket_urlpatterns
 from scram.route_manager.models import ActionType, Client, Entry, Route, WebSocketMessage, WebSocketSequenceElement
 
-from _pytest.assertion import truncate
 
-truncate.DEFAULT_MAX_LINES = 9999
-truncate.DEFAULT_MAX_CHARS = 9999
+@asynccontextmanager
+async def get_communicators(actiontypes, should_match, *args, **kwds):
+    """Creates a set of communicators, and then handles tear-down.
+    
+    Given two lists of the same length, a set of actiontypes, and set of boolean values, creates that many communicators, one for each actiontype-bool pair.
 
+    The boolean determines whether or not we're expecting to recieve a message to that communicator.
 
-class TestTranslator(TestCase):
+    Returns a list of (communicator, should_match bool) pairs.
+    """
+    assert len(actiontypes) == len(should_match)
+
+    router = URLRouter(websocket_urlpatterns)
+    communicators = [WebsocketCommunicator(router, f"/ws/route_manager/translator_{actiontype}/") for actiontype in actiontypes]
+    response = zip(communicators, should_match)
+
+    for communicator, should_match in response:
+        connected, subprotocol = await communicator.connect()
+        assert connected
+
+    try:
+        yield response
+
+    finally:
+        for communicator, should_match in response:
+            await communicator.disconnect()
+
+class TranslatorBaseCase(TestCase):
     def setUp(self):
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
@@ -39,31 +63,22 @@ class TestTranslator(TestCase):
         wsm = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="route")
         wsse = WebSocketSequenceElement.objects.create(websocketmessage=wsm, verb="A", action_type=self.actiontype)
 
-    async def create_communicator(self, name):
-        # Each one needs its own, so we can't do this in setUp
-        router = URLRouter(websocket_urlpatterns)
-        communicator = WebsocketCommunicator(router, f"/ws/route_manager/{name}/")
-
-        connected, subprotocol = await communicator.connect()
-        assert connected
-
-        return communicator
+    async def get_message(self, communicator, msg, should_match=True):
+        """Receive a message from the WebSocket and validate it."""
+        response = json.loads(await communicator.receive_from())
+        match = response == msg
+        assert match == should_match
 
     async def add_ip(self, ip, mask):
-        communicator = await self.create_communicator(f"translator_{self.action_name}")
+        async with get_communicators(self.actiontypes, self.should_match) as communicators:
+            await self.api_create_entry(ip)
 
-        await self.api_create_entry(ip)
-        response = json.loads(await communicator.receive_from())
-        # Keep in sync with translator API
-        assert response == {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+            # A list of that many function calls to verify the response
+            get_message_func_calls = [self.get_message(c, self.generate_add_msg(ip, mask), should_match) for c, should_match in communicators]
 
-        await communicator.disconnect()
+            # Turn our list into parameters to the function and await them all
+            await gather(*get_message_func_calls)
 
-    async def test_add_v4(self):
-        await self.add_ip("1.2.3.4", 32)
-
-    async def test_add_v6(self):
-        await self.add_ip("2001::", 128)
 
     # Django ensures that the create is synchronous, so we have some extra steps to do
     @sync_to_async
@@ -77,3 +92,39 @@ class TestTranslator(TestCase):
             },
             format="json",
         )
+
+
+class TranslatorSimpleTestCase(TranslatorBaseCase):
+    """Three translators in the same group, single IP, ensure we get the message we expect."""
+    def setUp(self):
+        # First call TranslatorBaseCase.setUp()
+        super().setUp()
+
+        self.actiontypes = ["block"] * 3
+        self.should_match = [True] * 3
+        self.generate_add_msg = lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+
+    async def test_add_v4(self):
+        await self.add_ip("1.2.3.4", 32)
+
+    async def test_add_v6(self):
+        await self.add_ip("2001::", 128)
+
+
+# class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
+#     """Ensure we're only sending messages to the translators we want."""
+#     async def add_ip(self, ip, mask):
+#         communicator = await self.create_communicator(f"translator_{self.action_name}")
+
+#         await self.api_create_entry(ip)
+#         response = json.loads(await communicator.receive_from())
+#         # Keep in sync with translator API
+#         assert response == {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}
+
+#         await communicator.disconnect()
+
+#     async def test_add_v4(self):
+#         await self.add_ip("1.2.3.4", 32)
+
+#     async def test_add_v6(self):
+#         await self.add_ip("2001::", 128)
