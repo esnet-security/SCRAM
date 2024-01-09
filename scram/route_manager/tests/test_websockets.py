@@ -46,6 +46,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
 
 class TestTranslatorBaseCase(TestCase):
     """Base case that other test cases build on top of. Three translators in one group, test one v4 and one v6."""
+
     def setUp(self):
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
@@ -110,13 +111,10 @@ class TestTranslatorBaseCase(TestCase):
 
     async def ensure_no_more_msgs(self, communicators):
         """Run through all communicators and ensure they have no messages waiting."""
-        get_nothing_func_calls = [
-            self.get_nothings(c) for c, _ in communicators
-        ]
+        get_nothing_func_calls = [self.get_nothings(c) for c, _ in communicators]
 
         # Ensure we don't receive any other messages
         await gather(*get_nothing_func_calls)
-
 
     # Django ensures that the create is synchronous, so we have some extra steps to do
     @sync_to_async
@@ -132,10 +130,16 @@ class TestTranslatorBaseCase(TestCase):
         )
 
     async def test_add_v4(self):
-        await self.add_ip("1.2.3.4", 32)
+        await self.add_ip("192.0.2.2", 32)
+        await self.add_ip("192.0.2.22", 32)
+        await self.add_ip("192.0.2.222", 32)
+        await self.add_ip("198.51.100.100", 32)
 
     async def test_add_v6(self):
-        await self.add_ip("2001::", 128)
+        await self.add_ip("2001:DB8::", 128)
+        await self.add_ip("2001:DB8::D", 128)
+        await self.add_ip("2001:DB8::DB", 128)
+        await self.add_ip("2001:DB8::DB8", 128)
 
 
 class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
