@@ -89,6 +89,10 @@ class TestTranslatorBaseCase(TestCase):
             match = response == msg
             assert match == should_match
 
+    async def get_nothings(self, communicator):
+        """Check there are no more messages waiting."""
+        assert await communicator.receive_nothing(timeout=0.1, interval=0.01) is False
+
     async def add_ip(self, ip, mask):
         async with get_communicators(self.actiontypes, self.should_match) as communicators:
             await self.api_create_entry(ip)
@@ -101,6 +105,18 @@ class TestTranslatorBaseCase(TestCase):
 
             # Turn our list into parameters to the function and await them all
             await gather(*get_message_func_calls)
+
+            await self.ensure_no_more_msgs(communicators)
+
+    async def ensure_no_more_msgs(self, communicators):
+        """Run through all communicators and ensure they have no messages waiting."""
+        get_nothing_func_calls = [
+            self.get_nothings(c) for c, _ in communicators
+        ]
+
+        # Ensure we don't receive any other messages
+        await gather(*get_nothing_func_calls)
+
 
     # Django ensures that the create is synchronous, so we have some extra steps to do
     @sync_to_async
