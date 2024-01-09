@@ -60,8 +60,8 @@ class TranslatorBaseCase(TestCase):
         )
         self.authorized_client.authorized_actiontypes.set([self.actiontype])
 
-        wsm = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="route")
-        wsse = WebSocketSequenceElement.objects.create(websocketmessage=wsm, verb="A", action_type=self.actiontype)
+        wsm, created = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
+        wsse, created = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=self.actiontype)
 
     async def get_messages(self, communicator, messages, should_match):
         """Receive a number of messages from the WebSocket and validate them."""
@@ -147,6 +147,28 @@ class TranslatorSequenceTestCase(TranslatorBaseCase):
             lambda ip, mask: {"type": "translator_add", "message": {"bar": f"{ip}/{mask}"}}, # order_num=2
             lambda ip, mask: {"type": "translator_add", "message": {"foo": f"{ip}/{mask}"}}, # order_num=20
             ]
+
+    async def test_add_v4(self):
+        await self.add_ip("1.2.3.4", 32)
+
+    async def test_add_v6(self):
+        await self.add_ip("2001::", 128)
+
+
+class TranslatorParametersTestCase(TranslatorBaseCase):
+    """Additional parameters in the JSONField."""
+    def setUp(self):
+        # First call TranslatorBaseCase.setUp()
+        super().setUp()
+
+        self.actiontypes = ["block"] * 3
+        self.should_match = [True] * 3
+    
+        wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
+        wsm.msg_data = {"asn": 65550, "community": 100, "route": "Ensure this gets overwritten."}
+        wsm.save() 
+
+        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"asn": 65550, "community": 100, "route": f"{ip}/{mask}"}}]
 
     async def test_add_v4(self):
         await self.add_ip("1.2.3.4", 32)
