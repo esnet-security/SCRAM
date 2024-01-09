@@ -33,7 +33,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
     response = zip(communicators, should_match)
 
     for communicator, should_match in response:
-        connected, subprotocol = await communicator.connect()
+        connected, _ = await communicator.connect()
         assert connected
 
     try:
@@ -44,7 +44,8 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
             await communicator.disconnect()
 
 
-class TranslatorBaseCase(TestCase):
+class TestTranslatorBaseCase(TestCase):
+    """Base case that other test cases build on top of. Three translators in one group, test one v4 and one v6."""
     def setUp(self):
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
@@ -54,7 +55,7 @@ class TranslatorBaseCase(TestCase):
 
         self.action_name = "block"
 
-        self.actiontype, created = ActionType.objects.get_or_create(name=self.action_name)
+        self.actiontype, _ = ActionType.objects.get_or_create(name=self.action_name)
         self.actiontype.save()
 
         self.authorized_client = Client.objects.create(
@@ -68,6 +69,18 @@ class TranslatorBaseCase(TestCase):
         _, _ = WebSocketSequenceElement.objects.get_or_create(
             websocketmessage=wsm, verb="A", action_type=self.actiontype
         )
+
+        # Set some defaults; some child classes override this
+        self.actiontypes = ["block"] * 3
+        self.should_match = [True] * 3
+        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
+
+        # Now we run any local setup actions by the child classes
+        self.local_setUp()
+
+    def local_setUp(self):
+        # Allow child classes to override this if desired
+        return
 
     async def get_messages(self, communicator, messages, should_match):
         """Receive a number of messages from the WebSocket and validate them."""
@@ -102,18 +115,6 @@ class TranslatorBaseCase(TestCase):
             format="json",
         )
 
-
-class TranslatorSimpleTestCase(TranslatorBaseCase):
-    """Three translators in the same group, single IP, ensure we get the message we expect."""
-
-    def setUp(self):
-        # First call TranslatorBaseCase.setUp()
-        super().setUp()
-
-        self.actiontypes = ["block"] * 3
-        self.should_match = [True] * 3
-        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
-
     async def test_add_v4(self):
         await self.add_ip("1.2.3.4", 32)
 
@@ -121,31 +122,18 @@ class TranslatorSimpleTestCase(TranslatorBaseCase):
         await self.add_ip("2001::", 128)
 
 
-class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
+class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
     """Two translators in the same group, two in another group, single IP, ensure we get only the messages we expect."""
 
-    def setUp(self):
-        # First call TranslatorBaseCase.setUp()
-        super().setUp()
-
+    def local_setUp(self):
         self.actiontypes = ["block", "block", "noop", "noop"]
         self.should_match = [True, True, False, False]
-        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
-
-    async def test_add_v4(self):
-        await self.add_ip("1.2.3.4", 32)
-
-    async def test_add_v6(self):
-        await self.add_ip("2001::", 128)
 
 
-class TranslatorSequenceTestCase(TranslatorBaseCase):
+class TranslatorSequenceTestCase(TestTranslatorBaseCase):
     """Test a sequence of WebSocket messages."""
 
-    def setUp(self):
-        # First call TranslatorBaseCase.setUp()
-        super().setUp()
-
+    def local_setUp(self):
         wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
         _ = WebSocketSequenceElement.objects.create(
             websocketmessage=wsm2, verb="A", action_type=self.actiontype, order_num=20
@@ -155,31 +143,17 @@ class TranslatorSequenceTestCase(TranslatorBaseCase):
             websocketmessage=wsm3, verb="A", action_type=self.actiontype, order_num=2
         )
 
-        self.actiontypes = ["block"] * 3
-        self.should_match = [True] * 3
         self.generate_add_msgs = [
             lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}},  # order_num=0
             lambda ip, mask: {"type": "translator_add", "message": {"bar": f"{ip}/{mask}"}},  # order_num=2
             lambda ip, mask: {"type": "translator_add", "message": {"foo": f"{ip}/{mask}"}},  # order_num=20
         ]
 
-    async def test_add_v4(self):
-        await self.add_ip("1.2.3.4", 32)
 
-    async def test_add_v6(self):
-        await self.add_ip("2001::", 128)
-
-
-class TranslatorParametersTestCase(TranslatorBaseCase):
+class TranslatorParametersTestCase(TestTranslatorBaseCase):
     """Additional parameters in the JSONField."""
 
-    def setUp(self):
-        # First call TranslatorBaseCase.setUp()
-        super().setUp()
-
-        self.actiontypes = ["block"] * 3
-        self.should_match = [True] * 3
-
+    def local_setUp(self):
         wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
         wsm.msg_data = {"asn": 65550, "community": 100, "route": "Ensure this gets overwritten."}
         wsm.save()
@@ -190,9 +164,3 @@ class TranslatorParametersTestCase(TranslatorBaseCase):
                 "message": {"asn": 65550, "community": 100, "route": f"{ip}/{mask}"},
             }
         ]
-
-    async def test_add_v4(self):
-        await self.add_ip("1.2.3.4", 32)
-
-    async def test_add_v6(self):
-        await self.add_ip("2001::", 128)
