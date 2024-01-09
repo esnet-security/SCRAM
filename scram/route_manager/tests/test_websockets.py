@@ -127,3 +127,29 @@ class TranslatorDontCrossTheStreamsTestCase(TranslatorBaseCase):
 
     async def test_add_v6(self):
         await self.add_ip("2001::", 128)
+
+
+class TranslatorSequenceTestCase(TranslatorBaseCase):
+    """Test a sequence of WebSocket messages."""
+    def setUp(self):
+        # First call TranslatorBaseCase.setUp()
+        super().setUp()
+
+        wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
+        wsse2 = WebSocketSequenceElement.objects.create(websocketmessage=wsm2, verb="A", action_type=self.actiontype, order_num=20)
+        wsm3 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="bar")
+        wsse3 = WebSocketSequenceElement.objects.create(websocketmessage=wsm3, verb="A", action_type=self.actiontype, order_num=2)
+
+        self.actiontypes = ["block"] * 3
+        self.should_match = [True] * 3
+        self.generate_add_msgs = [
+            lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}, # order_num=0
+            lambda ip, mask: {"type": "translator_add", "message": {"bar": f"{ip}/{mask}"}}, # order_num=2
+            lambda ip, mask: {"type": "translator_add", "message": {"foo": f"{ip}/{mask}"}}, # order_num=20
+            ]
+
+    async def test_add_v4(self):
+        await self.add_ip("1.2.3.4", 32)
+
+    async def test_add_v6(self):
+        await self.add_ip("2001::", 128)
