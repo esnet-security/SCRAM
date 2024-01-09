@@ -14,12 +14,7 @@ from rest_framework.response import Response
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
-from .serializers import (
-    ActionTypeSerializer,
-    ClientSerializer,
-    EntrySerializer,
-    IgnoreEntrySerializer,
-)
+from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
 
 channel_layer = get_channel_layer()
 
