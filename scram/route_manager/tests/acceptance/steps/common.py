@@ -2,7 +2,9 @@ import datetime
 import time
 
 import django.conf as conf
+from asgiref.sync import async_to_sync
 from behave import given, step, then, when
+from channels.layers import get_channel_layer
 from django.urls import reverse
 
 from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
@@ -10,6 +12,11 @@ from scram.route_manager.models import ActionType, Client, WebSocketMessage, Web
 
 @given("a {name} actiontype is defined")
 def define_block(context, name):
+    context.channel_layer = get_channel_layer()
+    async_to_sync(context.channel_layer.group_send)(
+        f"translator_{name}", {"type": "translator_remove_all", "message": {}}
+    )
+
     at, created = ActionType.objects.get_or_create(name=name)
     wsm, created = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
     wsm.save()
@@ -171,7 +178,7 @@ def step_impl(context, value, model):
     for obj in objs.json():
         # For some models, we need to look at a different field.
         model = model_to_field_mapping.get(model.lower(), model.lower())
-        if obj[model] == value:
+        if obj[model].lower() == value.lower():
             found = True
             break
 

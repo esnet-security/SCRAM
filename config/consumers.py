@@ -37,6 +37,8 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     translator_add = _send_event
     # Tell all translators of this actiontype of a withdrawal of a route.
     translator_remove = _send_event
+    # Tell all translators of this actiontype to withdraw ALL routes.
+    translator_remove_all = _send_event
     # Send a query to all translators if a route is announced.
     translator_check = _send_event
 
