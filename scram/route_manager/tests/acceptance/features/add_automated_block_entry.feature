@@ -1,10 +1,13 @@
+@fixture.isolated.gobgp
 Feature: an automated source adds a block entry
   Automated clients (eg zeek) can add v4/v6 block entries
 
+  @fixture.isolated.gobgp
   Scenario: unauthenticated users get a 403
-    When we add the entry 127.0.0.1
+    When we add the entry 192.0.2.132
     Then we get a 403 status code
 
+  @fixture.isolated.gobgp
   Scenario Outline: add a block entry
     Given a block actiontype is defined
     And a client with block authorization
@@ -19,22 +22,23 @@ Feature: an automated source adds a block entry
 
     Examples: v4 IPs
       | ip          | cidr           |
-      | 1.2.3.4     | 1.2.3.4/32     |
-      | 193.168.0.0 | 193.168.0.0/32 |
+      | 192.0.2.128 | 192.0.2.128/32 |
+      | 192.0.2.129 | 192.0.2.129/32 |
 
     Examples: v6 IPs
-      | ip     | cidr       |
-      | 2000:: | 2000::/128 |
-      | ::1    | ::1/128    |
+      | ip     | cidr                         |
+      | 2001:DB8:94BB::94BC  | 2001:DB8:94BB::94BC/128  |
+      | 2001:DB8:94BC:: | 2001:DB8:94BC::/128 |
 
   @history
   Scenario: add a block entry with a comment
     Given a client with block authorization
     When we're logged in
-    And  we add the entry 127.0.0.2 with comment it's coming from inside the house
+    And  we add the entry 192.0.2.133 with comment it's coming from inside the house
     Then we get a 201 status code
-    And  the change entry for 127.0.0.2 is it's coming from inside the house
+    And  the change entry for 192.0.2.133 is it's coming from inside the house
 
+  @fixture.isolated.gobgp
   Scenario Outline: add a block entry multiple times and it's accepted
     Given a client with block authorization
     When we're logged in
@@ -45,12 +49,13 @@ Feature: an automated source adds a block entry
     And the number of entrys is 1
 
     Examples: IPs
-      | ip          |
-      | 1.2.3.4     |
-      | 193.168.0.0 |
-      | 2000::      |
-      | ::1         |
+      | ip              |
+      | 192.0.2.130     |
+      | 198.51.100.130  |
+      | 2001:DB8:94BD::94BD  |
+      | 2001:DB8:94BE:: |
 
+  @fixture.isolated.gobgp
   Scenario Outline: invalid block entries can't be added
     Given a client with block authorization
     When we're logged in
@@ -69,6 +74,7 @@ Feature: an automated source adds a block entry
       | 2000::1::1  |
       | 2000::/129  |
 
+  @fixture.isolated.gobgp
   Scenario Outline: add a block entry as a cidr address
     Given a block actiontype is defined
     And a client with block authorization
@@ -82,7 +88,7 @@ Feature: an automated source adds a block entry
 
     Examples:
       | ip                 |
-      | 1.2.3.4/32         |
-      | 10.1.0.0/16        |
-      | 2000::1/128        |
-      | 2001:4f8:3:ba::/64 |
+      | 192.0.2.131/32     |
+      | 198.51.100.160/29  |
+      | 2001:DB8:94BA::94BD/128 |
+      | 2001:DB8:94BE::/64 |

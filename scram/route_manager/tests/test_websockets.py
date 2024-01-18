@@ -130,16 +130,16 @@ class TestTranslatorBaseCase(TestCase):
         )
 
     async def test_add_v4(self):
-        await self.add_ip("192.0.2.2", 32)
-        await self.add_ip("192.0.2.22", 32)
-        await self.add_ip("192.0.2.222", 32)
-        await self.add_ip("198.51.100.100", 32)
+        await self.add_ip("192.0.2.224", 32)
+        await self.add_ip("192.0.2.225", 32)
+        await self.add_ip("192.0.2.226", 32)
+        await self.add_ip("198.51.100.224", 32)
 
     async def test_add_v6(self):
-        await self.add_ip("2001:DB8::", 128)
-        await self.add_ip("2001:DB8::D", 128)
-        await self.add_ip("2001:DB8::DB", 128)
-        await self.add_ip("2001:DB8::DB8", 128)
+        await self.add_ip("2001:DB8:FDF0::", 128)
+        await self.add_ip("2001:DB8:FDF0::D", 128)
+        await self.add_ip("2001:DB8:FDF0::DB", 128)
+        await self.add_ip("2001:DB8:FDF0::DB8", 128)
 
 
 class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
