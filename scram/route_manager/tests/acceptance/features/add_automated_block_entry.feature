@@ -1,13 +1,10 @@
-@fixture.isolated.gobgp
 Feature: an automated source adds a block entry
   Automated clients (eg zeek) can add v4/v6 block entries
 
-  @fixture.isolated.gobgp
   Scenario: unauthenticated users get a 403
     When we add the entry 192.0.2.132
     Then we get a 403 status code
 
-  @fixture.isolated.gobgp
   Scenario Outline: add a block entry
     Given a block actiontype is defined
     And a client with block authorization
@@ -38,7 +35,6 @@ Feature: an automated source adds a block entry
     Then we get a 201 status code
     And  the change entry for 192.0.2.133 is it's coming from inside the house
 
-  @fixture.isolated.gobgp
   Scenario Outline: add a block entry multiple times and it's accepted
     Given a client with block authorization
     When we're logged in
@@ -55,7 +51,6 @@ Feature: an automated source adds a block entry
       | 2001:DB8:94BD::94BD  |
       | 2001:DB8:94BE:: |
 
-  @fixture.isolated.gobgp
   Scenario Outline: invalid block entries can't be added
     Given a client with block authorization
     When we're logged in
@@ -74,7 +69,6 @@ Feature: an automated source adds a block entry
       | 2000::1::1  |
       | 2000::/129  |
 
-  @fixture.isolated.gobgp
   Scenario Outline: add a block entry as a cidr address
     Given a block actiontype is defined
     And a client with block authorization
