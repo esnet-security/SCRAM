@@ -11,7 +11,7 @@ from scram.route_manager.models import ActionType, Client, WebSocketMessage, Web
 
 
 @given("a {name} actiontype is defined")
-def define_block(context, name):
+def step_impl(context, name):
     context.channel_layer = get_channel_layer()
     async_to_sync(context.channel_layer.group_send)(
         f"translator_{name}", {"type": "translator_remove_all", "message": {}}
@@ -25,7 +25,7 @@ def define_block(context, name):
 
 
 @given("a client with {name} authorization")
-def define_block(context, name):
+def step_impl(context, name):
     at, created = ActionType.objects.get_or_create(name=name)
     authorized_client = Client.objects.create(
         hostname="authorized_client.es.net",
@@ -36,7 +36,7 @@ def define_block(context, name):
 
 
 @given("a client without {name} authorization")
-def define_block(context, name):
+def step_impl(context, name):
     unauthorized_client = Client.objects.create(
         hostname="unauthorized_client.es.net",
         uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
