@@ -41,7 +41,9 @@ class WebSocketMessage(models.Model):
     msg_type = models.CharField("The type of the message", max_length=50)
     msg_data = models.JSONField("The JSON payload. See also msg_data_route_field.", default=dict)
     msg_data_route_field = models.CharField(
-        "The key in the JSON payload whose value will contain the route being acted on.", default="route", max_length=25
+        "The key in the JSON payload whose value will contain the route being acted on.",
+        default="route",
+        max_length=25,
     )
 
     def __str__(self):
@@ -68,7 +70,10 @@ class WebSocketSequenceElement(models.Model):
     action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.websocketmessage} as order={self.order_num} for {self.verb} actions on actiontype={self.action_type}"
+        return (
+            f"{self.websocketmessage} as order={self.order_num} for "
+            + f"{self.verb} actions on actiontype={self.action_type}"
+        )
 
 
 class Entry(models.Model):

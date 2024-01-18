@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0028_default_websocket_messages'),
+        ("route_manager", "0028_default_websocket_messages"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='websocketmessage',
-            name='msg_data_route_field',
-            field=models.CharField(default='route', max_length=25, verbose_name='The key in the JSON payload whose value will contain the route being acted on.'),
+            model_name="websocketmessage",
+            name="msg_data_route_field",
+            field=models.CharField(
+                default="route",
+                max_length=25,
+                verbose_name="The key in the JSON payload whose value will contain the route being acted on.",
+            ),
         ),
     ]
