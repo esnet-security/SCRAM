@@ -53,7 +53,7 @@ class GoBGP(object):
         else:
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
-                    next_hop="192.0.2.1",
+                    next_hop="192.0.2.199",
                 )
             )
 
@@ -78,6 +78,11 @@ class GoBGP(object):
             gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
             _TIMEOUT_SECONDS,
         )
+
+    def del_all_paths(self):
+        logging.warning("Withdrawing ALL routes")
+
+        self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
 
     def del_path(self, ip):
         path = self._build_path(ip)
