@@ -48,7 +48,7 @@ coverage.xml: pytest behave-all behave-translator
 .Phony: ci-test
 ci-test: | toggle-local build migrate run coverage.xml
 
-## cleanup: remove local containers and volumes
+## clean: remove local containers and volumes
 .Phony: clean
 clean: docker-compose.yaml
 	@docker compose rm -f -s

@@ -2,33 +2,46 @@ import datetime
 import time
 
 import django.conf as conf
+from asgiref.sync import async_to_sync
 from behave import given, step, then, when
+from channels.layers import get_channel_layer
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType, Client
+from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
 
 
 @given("a {name} actiontype is defined")
-def define_block(context, name):
+def step_impl(context, name):
+    context.channel_layer = get_channel_layer()
+    async_to_sync(context.channel_layer.group_send)(
+        f"translator_{name}", {"type": "translator_remove_all", "message": {}}
+    )
+
     at, created = ActionType.objects.get_or_create(name=name)
+    wsm, created = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
+    wsm.save()
+    wsse, created = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=at)
+    wsse.save()
 
 
-@given("a client with block authorization")
-def define_block(context):
+@given("a client with {name} authorization")
+def step_impl(context, name):
+    at, created = ActionType.objects.get_or_create(name=name)
     authorized_client = Client.objects.create(
         hostname="authorized_client.es.net",
         uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
         is_authorized=True,
     )
-    authorized_client.authorized_actiontypes.set([1])
+    authorized_client.authorized_actiontypes.set([at])
 
 
-@given("a client without block authorization")
-def define_block(context):
-    Client.objects.create(
+@given("a client without {name} authorization")
+def step_impl(context, name):
+    unauthorized_client = Client.objects.create(
         hostname="unauthorized_client.es.net",
         uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
     )
+    unauthorized_client.authorized_actiontypes.set([])
 
 
 @when("we're logged in")
@@ -59,6 +72,7 @@ def step_impl(context, value):
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             "who": "person",
         },
+        format="json",
     )
 
 
@@ -72,6 +86,7 @@ def step_impl(context, value, comment):
             "comment": comment,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 
@@ -87,6 +102,7 @@ def step_impl(context, value, exp):
             "expiration": exp,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 
@@ -105,6 +121,7 @@ def step_impl(context, value, secs):
             "expiration": expiration,
             # Authorized uuid
             "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            "who": "person",
         },
     )
 
@@ -161,7 +178,7 @@ def step_impl(context, value, model):
     for obj in objs.json():
         # For some models, we need to look at a different field.
         model = model_to_field_mapping.get(model.lower(), model.lower())
-        if obj[model] == value:
+        if obj[model].lower() == value.lower():
             found = True
             break
 
