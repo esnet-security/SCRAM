@@ -22,8 +22,16 @@ async def main():
                 json_message = json.loads(message)
                 event_type = json_message.get("type")
                 event_data = json_message.get("message")
-                if event_type not in ["translator_add", "translator_remove", "translator_check"]:
+                if event_type not in [
+                    "translator_add",
+                    "translator_remove",
+                    "translator_remove_all",
+                    "translator_check",
+                ]:
                     logging.error(f"Unknown event type received: {event_type!r}")
+                # TODO: Maybe only allow this in testing?
+                elif event_type == "translator_remove_all":
+                    g.del_all_paths()
                 else:
                     try:
                         ip = ipaddress.ip_interface(event_data["route"])

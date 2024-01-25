@@ -53,7 +53,7 @@ class AuthzTest(TestCase):
         self.client.post(
             reverse("route_manager:add"),
             {
-                "route": "3.2.3.4/32",
+                "route": "192.0.2.199/32",
                 "actiontype": "block",
                 "comment": "create entry",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
@@ -71,7 +71,7 @@ class AuthzTest(TestCase):
             response = self.client.post(
                 reverse("route_manager:add"),
                 {
-                    "route": "1.2.3.4/32",
+                    "route": "192.0.2.4/32",
                     "actiontype": "block",
                     "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
                 },
@@ -84,7 +84,7 @@ class AuthzTest(TestCase):
             response = self.client.post(
                 reverse("route_manager:add"),
                 {
-                    "route": "1.2.3.4/32",
+                    "route": "192.0.2.4/32",
                     "actiontype": "block",
                     "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
                 },
@@ -116,12 +116,12 @@ class AuthzTest(TestCase):
         test_user.save()
 
         self.client.force_login(test_user)
-        response = self.client.post(reverse("route_manager:add"), {"route": "1.2.3.4/32", "actiontype": "block"})
+        response = self.client.post(reverse("route_manager:add"), {"route": "192.0.2.4/32", "actiontype": "block"})
         self.assertEqual(response.status_code, 200)
 
         test_user.groups.set([])
 
-        response = self.client.post(reverse("route_manager:add"), {"route": "1.2.3.5/32", "actiontype": "block"})
+        response = self.client.post(reverse("route_manager:add"), {"route": "192.0.2.5/32", "actiontype": "block"})
         self.assertEqual(response.status_code, 302)
 
 
