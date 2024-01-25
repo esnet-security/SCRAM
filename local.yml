@@ -1,3 +1,4 @@
+---
 version: '3.4'
 
 volumes:
@@ -11,7 +12,10 @@ services:
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
@@ -26,7 +30,7 @@ services:
       - "8000"
     command: /start
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://django:8000/process_expired/" ]
+      test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
       interval: 30s
       timeout: 30s
       start_period: 30s
@@ -46,6 +50,8 @@ services:
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
 
   docs:
     image: scram_local_docs
@@ -70,6 +76,8 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     ports:
       - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   gobgp:
     image: jauderho/gobgp:v2.32.0
