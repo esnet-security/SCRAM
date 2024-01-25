@@ -20,9 +20,9 @@ flake8:
   stage: lint
   image: python:3.8-alpine
   before_script:
-  - ./.ci_scripts/flake8_before.sh
+  - ./.ci-scripts/flake8_before.sh
   script:
-  - ./.ci_scripts/flake8_run.sh
+  - ./.ci-scripts/flake8_run.sh
 
 pytest:
   stage: pytest
@@ -30,11 +30,11 @@ pytest:
   services:
   - docker:dind
   before_script:
-    - ./.ci_scripts/pytest_before.sh
+    - ./.ci-scripts/pytest_before.sh
   script:
-    - ./.ci_scripts/pytest_run.sh
+    - ./.ci-scripts/pytest_run.sh
   after_script:
-    - ./.ci_scripts/pytest_after.sh
+    - ./.ci-scripts/pytest_after.sh
   artifacts:
     reports:
       coverage_report:
