@@ -15,7 +15,6 @@ else
     make build
     .ci-scripts/push_images.sh
 fi
-env
-exit 1
+
 make migrate
 make run
