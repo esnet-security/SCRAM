@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="entry",
             name="expiration",
-            field=models.DateTimeField(default="9999-12-31 00:00"),
+            field=models.DateTimeField(default="9999-12-31 00:00Z"),
         ),
         migrations.AddField(
             model_name="entry",
@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="historicalentry",
             name="expiration",
-            field=models.DateTimeField(default="9999-12-31 00:00"),
+            field=models.DateTimeField(default="9999-12-31 00:00Z"),
         ),
         migrations.AddField(
             model_name="historicalentry",

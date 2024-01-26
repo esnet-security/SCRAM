@@ -111,7 +111,7 @@ pass-reset: docker-compose.yaml
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest: docker-compose.yaml
-	@docker compose run django coverage run -m pytest
+	@docker compose run django coverage run -m pytest -Werror
 
 ## run: brings up the containers as described in docker-compose.yaml
 .Phony: run

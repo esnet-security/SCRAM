@@ -46,9 +46,13 @@ class TestUserUpdateView:
         view = UserUpdateView()
         request = rf.get("/fake-url/")
 
+        # This can be None, but will raise an error if we don't provide something.
+        def dummy_response(request):  # pragma: no cover
+            return None
+
         # Add the session/message middleware to the request
-        SessionMiddleware().process_request(request)
-        MessageMiddleware().process_request(request)
+        SessionMiddleware(dummy_response).process_request(request)
+        MessageMiddleware(dummy_response).process_request(request)
         request.user = user
 
         view.request = request
