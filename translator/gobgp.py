@@ -22,7 +22,19 @@ class GoBGP(object):
         else:
             return gobgp_pb2.Family.AFI_IP
 
-    def _build_path(self, ip):
+    def _build_path(self, ip, event_data):
+        logging.info(f"ip: {ip}, event_data: {event_data}")
+        if "asn" in event_data:
+            asn = event_data["asn"]
+        else:
+            asn = 293
+        if "community" in event_data:
+            community = event_data["community"]
+        else:
+            community = 666
+
+        logging.info(f"{ip} {asn} {community}")
+
         origin = Any()
         origin.Pack(
             attribute_pb2.OriginAttribute(
@@ -58,7 +70,7 @@ class GoBGP(object):
             )
 
         communities = Any()
-        comm_id = (293 << 16) + 666
+        comm_id = (asn << 16) + community
         communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
 
         attributes = [origin, next_hop, communities]
@@ -69,10 +81,12 @@ class GoBGP(object):
             family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
         )
 
-    def add_path(self, ip):
-        path = self._build_path(ip)
+    def add_path(self, ip, event_data):
+        logging.info(f"ip: {ip}, event_data: {event_data}")
 
-        logging.info(f"Blocking {ip}")
+        path = self._build_path(ip, event_data)
+
+        logging.info(f"Blocking {event_data}")
 
         self.stub.AddPath(
             gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
@@ -84,8 +98,8 @@ class GoBGP(object):
 
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
 
-    def del_path(self, ip):
-        path = self._build_path(ip)
+    def del_path(self, ip, event_data):
+        path = self._build_path(ip, event_data)
 
         logging.info(f"Unblocking {ip}")
 

@@ -40,9 +40,9 @@ async def main():
                         continue
 
                     if event_type == "translator_add":
-                        g.add_path(ip)
+                        g.add_path(ip, event_data)
                     elif event_type == "translator_remove":
-                        g.del_path(ip)
+                        g.del_path(ip, event_data)
                     elif event_type == "translator_check":
                         json_message["type"] = "translator_check_resp"
                         json_message["message"]["is_blocked"] = g.is_blocked(ip)
