@@ -125,6 +125,7 @@ class TestTranslatorBaseCase(TestCase):
                 "route": route,
                 "comment": "test",
                 "uuid": self.uuid,
+                "who": "Test User",
             },
             format="json",
         )
