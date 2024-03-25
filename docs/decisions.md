@@ -53,12 +53,19 @@ Any API clients will connect to the SCRAM REST API, which is over HTTPS. We can 
 information being sent to the API from the client. We wanted to centralize the administration of the clients, so it 
 seemed natural to use the built-in django admin site. The client is allowed to start up and hit a POST only endpoint on
 first connection where it registers itself with SCRAM. We only allow the client to tell us its fqdn and a unique 
-identifier. The SCRAM admin is expected to go to the admin site to toggle the boolean for setting the client as 
+identifier. The SCRAM administrator is expected to go to the admin site to toggle the boolean for setting the client as 
 authorized, as well as choose from any of the list of available actiontypes. During an entry's creation, we verify this
-client is allowed to create an entry using the actiontype it is giving.
+client is allowed to create an entry using the actiontype it is providing.
 
 This model does allow for anyone to "register" a client, but until someone with admin level permissions goes to the admin
 site and accepts the registration and sets authorized actiontypes, this client cannot create any entries and therefore,
 not affect any sort of change. This endpoint is POST only, so nobody should be allowed to see what clients exist unless
 they can access the admin site. Our main security concern after all this is a DoS by constantly POSTing to this endpoint,
 which can be handled the same way any other DoS would be dealth with (ie likely blocked via SCRAM).
+
+#### Configurable Payloads
+Configurable payloads allows you to override certain data sent to the translator. Currently, this is ASN and BGP community.
+In order to do so, you update the JSON dictionary inside the Web Socket Message entry in the admin page. One thing to note
+is that you must include a "route" key in that dictionary with a string value of any kind. If you decide to change the 
+key in the JSON payload whose value will contain the route being acted on field, you must change the route key in the 
+dictionary to match that field.
