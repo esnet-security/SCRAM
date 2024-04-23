@@ -14,11 +14,8 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    volumes:
-      - ./staticfiles:/staticfiles
     command: /start
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
       interval: 30s
       timeout: 30s
       start_period: 30s
@@ -68,9 +65,3 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
 
-networks:
-  default:
-    ipam:
-      driver: default
-      config:
-        - subnet: 0200:c0:ff:ee::/48

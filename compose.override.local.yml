@@ -16,6 +16,8 @@ services:
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
     ports:
       - "8000"
 
@@ -53,3 +55,10 @@ services:
     ports:
       - "179"
       - "50051"
+
+networks:
+  default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 0200:c0:ff:ee::/48

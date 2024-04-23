@@ -16,6 +16,10 @@ services:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
       - /etc/vault.d/secrets/kv_root_security.env
+    volumes:
+      - ./staticfiles:/staticfiles
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
 
   postgres:
     volumes:
@@ -43,7 +47,6 @@ services:
       - "80:80"
 
   redis:
-    image: redis:5.0
     volumes:
       - production_redis_data:/var/lib/redis:Z
 
@@ -66,6 +69,10 @@ services:
 networks:
   default:
     enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 0200:c0:ff:ee::/48
   peering:
     enable_ipv6: true
     driver: macvlan
