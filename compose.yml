@@ -1,16 +1,10 @@
 ---
 version: '3.4'
 
-volumes:
-  local_postgres_data: {}
-  local_postgres_data_backups: {}
-
 services:
   django:
     build:
       context: .
-      dockerfile: ./compose/local/django/Dockerfile
-    image: scram_local_django
     depends_on:
       postgres:
         condition: service_healthy
@@ -21,13 +15,7 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     volumes:
-      - $CI_PROJECT_DIR:/app:z
-      - /tmp/profile_data:/tmp/profile_data
-    env_file:
-      - ./.envs/.local/.django
-      - ./.envs/.local/.postgres
-    ports:
-      - "8000"
+      - ./staticfiles:/staticfiles
     command: /start
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
@@ -45,37 +33,15 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    volumes:
-      - local_postgres_data:/var/lib/postgresql/data:Z
-      - local_postgres_data_backups:/backups:z
-    env_file:
-      - ./.envs/.local/.postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
 
-  docs:
-    image: scram_local_docs
-    build:
-      context: .
-      dockerfile: ./compose/local/docs/Dockerfile
-    env_file:
-      - ./.envs/.local/.django
-    networks:
-      default: {}
-    volumes:
-      - $CI_PROJECT_DIR/docs:/docs:z
-      - $CI_PROJECT_DIR/config:/app/config:z
-      - $CI_PROJECT_DIR/scram:/app/scram:z
-    ports:
-      - "7000"
-    command: /start-docs
-
   redis:
     image: redis:5.0
+    networks:
+      default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    ports:
-      - "6379"
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
@@ -85,22 +51,20 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    volumes:
-      - $CI_PROJECT_DIR/gobgp_config:/config:z
-    ports:
-      - "179"
-      - "50051"
 
   translator:
     build:
       context: .
       dockerfile: ./compose/local/translator/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      gobgp:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-    depends_on:
-      - gobgp
 
 networks:
   default:

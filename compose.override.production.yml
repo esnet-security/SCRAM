@@ -1,4 +1,4 @@
-version: '3.4'
+---
 
 volumes:
   production_postgres_data: {}
@@ -9,39 +9,14 @@ volumes:
 services:
   django:
     build:
-      context: .
       dockerfile: ./compose/production/django/Dockerfile
     image: scram_production_django
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
-    volumes:
-      - ./staticfiles:/staticfiles
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
       - /etc/vault.d/secrets/kv_root_security.env
-    command: /start
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
-      interval: 30s
-      timeout: 30s
-      start_period: 30s
-      retries: 5
 
   postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: scram_production_postgres
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
@@ -68,19 +43,12 @@ services:
 
   redis:
     image: redis:5.0
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - production_redis_data:/var/lib/redis:Z
 
   gobgp:
-    image: jauderho/gobgp:v2.32.0
     volumes:
       - ./gobgp_config:/config:z
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     networks:
       default: {}
       peering:
@@ -91,26 +59,12 @@ services:
       - "50051"
 
   translator:
-    build:
-      context: .
-      dockerfile: ./compose/local/translator/Dockerfile
-    depends_on:
-      - redis
-      - gobgp
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     env_file:
       - ./.envs/.production/.translator
 
 networks:
   default:
     enable_ipv6: true
-    ipam:
-      driver: default
-      config:
-        - subnet: 0200:c0:ff:ee::/48
   peering:
     enable_ipv6: true
     driver: macvlan
