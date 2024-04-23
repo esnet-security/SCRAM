@@ -7,6 +7,7 @@ include:
 stages:
 - lint
 - test
+- cleanup
 
 variables:
   POSTGRES_USER: scram
@@ -38,8 +39,6 @@ pytest:
   - make run
   script:
   - make coverage.xml
-  after_script:
-  - make clean
   artifacts:
     reports:
       coverage_report:
@@ -60,3 +59,17 @@ code_quality_html:
 
 sast:
   stage: test
+
+final_clean:
+  image: docker:24.0.6-dind
+  services:
+  - docker:dind
+  before_script:
+  - apk add make
+  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
+  stage: cleanup
+  rules:
+    - when: always # run even if something failed
+  script:
+    - make stop
+    - make clean
