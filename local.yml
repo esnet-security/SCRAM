@@ -90,6 +90,8 @@ services:
     ports:
       - "179"
       - "50051"
+    healthcheck:
+      test: ["CMD", "gobgp", "global"]
 
   translator:
     build:
