@@ -23,17 +23,30 @@ class GoBGP(object):
             return gobgp_pb2.Family.AFI_IP
 
     def _build_path(self, ip, event_data):
-        logging.debug(f"ip: {ip}, event_data: {event_data}")
-        asn = event_data.get("asn", 64500)
-        community = event_data.get("community", 666)
+        # defaults
+        asn = 64500
+        community = 666
 
+        logging.debug(event_data)
+        # Pull asn and community from event_data if we have any
+        if event_data:
+            if "asn" in event_data:
+                asn = event_data["asn"]
+            if "community" in event_data:
+                community = event_data["community"]
+
+        # Set the origin to incomplete (options are IGP, EGP, incomplete)
+        # Incomplete means that BGP is unsure of exactly how the prefix was injected into the topology.
+        # The most common scenario here is that the prefix was redistributed into Border Gateway Protocol
+        # from some other protocol, typically an IGP. - https://www.kwtrain.com/blog/bgp-pt2
         origin = Any()
         origin.Pack(
             attribute_pb2.OriginAttribute(
-                origin=2,  # INCOMPLETE
+                origin=2,
             )
         )
 
+        # IP prefix and its associated length
         nlri = Any()
         nlri.Pack(
             attribute_pb2.IPAddressPrefix(
@@ -42,10 +55,10 @@ class GoBGP(object):
             )
         )
 
+        # Set the next hop to the correct value depending on IP family
         next_hop = Any()
         family = self._get_family(ip.ip.version)
-
-        if ip.ip.version == 6:
+        if family == 6:
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
                     family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
@@ -53,7 +66,6 @@ class GoBGP(object):
                     nlris=[nlri],
                 )
             )
-
         else:
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
@@ -61,11 +73,22 @@ class GoBGP(object):
                 )
             )
 
-        communities = Any()
-        comm_id = (asn << 16) + community
-        communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
+        # Set our AS Path
+        as_path = Any()
+        as_segment = None
 
-        attributes = [origin, next_hop, communities]
+        # Make sure our asn is an acceptable number. This is the max as stated in rfc6996
+        assert asn < 4294967295
+        as_segment = [attribute_pb2.AsSegment(numbers=[asn])]
+        as_segments = attribute_pb2.AsPathAttribute(segments=as_segment)
+        as_path.Pack(as_segments)
+
+        # Set our community number
+        # TODO: We currently only accept one community number, we may want to accept more than one in the future
+        communities = Any()
+        communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[community]))
+
+        attributes = [origin, next_hop, as_path, communities]
 
         return gobgp_pb2.Path(
             nlri=nlri,
@@ -74,11 +97,8 @@ class GoBGP(object):
         )
 
     def add_path(self, ip, event_data):
-        logging.info(f"ip: {ip}, event_data: {event_data}")
-
+        logging.info(f"Blocking {ip}")
         path = self._build_path(ip, event_data)
-
-        logging.info(f"Blocking {event_data}")
 
         self.stub.AddPath(
             gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
