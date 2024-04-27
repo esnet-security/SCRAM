@@ -15,7 +15,7 @@ Feature: an automated source adds a block entry
     Then the number of entrys is 1
     And <cidr> is one of our list of entrys
     And <ip> is contained in our list of entrys
-#    And <cidr> is announced by block translators
+    And <cidr> is announced by block translators
 
     Examples: v4 IPs
       | ip          | cidr           |
@@ -78,7 +78,7 @@ Feature: an automated source adds a block entry
     And we list the entrys
 
     Then the number of entrys is 1
-#    And <ip> is announced by block translators
+    And <ip> is announced by block translators
 
     Examples:
       | ip                 |
