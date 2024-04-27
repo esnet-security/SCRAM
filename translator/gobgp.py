@@ -22,17 +22,10 @@ class GoBGP(object):
         else:
             return gobgp_pb2.Family.AFI_IP
 
-    def _build_path(self, ip, event_data):
-        # defaults
-        asn = 64500
-        community = 666
-
-        # Pull asn and community from event_data if we have any
-        if event_data:
-            if "asn" in event_data:
-                asn = event_data["asn"]
-            if "community" in event_data:
-                community = event_data["community"]
+    def _build_path(self, ip, event_data={}):
+        # Grab ASN and Community from our event_data, or use the defaults
+        asn = event_data.get("asn", 65400)
+        community = event_data.get("community", 666)
 
         # Set the origin to incomplete (options are IGP, EGP, incomplete)
         # Incomplete means that BGP is unsure of exactly how the prefix was injected into the topology.
