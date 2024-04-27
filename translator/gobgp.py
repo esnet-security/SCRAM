@@ -27,7 +27,6 @@ class GoBGP(object):
         asn = 64500
         community = 666
 
-        logging.debug(event_data)
         # Pull asn and community from event_data if we have any
         if event_data:
             if "asn" in event_data:
