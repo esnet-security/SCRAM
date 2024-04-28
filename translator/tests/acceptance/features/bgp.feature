@@ -15,7 +15,7 @@ Feature: block with BGP
 
   Scenario Outline: We can block an IP
     When we add <route> with <asn> and <community> to the block list
-    And we delete <route> from the block list
+    And we delete <route> with <asn> and <community> from the block list
     Then <unblock_ip> is unblocked
 
     Examples: data

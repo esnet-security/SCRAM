@@ -11,10 +11,10 @@ def add_block(context, route, asn, community):
     context.gobgp.add_path(ip, event_data)
 
 
-@when("we delete {route} from the block list")
-def del_block(context, route):
+@when("we delete {route} with {asn} and {community} from the block list")
+def del_block(context, route, asn, community):
     ip = ipaddress.ip_interface(route)
-    event_data = {"asn": 64500, "community": 666}
+    event_data = {"asn": int(asn), "community": int(community)}
     context.gobgp.del_path(ip, event_data)
 
 
