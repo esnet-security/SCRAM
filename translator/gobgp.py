@@ -7,6 +7,10 @@ import grpc
 from google.protobuf.any_pb2 import Any
 
 _TIMEOUT_SECONDS = 1000
+DEFAULT_ASN = 65400
+DEFAULT_COMMUNITY = 666
+DEFAULT_V4_NEXTHOP = "192.0.2.199"
+DEFAULT_V6_NEXTHOP = "100::1"
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,7 +20,7 @@ class GoBGP(object):
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
-    def _get_family(self, ip_version):
+    def _get_family_AFI(self, ip_version):
         if ip_version == 6:
             return gobgp_pb2.Family.AFI_IP6
         else:
@@ -24,8 +28,9 @@ class GoBGP(object):
 
     def _build_path(self, ip, event_data={}):
         # Grab ASN and Community from our event_data, or use the defaults
-        asn = event_data.get("asn", 65400)
-        community = event_data.get("community", 666)
+        asn = event_data.get("asn", DEFAULT_ASN)
+        community = event_data.get("community", DEFAULT_COMMUNITY)
+        family = ip.ip.version
 
         # Set the origin to incomplete (options are IGP, EGP, incomplete)
         # Incomplete means that BGP is unsure of exactly how the prefix was injected into the topology.
@@ -49,19 +54,21 @@ class GoBGP(object):
 
         # Set the next hop to the correct value depending on IP family
         next_hop = Any()
-        family = self._get_family(ip.ip.version)
+        family_AFI = self._get_family_AFI(family)
         if family == 6:
+            next_hops = list(event_data.get("next_hop", DEFAULT_V6_NEXTHOP))
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
-                    family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
-                    next_hops=["100::1"],
+                    family=gobgp_pb2.Family(afi=family_AFI, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                    next_hop=next_hops,
                     nlris=[nlri],
                 )
             )
         else:
+            next_hops = list(event_data.get("next_hop", DEFAULT_V4_NEXTHOP))
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
-                    next_hop="192.0.2.199",
+                    next_hop=next_hops,
                 )
             )
 
@@ -76,7 +83,6 @@ class GoBGP(object):
         as_path.Pack(as_segments)
 
         # Set our community number
-        # TODO: We currently only accept one community number, we may want to accept more than one in the future
         communities = Any()
         communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[community]))
 
