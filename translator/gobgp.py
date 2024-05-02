@@ -77,7 +77,7 @@ class GoBGP(object):
         as_segment = None
 
         # Make sure our asn is an acceptable number. This is the max as stated in rfc6996
-        assert asn < 4294967295
+        assert 0 < asn < 4294967295
         as_segment = [attribute_pb2.AsSegment(numbers=[asn])]
         as_segments = attribute_pb2.AsPathAttribute(segments=as_segment)
         as_path.Pack(as_segments)
@@ -96,7 +96,10 @@ class GoBGP(object):
 
     def add_path(self, ip, event_data):
         logging.info(f"Blocking {ip}")
-        path = self._build_path(ip, event_data)
+        try:
+            path = self._build_path(ip, event_data)
+        except AssertionError:
+            logging.warning("ASN assertion failed")
 
         self.stub.AddPath(
             gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
@@ -109,9 +112,11 @@ class GoBGP(object):
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
 
     def del_path(self, ip, event_data):
-        path = self._build_path(ip, event_data)
-
         logging.info(f"Unblocking {ip}")
+        try:
+            path = self._build_path(ip, event_data)
+        except AssertionError:
+            logging.warning("ASN assertion failed")
 
         self.stub.DeletePath(
             gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
