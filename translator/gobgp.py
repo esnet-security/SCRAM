@@ -30,7 +30,7 @@ class GoBGP(object):
         # Grab ASN and Community from our event_data, or use the defaults
         asn = event_data.get("asn", DEFAULT_ASN)
         community = event_data.get("community", DEFAULT_COMMUNITY)
-        family = ip.ip.version
+        ip_version = ip.ip.version
 
         # Set the origin to incomplete (options are IGP, EGP, incomplete)
         # Incomplete means that BGP is unsure of exactly how the prefix was injected into the topology.
@@ -54,18 +54,18 @@ class GoBGP(object):
 
         # Set the next hop to the correct value depending on IP family
         next_hop = Any()
-        family_AFI = self._get_family_AFI(family)
-        if family == 6:
-            next_hops = list(event_data.get("next_hop", DEFAULT_V6_NEXTHOP))
+        family_afi = self._get_family_AFI(ip_version)
+        if ip_version == 6:
+            next_hops = event_data.get("next_hop", DEFAULT_V6_NEXTHOP)
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
-                    family=gobgp_pb2.Family(afi=family_AFI, safi=gobgp_pb2.Family.SAFI_UNICAST),
-                    next_hop=next_hops,
+                    family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                    next_hops=[next_hops],
                     nlris=[nlri],
                 )
             )
         else:
-            next_hops = list(event_data.get("next_hop", DEFAULT_V4_NEXTHOP))
+            next_hops = event_data.get("next_hop", DEFAULT_V4_NEXTHOP)
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
                     next_hop=next_hops,
@@ -91,20 +91,20 @@ class GoBGP(object):
         return gobgp_pb2.Path(
             nlri=nlri,
             pattrs=attributes,
-            family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+            family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
         )
 
     def add_path(self, ip, event_data):
         logging.info(f"Blocking {ip}")
         try:
             path = self._build_path(ip, event_data)
+
+            self.stub.AddPath(
+                gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                _TIMEOUT_SECONDS,
+            )
         except AssertionError:
             logging.warning("ASN assertion failed")
-
-        self.stub.AddPath(
-            gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
-            _TIMEOUT_SECONDS,
-        )
 
     def del_all_paths(self):
         logging.warning("Withdrawing ALL routes")
@@ -115,17 +115,16 @@ class GoBGP(object):
         logging.info(f"Unblocking {ip}")
         try:
             path = self._build_path(ip, event_data)
+            self.stub.DeletePath(
+                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                _TIMEOUT_SECONDS,
+            )
         except AssertionError:
             logging.warning("ASN assertion failed")
 
-        self.stub.DeletePath(
-            gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
-            _TIMEOUT_SECONDS,
-        )
-
     def get_prefixes(self, ip):
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
-        family = self._get_family(ip.ip.version)
+        family = self._get_family_AFI(ip.ip.version)
         result = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
                 table_type=gobgp_pb2.GLOBAL,
