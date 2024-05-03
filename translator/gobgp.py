@@ -124,12 +124,12 @@ class GoBGP(object):
 
     def get_prefixes(self, ip):
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
-        family = self._get_family_AFI(ip.ip.version)
+        family_afi = self._get_family_AFI(ip.ip.version)
         result = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
                 table_type=gobgp_pb2.GLOBAL,
                 prefixes=prefixes,
-                family=gobgp_pb2.Family(afi=family, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
             ),
             _TIMEOUT_SECONDS,
         )
