@@ -45,7 +45,7 @@ Feature: entries auto-expire
     And we add the entry 192.0.2.1/32 with expiration 1970-01-01T00:00:00Z
     And we add the entry 192.0.2.1/32 with expiration 2030-01-01T00:00:00Z
     Then 192.0.2.1/32 is announced by block translators
-    And we remove expired entries
+    Then we remove expired entries
     And 192.0.2.1/32 is announced by block translators
 
   Scenario: Adding an IP twice gets expired after the last entry expires in 2 seconds
@@ -55,7 +55,7 @@ Feature: entries auto-expire
     And we add the entry 192.0.2.1/32 with expiration 1970-01-01T00:00:00Z
     And we add the entry 192.0.2.1/32 with expiration in 12 seconds
     Then 192.0.2.1/32 is announced by block translators
-    And we remove expired entries
+    Then we remove expired entries
     And we wait 1 seconds
     And 192.0.2.1/32 is announced by block translators
     And we wait 13 seconds
