@@ -61,4 +61,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 0200:c0:ff:ee::/48
+        - subnet: 0200:c0:ff:ee::/64
