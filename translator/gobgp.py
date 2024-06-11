@@ -84,7 +84,11 @@ class GoBGP(object):
 
         # Set our community number
         communities = Any()
-        communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[community]))
+        try:
+            comm_id = (asn << 16) + community
+            communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
+        except ValueError:
+            logging.warning(f"Community {comm_id} too large to use; please pick a smaller ASN and try again")
 
         attributes = [origin, next_hop, as_path, communities]
 
