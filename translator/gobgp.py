@@ -83,9 +83,6 @@ class GoBGP(object):
         as_path.Pack(as_segments)
 
         # Set our community number
-        # Large community: attribute is a set of one or more 12-byte values,
-        # each of which is in the format of Global Administrator:LocalData1:LocalData2
-        #
         # global_admin = The Global Administrator field is intended to represent a complete 4-byte ASN
         # local_data* is for more flexible routing policy. can be set to ME:ACTION:YOU or ASN:Function:Parameter.
         #
