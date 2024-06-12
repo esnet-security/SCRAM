@@ -83,12 +83,23 @@ class GoBGP(object):
         as_path.Pack(as_segments)
 
         # Set our community number
+        # Large community: attribute is a set of one or more 12-byte values,
+        # each of which is in the format of Global Administrator:LocalData1:LocalData2
+        #
+        # global_admin = The Global Administrator field is intended to represent a complete 4-byte ASN
+        # local_data* is for more flexible routing policy. can be set to ME:ACTION:YOU or ASN:Function:Parameter.
+        #
+        # Use local_data2 for any "flag" you want to send to the router that can be used for routing policy decisions.
         communities = Any()
-        try:
-            comm_id = (asn << 16) + community
-            communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
-        except ValueError:
-            logging.warning(f"Community {comm_id} too large to use; please pick a smaller ASN and try again")
+        global_admin = asn
+        local_data1 = community
+        local_data2 = 0
+        large_community = attribute_pb2.LargeCommunity(
+            global_admin=global_admin,
+            local_data1=local_data1,
+            local_data2=local_data2,
+        )
+        communities.Pack(attribute_pb2.LargeCommunitiesAttribute(communities=[large_community]))
 
         attributes = [origin, next_hop, as_path, communities]
 
