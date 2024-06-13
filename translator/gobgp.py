@@ -96,7 +96,7 @@ class GoBGP(object):
             # local_data* is for more flexible routing policy. can be set to ME:ACTION:YOU or ASN:Function:Parameter.
             #
             # Use local_data2 for any "flag" you want to send to the router to be used for routing policy decisions.
-            logging.warning(f"LargeCommunity Used - ASN:{asn} Community: {community}")
+            logging.info(f"LargeCommunity Used - ASN:{asn} Community: {community}")
             global_admin = asn
             local_data1 = community
             local_data2 = 0
