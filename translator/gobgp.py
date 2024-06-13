@@ -91,14 +91,10 @@ class GoBGP(object):
             comm_id = (asn << 16) + community
             communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
         else:
-            # Large Community: 3 fields of 4 bytes version of a community string
-            # global_admin = The Global Administrator field is intended to represent a complete 4-byte ASN
-            # local_data* is for more flexible routing policy. can be set to ME:ACTION:YOU or ASN:Function:Parameter.
-            #
-            # Use local_data2 for any "flag" you want to send to the router to be used for routing policy decisions.
             logging.info(f"LargeCommunity Used - ASN:{asn} Community: {community}")
             global_admin = asn
             local_data1 = community
+            # set to 0 because there's no use case for it, but we need a local_data2 for gobgp to read any of it
             local_data2 = 0
             large_community = attribute_pb2.LargeCommunity(
                 global_admin=global_admin,
