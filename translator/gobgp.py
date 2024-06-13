@@ -83,8 +83,25 @@ class GoBGP(object):
         as_path.Pack(as_segments)
 
         # Set our community number
+        # The ASN gets packed into the community so we need to be careful about size to not overflow the structure
         communities = Any()
-        communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[community]))
+        # Standard community
+        # Since we pack both into the community string we need to make sure they will both fit
+        if asn < 65536 and community < 65536:
+            comm_id = (asn << 16) + community
+            communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
+        else:
+            logging.info(f"LargeCommunity Used - ASN:{asn} Community: {community}")
+            global_admin = asn
+            local_data1 = community
+            # set to 0 because there's no use case for it, but we need a local_data2 for gobgp to read any of it
+            local_data2 = 0
+            large_community = attribute_pb2.LargeCommunity(
+                global_admin=global_admin,
+                local_data1=local_data1,
+                local_data2=local_data2,
+            )
+            communities.Pack(attribute_pb2.LargeCommunitiesAttribute(communities=[large_community]))
 
         attributes = [origin, next_hop, as_path, communities]
 
