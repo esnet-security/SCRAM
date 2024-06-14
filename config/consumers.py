@@ -20,6 +20,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num")
         )
         if not elements:
+            logging.warning(f"No elements found for actiontype={self.actiontype}.")
             return
 
         # Avoid lazy evaluation
