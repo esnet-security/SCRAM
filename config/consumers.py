@@ -1,25 +1,38 @@
+import logging
+
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from scram.route_manager.models import Entry
+from scram.route_manager.models import Entry, WebSocketSequenceElement
 
 
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
+        logging.info("Translator connected")
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
 
         await self.channel_layer.group_add(self.translator_group, self.channel_name)
         await self.accept()
 
-        # TODO: Filter by our actiontype
+        # Filter WebSocketSequenceElements by actiontype
+        elements = await sync_to_async(list)(
+            WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num")
+        )
+        if not elements:
+            logging.warning(f"No elements found for actiontype={self.actiontype}.")
 
         # Avoid lazy evaluation
         routes = await sync_to_async(list)(Entry.objects.filter(is_active=True).values_list("route__route", flat=True))
+
         for route in routes:
-            await self.send_json({"type": "translator_add", "message": {"route": str(route)}})
+            for element in elements:
+                msg = await sync_to_async(lambda: element.websocketmessage)()
+                msg.msg_data[msg.msg_data_route_field] = str(route)
+                await self.send_json({"type": msg.msg_type, "message": msg.msg_data})
 
     async def disconnect(self, close_code):
+        logging.info(f"Disconnect received: {close_code}")
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):
