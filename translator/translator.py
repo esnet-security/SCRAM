@@ -11,7 +11,7 @@ from gobgp import GoBGP
 
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
-url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/translator_block/")
+url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:5000/ws/route_manager/translator_block/")
 
 
 async def main():
