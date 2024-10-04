@@ -2,31 +2,53 @@
 version: '3.4'
 
 volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
   production_redis_data: {}
   production_nginx: {}
+  staticfiles:
 
 services:
   django:
     build:
       dockerfile: ./compose/production/django/Dockerfile
     image: scram_production_django
-    env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
-      - /etc/vault.d/secrets/kv_root_security.env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=scram
+      - POSTGRES_USER=debug
+      - POSTGRES_PASSWORD=debug
+      - DJANGO_READ_DOT_ENV_FILE=True
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_SECRET_KEY=DJANGO_SECRET_KY
+      - DJANGO_ADMIN_URL=admin/
+      - DJANGO_ALLOWED_HOSTS=24.199.100.172,django
+      - DJANGO_SECURE_SSL_REDIRECT=False
+      - DJANGO_SERVER_EMAIL=test@test.com
+      - WEB_CONCURRENCY=4
+      - SCRAM_AUTH_METHOD=local
+      - POSTGRES_SSL=False
+      - REDIS_URL=redis://redis:6379/0
     volumes:
-      - ./staticfiles:/staticfiles
+      - ./staticfiles:/staticfiles:rw,z
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
+    #ports:
+    #  - 5000:5000
 
   postgres:
     volumes:
-      - production_postgres_data:/var/lib/postgresql/data:Z
-      - production_postgres_data_backups:/backups:z
-    env_file:
-      - ./.envs/.production/.postgres
+      - local_postgres_data:/var/lib/postgresql/data:z
+      - local_postgres_data_backups:/backups:z
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=scram
+      - POSTGRES_USER=debug
+      - POSTGRES_PASSWORD=debug
+    #ports:
+    #  - "5432:5432"
 
   nginx:
     image: nginx:1.19
@@ -41,7 +63,7 @@ services:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/scram/ssl/server.crt:/etc/ssl/server.crt
       - /etc/scram/ssl/server.key:/etc/ssl/server.key
-      - ./staticfiles:/staticfiles
+      - ./staticfiles:/staticfiles:rw,z
     ports:
       - "443:443"
       - "80:80"
@@ -52,19 +74,24 @@ services:
 
   gobgp:
     volumes:
-      - ./gobgp_config:/config:z
+      - $CI_PROJECT_DIR/gobgp_config:/config:z
+    cap_add: [ "CAP_NET_BIND_SERVICE" ]
     networks:
       default: {}
       peering:
         ipv4_address: ${SCRAM_V4_ADDRESS}
         ipv6_address: ${SCRAM_V6_ADDRESS}
+    privileged: true
     ports:
-      - "179:179"
+      #- "179"
       - "50051"
 
   translator:
-    env_file:
-      - ./.envs/.production/.translator
+    environment:
+      - TRANSLATOR_HOSTNAME=localhost
+      - TRANSLATOR_URL="ws://django:5000/ws/route_manager/translator_block/"
+    networks:
+      default: {}
 
 networks:
   default:
