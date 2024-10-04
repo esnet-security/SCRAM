@@ -22,17 +22,17 @@ compose.override.yml:
 ## behave-all: runs behave inside the containers against all of your features
 .Phony: behave-all
 behave-all: compose.override.yml
-	@docker compose run --rm django coverage run -a manage.py behave --no-input --simple
+	@podman-compose run django coverage run -a manage.py behave --no-input --simple
 
 ## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
 .Phony: behave
 behave: compose.override.yml
-	@docker compose run --rm django python manage.py behave --no-input --simple -i $(FEATURE)
+	@podman-compose run django python manage.py behave --no-input --simple -i $(FEATURE)
 
 ## behave-translator
 .Phony: behave-translator
 behave-translator: compose.override.yml
-	@docker compose exec -T translator /usr/local/bin/behave /app/tests/acceptance/features
+	@podman-compose exec -T translator /usr/local/bin/behave /app/acceptance/features
 
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
@@ -42,8 +42,8 @@ build: compose.override.yml
 
 ## coverage.xml: generate coverage from test runs
 coverage.xml: pytest behave-all behave-translator
-	@docker compose run --rm django coverage report
-	@docker compose run --rm django coverage xml
+	@podman-compose run django coverage report
+	@podman-compose run django coverage xml
 
 ## ci-test: runs all tests just like Gitlab CI does
 .Phony: ci-test
@@ -58,7 +58,7 @@ clean: compose.override.yml
 ## collect-static: run collect static admin command
 .Phony: collectstatic
 collectstatic: compose.override.yml
-	@docker compose run --rm django python manage.py collectstatic
+	@podman-compose run django python manage.py collectstatic
 
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
@@ -101,18 +101,18 @@ list-routes: compose.override.yml
 ## migrate: makemigrations and then migrate
 .Phony: migrate
 migrate: compose.override.yml
-	@docker compose run --rm django python manage.py makemigrations
-	@docker compose run --rm django python manage.py migrate
+	@podman-compose run django python manage.py makemigrations
+	@podman-compose run django python manage.py migrate
 
 ## pass-reset: change admin's password
 .Phony: pass-reset
 pass-reset: compose.override.yml
-	@docker compose run --rm django python manage.py changepassword admin
+	@podman-compose run django python manage.py changepassword admin
 
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest: compose.override.yml
-	@docker compose run --rm django coverage run -m pytest
+	@podman-compose run django coverage run -m pytest
 
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run
@@ -132,4 +132,4 @@ tail-log: compose.override.yml
 ## type-check: static type checking
 .Phony: type-check
 type-check: compose.override.yml
-	@docker compose run --rm django mypy scram
+	@podman-compose run django mypy scram
