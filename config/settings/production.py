@@ -15,8 +15,10 @@ ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS", default=["es.net"])
 DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405
 DATABASES["default"]["ATOMIC_REQUESTS"] = True  # noqa F405
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
-if env("POSTGRES_SSL"):
-    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}  # noqa F405
+#if env("POSTGRES_SSL"):
+#    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}  # noqa F405
+#else:
+#DATABASES["default"]["OPTIONS"] = {"sslmode": "disable"}  # noqa F405
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -149,6 +151,7 @@ AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAu
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "oidc_authentication_init"
+#LOGIN_URL = "/"
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = "/"
