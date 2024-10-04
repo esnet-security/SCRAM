@@ -10,8 +10,8 @@ class UsersConfig(AppConfig):
     name = "scram.users"
     verbose_name = _("Users")
 
-    def ready(self):
-        try:
-            import scram.users.signals  # noqa F401
-        except ImportError:
-            logger.warning("SCRAM user signals not found")
+#    def ready(self):
+#        try:
+#            import scram.users.signals  # noqa F401
+#        except ImportError:
+#            logger.warning("SCRAM user signals not found")
