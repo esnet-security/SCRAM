@@ -60,6 +60,8 @@ services:
         condition: service_healthy
       gobgp:
         condition: service_healthy
+      djengo:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
