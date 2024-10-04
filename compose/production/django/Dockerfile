@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
   # dependencies for building Python packages and Docker healthcheck
-  && apt-get install -y build-essential curl git\
+  && apt-get install -y build-essential curl git net-tools iputils-ping procps\
   # psycopg2 dependencies
   && apt-get install -y libpq-dev \
   # Translations dependencies
