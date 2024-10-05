@@ -1,0 +1,80 @@
+Some general notes on using Podman and some shortcuts
+
+To completely clean the environment
+
+	# Containers
+	podman rm -af
+	# Images
+	podman rmi -af
+	# Volumes
+	podman volume rm $(podman volume ls -q)
+	# Networks
+	podman network rm $(podman network ls -q)
+
+To correct the postgres error:
+
+	SELECT rolname FROM pg_roles;
+	CREATE ROLE postgres;
+	ALTER ROLE postgres WITH LOGIN;
+
+
+General install directions with vanilla rRocky8
+
+	- yum update
+	- yum -y install podman podman-plugins containernetworking-plugins python3.12.x86_64 python3.12-pip.noarch git make netavark.x86_64 net-tools.x86_64
+	- pip3 install podman-compose
+	- mkdir -p /root/.config/containers
+	- cp /etc/containers/registries.conf /root/.config/containers/registries.conf
+
+	- edit  /root/.config/containers/registries.conf with 'unqualified-search-registries = ["docker.io"]'
+
+	- git clone https://github.com/esnet-security/SCRAM.git
+
+
+Container infrastructure mods:
+
+(1) edit the /etc/containers/containers.conf
+
+[network]
+# Explicitly force "netavark" as to not use the outdated CNI networking, which it would not apply otherwise as long as old stuff is there.
+# This may be removed once all containers were upgraded?
+# see https://discussion.fedoraproject.org/t/how-to-get-podman-dns-plugin-container-name-resolution-to-work-in-fedora-coreos-36-podman-plugins-podman-dnsname/39493/5?u=rugk
+
+# official doc:
+# Network backend determines what network driver will be used to set up and tear down container networks.
+# Valid values are "cni" and "netavark".
+# The default value is empty which means that it will automatically choose CNI or netavark. If there are
+# already containers/images or CNI networks preset it will choose CNI.
+#
+# Before changing this value all containers must be stopped otherwise it is likely that
+# iptables rules and network interfaces might leak on the host. A reboot will fix this.
+#
+network_backend = "netavark"
+
+# List of default capabilities for containers. If it is empty or commented out,
+# the default capabilities defined in the container engine will be added.
+#
+default_capabilities = [
+  "CHOWN",
+  "DAC_OVERRIDE",
+  "FOWNER",
+  "FSETID",
+  "KILL",
+  "NET_BIND_SERVICE",
+  "SETFCAP",
+  "SETGID",
+  "SETPCAP",
+  "SETUID",
+  "SYS_CHROOT",
+]
+
+
+(2) registries.conf
+Be sure to have the following line in there:
+unqualified-search-registries = ["docker.io"]
+
+
+
+
+
+

@@ -1,0 +1,4 @@
+# Installs the SCRAM database into a shiny new install
+#
+podman-compose run django python manage.py makemigrations
+podman-compose run django python manage.py migrate
