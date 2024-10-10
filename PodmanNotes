@@ -10,6 +10,8 @@ To completely clean the environment
 	podman volume rm $(podman volume ls -q)
 	# Networks
 	podman network rm $(podman network ls -q)
+	# Pods
+	podman pod rm $(podman pod ls -q)
 
 To correct the postgres error:
 
@@ -23,6 +25,7 @@ General install directions with vanilla rRocky8
 	- yum update
 	- yum -y install podman podman-plugins containernetworking-plugins python3.12.x86_64 python3.12-pip.noarch git make netavark.x86_64 net-tools.x86_64
 	- pip3 install podman-compose
+	- pip3 install django-anymail
 	- mkdir -p /root/.config/containers
 	- cp /etc/containers/registries.conf /root/.config/containers/registries.conf
 
@@ -75,6 +78,24 @@ unqualified-search-registries = ["docker.io"]
 
 
 
+
+-----
+If you see the error:
+
+[nginx]      | Error: unable to start container b5756315d00ad99544e38cad2c15c7639275b5e74be5c2e013ce54b5e89ea689: generating dependency graph for container b5756315d00ad99544e38cad2c15c7639275b5e74be5c2e013ce54b5e89ea689: container bedbe4722e03856c0e200e41cee4d6c3d21a61f99c19ba5cf6347c7722f593f5 depends on container f7147489340954021f5a0b15298e2835be2f2d1856588f0ecee240945e430854 not found in input list: no such container
+
+
+[root@fedora-s-1vcpu-2gb-sfo3-01 SCRAM]# podman ps -a
+CONTAINER ID  IMAGE                                       COMMAND               CREATED         STATUS                    PORTS                                             NAMES
+d09dbec54b9d  localhost/scram_production_postgres:latest  postgres              51 seconds ago  Up 49 seconds (healthy)   5432/tcp                                          scram_postgres_1
+f71474893409  docker.io/library/redis:5.0                 redis-server          51 seconds ago  Up 49 seconds (healthy)   6379/tcp                                          scram_redis_1
+021234dbb965  docker.io/jauderho/gobgp:v2.32.0            /usr/local/bin/go...  51 seconds ago  Up 46 seconds (starting)  0.0.0.0:41595->50051/tcp, 179/tcp                 scram_gobgp_1
+bedbe4722e03  localhost/scram_production_django:latest    /start                51 seconds ago  Up 47 seconds (healthy)                                                     scram_django_1
+7ec92daeddbb  localhost/scram_translator:latest                                 50 seconds ago  Up 45 seconds                                                               scram_translator_1
+b5756315d00a  docker.io/library/nginx:1.19                nginx -g daemon o...  50 seconds ago  Created                   0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 80/tcp  scram_nginx_1
+
+This has happened cause it looked for one of the dependent containers and did not find it. You can just restart the container in question.
+podman container start b5756315d00a
 
 
 
