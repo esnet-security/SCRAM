@@ -1,5 +1,5 @@
 ---
-version: '3.4'
+version: "3.4"
 
 volumes:
   local_postgres_data: {}
@@ -7,6 +7,7 @@ volumes:
 
 services:
   django:
+    platform: linux/amd64
     build:
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
