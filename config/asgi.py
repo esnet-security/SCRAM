@@ -11,6 +11,17 @@ import os
 import sys
 from pathlib import Path
 
+from django.conf import settings
+
+if settings.DEBUG:
+    print("In DEBUG Mode")
+    print("Starting Debugger")
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 3000))
+    print("Debugger listening!")
+
+
 # TODO: from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 

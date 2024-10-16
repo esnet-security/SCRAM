@@ -39,3 +39,7 @@ django-coverage-plugin==2.0.3  # https://github.com/nedbat/django_coverage_plugi
 pytest-django==4.5.2  # https://github.com/pytest-dev/pytest-django
 pytest~=7.1.2
 behave~=1.2.6 # https://behave.readthedocs.io/en/stable/
+
+# Debugging
+# ------------------------------------------------------------------------------
+debugpy

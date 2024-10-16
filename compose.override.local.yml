@@ -35,6 +35,7 @@ services:
       test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
     ports:
       - "8000"
+      - 3000:3000
 
   postgres:
     volumes:
@@ -78,6 +79,9 @@ services:
   translator:
     volumes:
       - ./translator/tests/:/app/tests/
+    ports:
+      - "5678"
+
 networks:
   default:
     ipam:
