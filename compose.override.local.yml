@@ -75,6 +75,9 @@ services:
       - "179"
       - "50051"
 
+  translator:
+    volumes:
+      - ./translator/tests/:/app/tests/
 networks:
   default:
     ipam:

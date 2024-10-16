@@ -4,7 +4,9 @@ import attribute_pb2
 import gobgp_pb2
 import gobgp_pb2_grpc
 import grpc
+from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
+from shared import asn_is_valid
 
 _TIMEOUT_SECONDS = 1000
 DEFAULT_ASN = 65400
@@ -76,8 +78,8 @@ class GoBGP(object):
         as_path = Any()
         as_segment = None
 
-        # Make sure our asn is an acceptable number. This is the max as stated in rfc6996
-        assert 0 < asn < 4294967295
+        # Make sure our asn is an acceptable value.
+        asn_is_valid(asn)
         as_segment = [attribute_pb2.AsSegment(numbers=[asn])]
         as_segments = attribute_pb2.AsPathAttribute(segments=as_segment)
         as_path.Pack(as_segments)
@@ -88,6 +90,8 @@ class GoBGP(object):
         # Standard community
         # Since we pack both into the community string we need to make sure they will both fit
         if asn < 65536 and community < 65536:
+            # We bitshift ASN left by 16 so that there is room to add the community on the end of it. This is because
+            # GoBGP wants the community sent as a single integer.
             comm_id = (asn << 16) + community
             communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
         else:
@@ -120,8 +124,8 @@ class GoBGP(object):
                 gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
                 _TIMEOUT_SECONDS,
             )
-        except AssertionError:
-            logging.warning("ASN assertion failed")
+        except ASNError as e:
+            logging.warning(f"ASN assertion failed with error: {e}")
 
     def del_all_paths(self):
         logging.warning("Withdrawing ALL routes")
@@ -136,8 +140,8 @@ class GoBGP(object):
                 gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
                 _TIMEOUT_SECONDS,
             )
-        except AssertionError:
-            logging.warning("ASN assertion failed")
+        except ASNError as e:
+            logging.warning(f"ASN assertion failed with error: {e}")
 
     def get_prefixes(self, ip):
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
