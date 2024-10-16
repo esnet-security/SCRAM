@@ -1,7 +1,11 @@
 import ipaddress
+import logging
 import time
 
 from behave import then, when
+from behave.log_capture import capture
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 @when("we add {route} with {asn} and {community} to the block list")
@@ -11,7 +15,7 @@ def add_block(context, route, asn, community):
     context.gobgp.add_path(ip, event_data)
 
 
-@when("we delete {route} with {asn} and {community} from the block list")
+@then("we delete {route} with {asn} and {community} from the block list")
 def del_block(context, route, asn, community):
     ip = ipaddress.ip_interface(route)
     event_data = {"asn": int(asn), "community": int(community)}
@@ -29,6 +33,13 @@ def get_block_status(context, ip):
             return True
 
     return False
+
+
+@capture
+@when("{route} and {community} with invalid {asn} is sent")
+def asn_validation_fails(context, route, asn, community):
+    add_block(context, route, asn, community)
+    assert context.log_capture.find_event("ASN assertion failed")
 
 
 @then("{ip} is blocked")
