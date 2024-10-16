@@ -32,6 +32,8 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+    deploy:
+      replicas: ${POSTGRES_ENABLED:-0}
 
   redis:
     image: redis:5.0
@@ -66,4 +68,3 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
-
