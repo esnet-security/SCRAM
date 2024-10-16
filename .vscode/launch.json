@@ -5,21 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Translator Debugger",
-            "type": "debugpy",
-            "request": "attach",
-            "connect": {
-                "host": "0.0.0.0",
-                "port": 32817
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/translator",
-                    "remoteRoot": "/app"
-                }
-            ]
-        },
-        {
             "name": "Django Debugger",
             "type": "debugpy",
             "request": "attach",
@@ -30,6 +15,21 @@
             "pathMappings": [
                 {
                     "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
+                }
+            ]
+        },
+        {
+            "name": "Translator Debugger",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "0.0.0.0",
+                "port": 3001
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/translator",
                     "remoteRoot": "/app"
                 }
             ]
