@@ -27,6 +27,8 @@ services:
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
+    deploy:
+      replicas: 0
 
   nginx:
     image: nginx:1.19
