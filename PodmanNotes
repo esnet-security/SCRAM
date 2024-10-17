@@ -15,6 +15,14 @@ To completely clean the environment
 
 To correct the postgres error:
 
+	go to the postgres container:
+	podman exec -it b9a66c459fdf /bin/bash
+	
+	will be root. Now: 
+	su - postgres
+
+	postgres@b9a66c459fdf:~$ psql --dbname=scram --username=debug
+
 	SELECT rolname FROM pg_roles;
 	CREATE ROLE postgres;
 	ALTER ROLE postgres WITH LOGIN;
