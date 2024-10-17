@@ -85,6 +85,8 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
+    environment:
+      - HOSTNAME=${HOSTNAME}
     volumes:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt/live/${HOSTNAME}/fullchain.pem:/etc/ssl/server.crt
