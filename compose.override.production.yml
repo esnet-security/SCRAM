@@ -9,6 +9,38 @@ volumes:
   staticfiles:
 
 services:
+  # Rework based on known dependencies and podman serial startup
+  gobgp:
+    volumes:
+      - $CI_PROJECT_DIR/gobgp_config:/config:z
+    cap_add: [ "CAP_NET_BIND_SERVICE" ]
+    networks:
+      default: {}
+      peering:
+        ipv4_address: ${SCRAM_V4_ADDRESS}
+        ipv6_address: ${SCRAM_V6_ADDRESS}
+    privileged: true
+    ports:
+      #- "179"
+      - "50051"
+
+  redis:
+    volumes:
+      - production_redis_data:/var/lib/redis:Z
+
+  postgres:
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:z
+      - local_postgres_data_backups:/backups:z
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=scram
+      - POSTGRES_USER=debug
+      - POSTGRES_PASSWORD=debug
+    #ports:
+    #  - "5432:5432"
+
   django:
     build:
       dockerfile: ./compose/production/django/Dockerfile
@@ -37,18 +69,12 @@ services:
     #ports:
     #  - 5000:5000
 
-  postgres:
-    volumes:
-      - local_postgres_data:/var/lib/postgresql/data:z
-      - local_postgres_data_backups:/backups:z
+  translator:
     environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=scram
-      - POSTGRES_USER=debug
-      - POSTGRES_PASSWORD=debug
-    #ports:
-    #  - "5432:5432"
+      - TRANSLATOR_HOSTNAME=localhost
+      - TRANSLATOR_URL="ws://django:5000/ws/route_manager/translator_block/"
+    networks:
+      default: {}
 
   nginx:
     image: nginx:1.19
@@ -60,38 +86,13 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     volumes:
-      - ./compose/production/nginx:/etc/nginx/conf.d
+      - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/scram/ssl/server.crt:/etc/ssl/server.crt
       - /etc/scram/ssl/server.key:/etc/ssl/server.key
       - ./staticfiles:/staticfiles:rw,z
     ports:
       - "443:443"
       - "80:80"
-
-  redis:
-    volumes:
-      - production_redis_data:/var/lib/redis:Z
-
-  gobgp:
-    volumes:
-      - $CI_PROJECT_DIR/gobgp_config:/config:z
-    cap_add: [ "CAP_NET_BIND_SERVICE" ]
-    networks:
-      default: {}
-      peering:
-        ipv4_address: ${SCRAM_V4_ADDRESS}
-        ipv6_address: ${SCRAM_V6_ADDRESS}
-    privileged: true
-    ports:
-      #- "179"
-      - "50051"
-
-  translator:
-    environment:
-      - TRANSLATOR_HOSTNAME=localhost
-      - TRANSLATOR_URL="ws://django:5000/ws/route_manager/translator_block/"
-    networks:
-      default: {}
 
 networks:
   default:
