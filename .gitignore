@@ -58,6 +58,9 @@ staticfiles/
 
 # Sphinx documentation
 docs/_build/
+docs/api
+docs/*.db
+
 
 # PyBuilder
 target/
