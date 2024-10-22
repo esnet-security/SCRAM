@@ -43,3 +43,5 @@ behave~=1.2.6 # https://behave.readthedocs.io/en/stable/
 # Debugging
 # ------------------------------------------------------------------------------
 debugpy
+# Pycharm might force you to be on the same version IDE as library, use caution.
+pydevd-pycharm
