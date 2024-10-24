@@ -161,9 +161,8 @@ Like all complicated things, running a remote debugger in this manner can someti
 
 * Starting the wrong debugger for the application you're trying to debug with
   * Make sure that you are using `debugpy` with VSCode and `pycharm-pydevd` with PyCharm!
+  * If you provide an invalid debugger, you'll see something like `f"Invalid debug mode given: {debug_mode}. Debugger not started"` as a warning level log in syslog.
 * Not being able to connect from VSCode to the applications with the debugger
   * Make sure that you can see that the debugger has started by looking at the container logs with `make tail-log`. Here you should see a message along the lines of `Translator is set to use a debugger. Provided debug mode: debugpy` or `Django is set to use a debugger. Provided debug mode: debugpy`. This will of course vary upon which app you're looking at and which debug mode you're using.
 * Not being able to connect with PyCharm.
   * Because the PyCharm debugger requires a connection from the application to PyCharm, we have to rely on the existence of the `host.docker.internal` DNS entry being available to the application. This is provided by default with colima and Docker Desktop, however, using docker-engine on linux does not provide this, so you might need to manually add this to your container using the `extra_hosts` option in docker compose.
-* Applications failing to start with the error `ValueError: Invalid debug mode given:`
-  * You will see this error if you set your environment variable for `DEBUG` to anything other than `debugpy` or `pycharm-pydevd`.

@@ -39,7 +39,7 @@ if debug_mode:
 
         logging.info("Debugger listening on port 3000.")
     else:
-        raise ValueError(f"Invalid debug mode given: {debug_mode}")
+        logging.warning(f"Invalid debug mode given: {debug_mode}. Debugger not started")
 
 # This allows easy placement of apps within the interior
 # scram directory.
