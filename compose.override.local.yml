@@ -1,5 +1,4 @@
 ---
-version: "3.4"
 
 volumes:
   local_postgres_data: {}
@@ -32,6 +31,8 @@ services:
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
+    deploy:
+      replicas: ${POSTGRES_ENABLED:-1}
 
   docs:
     image: scram_local_docs
