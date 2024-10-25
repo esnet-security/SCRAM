@@ -27,7 +27,7 @@ if debug_mode:
 
         import pydevd_pycharm
 
-        pydevd_pycharm.settrace("host.docker.internal", port=3003, stdoutToServer=True, stderrToServer=True)
+        pydevd_pycharm.settrace("host.docker.internal", port=56783, stdoutToServer=True, stderrToServer=True)
 
         logging.info("Debugger started.")
     elif debug_mode == "debugpy":
@@ -35,9 +35,9 @@ if debug_mode:
 
         import debugpy
 
-        debugpy.listen(("0.0.0.0", 3000))
+        debugpy.listen(("0.0.0.0", 56780))
 
-        logging.info("Debugger listening on port 3000.")
+        logging.info("Debugger listening on port 56780.")
     else:
         logging.warning(f"Invalid debug mode given: {debug_mode}. Debugger not started")
 

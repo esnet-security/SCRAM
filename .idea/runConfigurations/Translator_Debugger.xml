@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Translator Debugger" type="PyRemoteDebugConfigurationType" factoryName="Python Remote Debug">
     <module name="scram" />
-    <option name="PORT" value="3002" />
+    <option name="PORT" value="56782" />
     <option name="HOST" value="0.0.0.0" />
     <PathMappingSettings>
       <option name="pathMappings">
