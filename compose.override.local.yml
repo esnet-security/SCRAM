@@ -1,5 +1,4 @@
 ---
-version: "3.4"
 
 volumes:
   local_postgres_data: {}
@@ -21,10 +20,10 @@ services:
       test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
     ports:
       - "8000"
-      - 3000:3000
+      - 56780:56780
     environment:
       # This can be set to either `debugpy` or `pycharm-pydevd` currently.
-      - DEBUG=${DEBUG}
+      - DEBUG=${DEBUG:-}
 
   postgres:
     volumes:
@@ -32,6 +31,8 @@ services:
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
+    deploy:
+      replicas: ${POSTGRES_ENABLED:-1}
 
   docs:
     image: scram_local_docs
@@ -65,10 +66,10 @@ services:
     volumes:
       - ./translator/tests/:/app/tests/
     ports:
-      - 3001:3001
+      - 56781:56781
     environment:
       # This can be set to either `debugpy` or `pycharm-pydevd` currently.
-      - DEBUG=${DEBUG}
+      - DEBUG=${DEBUG:-}
 
 networks:
   default:
