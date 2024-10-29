@@ -1,0 +1,5 @@
+-r base.txt
+
+debugpy
+# Pycharm might force you to be on the same version IDE as library, use caution.
+pydevd-pycharm

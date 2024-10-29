@@ -21,6 +21,10 @@ services:
       test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
     ports:
       - "8000"
+      - 3000:3000
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG}
 
   postgres:
     volumes:
@@ -60,6 +64,12 @@ services:
   translator:
     volumes:
       - ./translator/tests/:/app/tests/
+    ports:
+      - 3001:3001
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG}
+
 networks:
   default:
     ipam:

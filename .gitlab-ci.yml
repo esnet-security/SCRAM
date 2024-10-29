@@ -28,6 +28,8 @@ pytest:
   image: docker:24.0.6-dind
   services:
   - docker:dind
+  variables:
+    POSTGRES_ENABLED: 1
   before_script:
   - apk add make
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY

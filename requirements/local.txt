@@ -39,3 +39,9 @@ django-coverage-plugin==2.0.3  # https://github.com/nedbat/django_coverage_plugi
 pytest-django==4.5.2  # https://github.com/pytest-dev/pytest-django
 pytest~=7.1.2
 behave~=1.2.6 # https://behave.readthedocs.io/en/stable/
+
+# Debugging
+# ------------------------------------------------------------------------------
+debugpy
+# Pycharm might force you to be on the same version IDE as library, use caution.
+pydevd-pycharm
