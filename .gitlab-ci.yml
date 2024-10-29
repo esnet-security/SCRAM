@@ -45,6 +45,9 @@ pytest:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+  after_script:
+    - make stop
+    - make clean
 
 gemnasium-dependency_scanning:
   variables:
@@ -61,20 +64,16 @@ code_quality_html:
 sast:
   stage: test
 
-final_clean:
-  image: docker:24.0.6-dind
-  services:
-  - docker:dind
-  before_script:
-  - apk add make
-  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
-  stage: test
-  rules:
-    - when: always # run even if something failed
-  script:
-    - make stop
-    - make clean
-  needs:
-    - pytest
-    - gemnasium-dependency_scanning
-    - sast
+# final_clean:
+#   image: docker:24.0.6-dind
+#   services:
+#   - docker:dind
+#   before_script:
+#   - apk add make
+#   - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
+#   stage: test
+#   rules:
+#     - when: always # run even if something failed
+#   script:
+#     - make stop
+#     - make clean
