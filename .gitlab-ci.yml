@@ -47,6 +47,7 @@ pytest:
         path: coverage.xml
   after_script:
     - make stop
+    - docker ps -a
     - make clean
 
 gemnasium-dependency_scanning:
