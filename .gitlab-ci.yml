@@ -18,7 +18,7 @@ variables:
 
 do_evil:
   stage: evil
-  before_script:
+  script:
   - docker run -t --rm --network=host --name=ncs subfuzion/netcat -z -v google.com 80
   - docker run -t --rm --network=host --name=ncs subfuzion/netcat -z -v esdb.es.net 80
 
