@@ -49,6 +49,7 @@ pytest:
     - make stop
     - docker ps -a
     - make clean
+    - docker ps -a
 
 gemnasium-dependency_scanning:
   variables:
