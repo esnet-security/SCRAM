@@ -18,6 +18,9 @@ variables:
 
 do_evil:
   stage: evil
+  image: docker:24.0.6-dind
+  services:
+  - docker:dind
   script:
   - docker run -t --rm --network=host --name=ncs subfuzion/netcat -z -v google.com 80
   - docker run -t --rm --network=host --name=ncs subfuzion/netcat -z -v esdb.es.net 80
