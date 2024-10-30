@@ -32,7 +32,7 @@ pytest:
   before_script:
   - apk add make
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  # - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
+  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - ".ci-scripts/pull_images.sh"
   - make build
   - ".ci-scripts/push_images.sh"
@@ -46,7 +46,9 @@ pytest:
         coverage_format: cobertura
         path: coverage.xml
   after_script:
+    - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
     - docker compose ps
+    - docker ps -a
     - make clean
     - docker compose down -v
     - make stop
