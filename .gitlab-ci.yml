@@ -46,6 +46,8 @@ pytest:
         coverage_format: cobertura
         path: coverage.xml
   after_script:
+    - make clean
+    - docker compose down -v
     - make stop
     - docker ps -a
     - make clean
