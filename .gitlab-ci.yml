@@ -39,6 +39,7 @@ pytest:
   - make migrate
   - make run
   script:
+  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - make coverage.xml
   artifacts:
     reports:
