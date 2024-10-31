@@ -48,14 +48,9 @@ pytest:
         path: coverage.xml
   after_script:
     - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
-    - docker compose ps
-    - docker ps -a
-    - make clean
-    - docker compose down -v
     - make stop
-    - docker ps -a
     - make clean
-    - docker ps -a
+
 
 gemnasium-dependency_scanning:
   variables:
