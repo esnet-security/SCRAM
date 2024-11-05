@@ -1,0 +1,4 @@
+# Translator
+# ------------------------------------------------------------------------------
+#TRANSLATOR_HOSTNAME=localhost
+#TRANSLATOR_URL="ws://django:5000/ws/route_manager/translator_block/"
