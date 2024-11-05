@@ -32,14 +32,20 @@ General install directions with vanilla rRocky8
 
 	- yum update
 	- yum -y install podman podman-plugins containernetworking-plugins python3.12.x86_64 python3.12-pip.noarch git make netavark.x86_64 net-tools.x86_64
-	- pip3 install podman-compose
-	- pip3 install django-anymail
+	- pip3.12 install podman-compose
+	- pip3.12 install django-anymail
 	- mkdir -p /root/.config/containers
 	- cp /etc/containers/registries.conf /root/.config/containers/registries.conf
 
 	- edit  /root/.config/containers/registries.conf with 'unqualified-search-registries = ["docker.io"]'
 
 	- git clone https://github.com/esnet-security/SCRAM.git
+
+	- podman-compose up   : loads images and containers
+	- podman-compose down : there will be an error, this gets read for repair
+	- ./load_database     : installs database
+	- podman-compose down : some containers are running now, close them down
+	- podman-compose up   : final start
 
 
 Container infrastructure mods:
@@ -106,4 +112,36 @@ This has happened cause it looked for one of the dependent containers and did no
 podman container start b5756315d00a
 
 
+[root@fedora-s-1vcpu-2gb-sfo3-01 SCRAM]# podman-compose systemd -a create-unit
+
+while in your project type `podman-compose systemd -a register`
+
+[root@fedora-s-1vcpu-2gb-sfo3-01 SCRAM]# podman-compose systemd -a register
+
+you can use systemd commands like enable, start, stop, status, cat
+all without `sudo` like this:
+
+		systemctl --user enable --now 'podman-compose@scram'
+		systemctl --user status 'podman-compose@scram'
+		journalctl --user -xeu 'podman-compose@scram'
+
+and for that to work outside a session
+you might need to run the following command *once*
+
+		sudo loginctl enable-linger 'root'
+
+you can use podman commands like:
+
+		podman pod ps
+		podman pod stats 'pod_scram'
+		podman pod logs --tail=10 -f 'pod_scram'
+
+
+
+
+new diffs
+move symlink from system to python 3.12
+use pip3.12 to install pkgs
+check out Podman-0.1
+tar xvf envs.tar
 
