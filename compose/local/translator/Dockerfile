@@ -22,7 +22,9 @@ RUN mkdir /app \
 
 COPY ./translator/translator.py /app
 COPY ./translator/gobgp.py /app
-COPY ./translator/tests /app
+COPY ./translator/exceptions.py /app
+COPY ./translator/shared.py /app
+
 RUN chmod +x /app/translator.py
 
 WORKDIR /app
