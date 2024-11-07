@@ -7,7 +7,6 @@ include:
 stages:
 - lint
 - test
-- cleanup
 
 variables:
   POSTGRES_USER: scram
@@ -28,6 +27,8 @@ pytest:
   image: docker:24.0.6-dind
   services:
   - docker:dind
+  variables:
+    POSTGRES_ENABLED: 1
   before_script:
   - apk add make
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -38,12 +39,18 @@ pytest:
   - make migrate
   - make run
   script:
+  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
   - make coverage.xml
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+  after_script:
+    - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
+    - make stop
+    - make clean
+
 
 gemnasium-dependency_scanning:
   variables:
@@ -59,17 +66,3 @@ code_quality_html:
 
 sast:
   stage: test
-
-final_clean:
-  image: docker:24.0.6-dind
-  services:
-  - docker:dind
-  before_script:
-  - apk add make
-  - export COMPOSE_PROJECT_NAME=$CI_PIPELINE_ID
-  stage: cleanup
-  rules:
-    - when: always # run even if something failed
-  script:
-    - make stop
-    - make clean

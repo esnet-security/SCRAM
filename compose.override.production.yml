@@ -1,5 +1,4 @@
 ---
-version: '3.4'
 
 volumes:
   production_postgres_data: {}
@@ -27,6 +26,8 @@ services:
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
+    deploy:
+      replicas: 0
 
   nginx:
     image: nginx:1.19
@@ -74,7 +75,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 0200:c0:ff:ee::/48
+        - subnet: 0200:c0:ff:ee::/64
   peering:
     enable_ipv6: true
     driver: macvlan

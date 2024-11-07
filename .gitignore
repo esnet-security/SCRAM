@@ -7,11 +7,6 @@ __pycache__/
 # Ignore prod nginx files so git doesnt think we've locally added new files when deploying templates with ansible
 compose/production/nginx
 
-.idea/
-.idea/*
-.idea/scram.iml
-*.iml
-
 # C extensions
 *.so
 
@@ -63,6 +58,9 @@ staticfiles/
 
 # Sphinx documentation
 docs/_build/
+docs/api
+docs/*.db
+
 
 # PyBuilder
 target/
@@ -162,6 +160,7 @@ typings/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+*.code-workspace
 
 
 # Provided default Pycharm Run/Debug Configurations should be tracked by git
@@ -172,7 +171,13 @@ typings/
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-.idea/*
+# Allow Debugger Files
+/.idea/runConfigurations/*.xml
+/.idea/inspectionProfiles
+!.idea/runConfigurations/*_Debugger.xml
+
+.idea/scram.iml
+*.iml
 
 # User-specific stuff:
 .idea/**/workspace.xml
