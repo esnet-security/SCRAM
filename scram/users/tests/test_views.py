@@ -47,8 +47,8 @@ class TestUserUpdateView:
         request = rf.get("/fake-url/")
 
         # Add the session/message middleware to the request
-        SessionMiddleware().process_request(request)
-        MessageMiddleware().process_request(request)
+        SessionMiddleware(get_response=request).process_request(request)
+        MessageMiddleware(get_response=request).process_request(request)
         request.user = user
 
         view.request = request
