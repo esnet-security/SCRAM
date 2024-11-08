@@ -339,6 +339,7 @@ scram/media/
 
 
 .ipython/
+# envs are now stored in compose file
 .envs/*
 !.envs/.local/
 compose.override.yml
