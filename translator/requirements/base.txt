@@ -1,5 +1,5 @@
 aiohttp-sse-client==0.2.1
 behave~=1.2.6
-coverage==5.5
-grpcio-tools==1.41.0
-websockets==10.3
+coverage==7.6.4
+grpcio-tools==1.67.1
+websockets==13.1
