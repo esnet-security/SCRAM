@@ -1,0 +1,53 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    open-pull-requests-limit: 1000
+    groups:
+      gh-actions-dependencies:
+        patterns:
+          - "*"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: pip
+    groups:
+      django-dependencies:
+        patterns:
+          - "*"
+    directories:
+    - "/"
+    - "/requirements/base.txt"
+    - "/requirements/local.txt"
+    - "/requirements/production.txt"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: pip
+    open-pull-requests-limit: 1000
+    groups:
+      translator-dependencies:
+        patterns:
+          - "*"
+    directories:
+    - "/translator/requirements/base.txt"
+    - "/translator/requirements/local.txt"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: docker
+    open-pull-requests-limit: 1000
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"
+    directories:
+      - "/compose/local/django"
+      - "/compose/local/docs"
+      - "/compose/local/translator"
+      - "/compose/production/django"
+      - "/compose/production/postgres"
+    schedule:
+      interval: "daily"
