@@ -7,14 +7,39 @@ For more information on this file, see
 https://docs.djangoproject.com/en/dev/howto/deployment/asgi/
 
 """
+import logging
 import os
 import sys
 from pathlib import Path
 
 # TODO: from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
+
 # TODO: from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
+
+# Here we setup a debugger if this is desired. This obviously should not be run in production.
+debug_mode = os.environ.get("DEBUG")
+if debug_mode:
+    logging.info(f"Django is set to use a debugger. Provided debug mode: {debug_mode}")
+    if debug_mode == "pycharm-pydevd":
+        logging.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
+
+        import pydevd_pycharm
+
+        pydevd_pycharm.settrace("host.docker.internal", port=56783, stdoutToServer=True, stderrToServer=True)
+
+        logging.info("Debugger started.")
+    elif debug_mode == "debugpy":
+        logging.info("Entering debug mode for debugpy (VSCode)")
+
+        import debugpy
+
+        debugpy.listen(("0.0.0.0", 56780))
+
+        logging.info("Debugger listening on port 56780.")
+    else:
+        logging.warning(f"Invalid debug mode given: {debug_mode}. Debugger not started")
 
 # This allows easy placement of apps within the interior
 # scram directory.

@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def create_block_actiontype(apps, schema_editor):
-    ActionType = apps.get_model('route_manager', 'ActionType')
+    ActionType = apps.get_model("route_manager", "ActionType")
     block = ActionType(name="block")
     block.save()
 
@@ -12,7 +12,7 @@ def create_block_actiontype(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0007_history_expiration'),
+        ("route_manager", "0007_history_expiration"),
     ]
 
     operations = [

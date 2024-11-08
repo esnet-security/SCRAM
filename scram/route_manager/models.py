@@ -25,18 +25,55 @@ class Route(models.Model):
 class ActionType(models.Model):
     """Defines an action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
 
-    name = models.CharField(
-        help_text="One-word description of the action", max_length=30
-    )
-    available = models.BooleanField(
-        help_text="Is this a valid choice for new entries?", default=True
-    )
+    name = models.CharField(help_text="One-word description of the action", max_length=30)
+    available = models.BooleanField(help_text="Is this a valid choice for new entries?", default=True)
     history = HistoricalRecords()
 
     def __str__(self):
         if not self.available:
             return f"{self.name} (Inactive)"
         return self.name
+
+
+class WebSocketMessage(models.Model):
+    """Defines a single message sent to downstream translators via WebSocket."""
+
+    msg_type = models.CharField("The type of the message", max_length=50)
+    msg_data = models.JSONField("The JSON payload. See also msg_data_route_field.", default=dict)
+    msg_data_route_field = models.CharField(
+        "The key in the JSON payload whose value will contain the route being acted on.",
+        default="route",
+        max_length=25,
+    )
+
+    def __str__(self):
+        return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
+
+
+class WebSocketSequenceElement(models.Model):
+    """In a sequence of messages, defines a single element."""
+
+    websocketmessage = models.ForeignKey("WebSocketMessage", on_delete=models.CASCADE)
+    order_num = models.SmallIntegerField(
+        "Sequences are sent from the smallest order_num to the highest. "
+        + "Messages with the same order_num could be sent in any order",
+        default=0,
+    )
+
+    VERB_CHOICES = [
+        ("A", "Add"),
+        ("C", "Check"),
+        ("R", "Remove"),
+    ]
+    verb = models.CharField(max_length=1, choices=VERB_CHOICES)
+
+    action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return (
+            f"{self.websocketmessage} as order={self.order_num} for "
+            + f"{self.verb} actions on actiontype={self.action_type}"
+        )
 
 
 class Entry(models.Model):

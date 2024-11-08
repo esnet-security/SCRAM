@@ -7,13 +7,13 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0001_initial'),
+        ("route_manager", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='ipaddress',
-            name='uuid',
+            model_name="ipaddress",
+            name="uuid",
             field=models.UUIDField(db_index=True, default=uuid.uuid4, editable=False),
         ),
     ]

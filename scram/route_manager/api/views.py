@@ -12,14 +12,9 @@ from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from ..models import ActionType, Client, Entry, IgnoreEntry
+from ..models import ActionType, Client, Entry, IgnoreEntry, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
-from .serializers import (
-    ActionTypeSerializer,
-    ClientSerializer,
-    EntrySerializer,
-    IgnoreEntrySerializer,
-)
+from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
 
 channel_layer = get_channel_layer()
 
@@ -64,7 +59,12 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
-
+        if self.request.user.username:
+            # This is set if our request comes through the WUI path
+            who = self.request.user.username
+        else:
+            # This is set if we pass the "who" through the json data in an API call (like from Zeek)
+            who = serializer.validated_data["who"]
         comment = serializer.validated_data["comment"]
         tmp_exp = self.request.data.get("expiration", "")
 
@@ -81,19 +81,13 @@ class EntryViewSet(viewsets.ModelViewSet):
         # Make sure this client is authorized to add this entry with this actiontype
         if self.request.data.get("uuid"):
             client_uuid = self.request.data["uuid"]
-            authorized_actiontypes = Client.objects.filter(
-                uuid=client_uuid
-            ).values_list("authorized_actiontypes__name", flat=True)
-            authorized_client = Client.objects.filter(uuid=client_uuid).values(
-                "is_authorized"
+            authorized_actiontypes = Client.objects.filter(uuid=client_uuid).values_list(
+                "authorized_actiontypes__name", flat=True
             )
+            authorized_client = Client.objects.filter(uuid=client_uuid).values("is_authorized")
             if not authorized_client or actiontype not in authorized_actiontypes:
-                logging.debug(
-                    f"Client {client_uuid} actiontypes: {authorized_actiontypes}"
-                )
-                logging.info(
-                    f"{client_uuid} is not allowed to add an entry to the {actiontype} list"
-                )
+                logging.debug(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
+                logging.info(f"{client_uuid} is not allowed to add an entry to the {actiontype} list")
                 raise ActiontypeNotAllowed()
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied()
@@ -104,24 +98,28 @@ class EntryViewSet(viewsets.ModelViewSet):
             ignore_entries = []
             for ignore_entry in overlapping_ignore.values():
                 ignore_entries.append(str(ignore_entry["route"]))
-            logging.info(
-                f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}"
-            )
+            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
             raise IgnoredRoute
         else:
-            # Must match a channel name defined in asgi.py
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}",
-                {"type": "translator_add", "message": {"route": str(route)}},
-            )
+            elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
+            if not elements:
+                logging.warning(f"No elements found for actiontype={actiontype}.")
+
+            for element in elements:
+                msg = element.websocketmessage
+                msg.msg_data[msg.msg_data_route_field] = str(route)
+                # Must match a channel name defined in asgi.py
+                async_to_sync(channel_layer.group_send)(
+                    f"translator_{actiontype}", {"type": msg.msg_type, "message": msg.msg_data}
+                )
 
             serializer.save()
 
             entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
             if expiration:
                 entry.expiration = expiration
+            entry.who = who
             entry.is_active = True
-            entry.who = self.request.user.username
             entry.comment = comment
             logging.info(f"{entry}")
             entry.save()

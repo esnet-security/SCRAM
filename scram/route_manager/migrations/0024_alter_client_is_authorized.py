@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('route_manager', '0023_client'),
+        ("route_manager", "0023_client"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='client',
-            name='is_authorized',
+            model_name="client",
+            name="is_authorized",
             field=models.BooleanField(blank=True, default=False, null=True),
         ),
     ]

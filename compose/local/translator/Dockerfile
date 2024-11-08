@@ -11,18 +11,20 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Requirements are installed here to ensure they will be cached.
-COPY ./translator/requirements.txt /requirements.txt
-RUN pip install -r /requirements.txt
+COPY ./translator/requirements /requirements
+RUN pip install -r /requirements/base.txt
 
 RUN mkdir /app \
-    && cd /app \
-    && git clone -b v2.32.0 https://github.com/osrg/gobgp.git \
-    && cd gobgp/api \
-    && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
+  && cd /app \
+  && git clone -b v2.32.0 https://github.com/osrg/gobgp.git \
+  && cd gobgp/api \
+  && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/translator.py /app
 COPY ./translator/gobgp.py /app
-COPY ./translator/tests /app
+COPY ./translator/exceptions.py /app
+COPY ./translator/shared.py /app
+
 RUN chmod +x /app/translator.py
 
 WORKDIR /app

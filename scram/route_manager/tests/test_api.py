@@ -9,9 +9,7 @@ from scram.route_manager.models import Client
 class TestAddRemoveIP(APITestCase):
     def setUp(self):
         self.url = reverse("api:v1:entry-list")
-        self.superuser = get_user_model().objects.create_superuser(
-            "admin", "admin@es.net", "admintestpassword"
-        )
+        self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
             hostname="authorized_client.es.net",
@@ -24,7 +22,7 @@ class TestAddRemoveIP(APITestCase):
         response = self.client.post(
             self.url,
             {
-                "route": "1.2.3.4",
+                "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             },
@@ -36,7 +34,7 @@ class TestAddRemoveIP(APITestCase):
         self.client.post(
             self.url,
             {
-                "route": "1.2.3.4",
+                "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             },
@@ -45,7 +43,7 @@ class TestAddRemoveIP(APITestCase):
         response = self.client.post(
             self.url,
             {
-                "route": "1.2.3.4",
+                "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             },
@@ -96,18 +94,17 @@ class TestUnauthenticatedAccess(APITestCase):
         response = self.client.post(
             self.entry_url,
             {
-                "route": "1.2.3.4",
+                "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+                "who": "person",
             },
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
-        response = self.client.post(
-            self.ignore_url, {"route": "1.2.3.4"}, format="json"
-        )
+        response = self.client.post(self.ignore_url, {"route": "192.0.2.4"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_list_access(self):

@@ -16,14 +16,14 @@ class TestActiontypeHistory(TestCase):
 
 
 class TestEntryHistory(TestCase):
-    routes = ["1.2.3.6/32", "2.4.6.0/24", "6.0.0.0/8"]
+    routes = ["192.0.2.16/32", "198.51.100.16/28"]
 
     def setUp(self):
         self.atype = ActionType.objects.create(name="Block")
         for r in self.routes:
             route = Route.objects.create(route=r)
             entry = Entry.objects.create(route=route, actiontype=self.atype)
-            create_reason = "Zeek detected a scan from 1.1.1.1."
+            create_reason = "Zeek detected a scan from 192.0.2.1."
             update_change_reason(entry, create_reason)
             self.assertEqual(entry.get_change_reason(), create_reason)
 
@@ -31,14 +31,12 @@ class TestEntryHistory(TestCase):
         for r in self.routes:
             route_old = Route.objects.get(route=r)
             e = Entry.objects.get(route=route_old)
-            self.assertEqual(
-                e.get_change_reason(), "Zeek detected a scan from 1.1.1.1."
-            )
+            self.assertEqual(e.get_change_reason(), "Zeek detected a scan from 192.0.2.1.")
 
-            route_new = str(route_old).replace("6", "7")
+            route_new = str(route_old).replace("16", "32")
             e.route = Route.objects.create(route=route_new)
 
-            change_reason = "I meant 7, not 6."
+            change_reason = "I meant 32, not 16."
             e._change_reason = change_reason
             e.save()
 
