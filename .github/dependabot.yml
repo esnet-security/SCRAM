@@ -21,7 +21,7 @@ updates:
           - "*"
     directories:
     - "/"
-    - "/requirements/"
+    - "/requirements"
     schedule:
       interval: "daily"
   - package-ecosystem: pip
@@ -31,7 +31,7 @@ updates:
         patterns:
           - "*"
     directories:
-    - "/translator/requirements/
+    - "/translator/requirements"
     schedule:
       interval: "daily"
   - package-ecosystem: docker
