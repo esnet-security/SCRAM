@@ -1,13 +1,18 @@
-name: Run pytest and coverage
+name: Run pytest
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["develop"]
+    branches:
+      - main
+      - develop
+      - topic/soehlert/github_ci
+  pull_request:
+    branches:
+      - main
+      - develop
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  pull_request:
 
 jobs:
   pytest:
