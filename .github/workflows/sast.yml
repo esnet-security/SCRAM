@@ -9,17 +9,18 @@ on:
   workflow_dispatch:
   pull_request:
 
-sast:
-  name: Static Application Security Testing (SAST)
-  runs-on: ubuntu-latest
-  steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+jobs:
+  sast:
+    name: Static Application Security Testing (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: python
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

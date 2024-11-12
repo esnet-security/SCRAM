@@ -1,0 +1,70 @@
+name: Run pytest and coverage
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["develop"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  pytest:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: test_scram
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scram"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose make
+
+      - name: Build Docker images
+        run: make build
+
+      - name: Migrate Database
+        run: make migrate
+
+      - name: Run Application
+        run: make run
+
+      - name: Run Pytest with Coverage
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_DB: test_scram
+        run: make coverage.xml
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Stop Services
+        if: always()
+        run: make stop
+
+      - name: Clean Up
+        if: always()
+        run: make clean
