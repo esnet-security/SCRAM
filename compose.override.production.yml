@@ -1,4 +1,3 @@
-
 ---
 version: '3.4'
 
@@ -33,12 +32,8 @@ services:
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:z
       - local_postgres_data_backups:/backups:z
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=scram
-      - POSTGRES_USER=debug
-      - POSTGRES_PASSWORD=debug
+    configs:
+      file: .envs/.production/.postgres
     #ports:
     #  - "5432:5432"
 
@@ -46,23 +41,8 @@ services:
     build:
       dockerfile: ./compose/production/django/Dockerfile
     image: scram_production_django
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=scram
-      - POSTGRES_USER=debug
-      - POSTGRES_PASSWORD=debug
-      - DJANGO_READ_DOT_ENV_FILE=True
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DJANGO_SECRET_KEY=DJANGO_SECRET_KY
-      - DJANGO_ADMIN_URL=admin/
-      - DJANGO_ALLOWED_HOSTS=24.199.100.172,django
-      - DJANGO_SECURE_SSL_REDIRECT=False
-      - DJANGO_SERVER_EMAIL=test@test.com
-      - WEB_CONCURRENCY=4
-      - SCRAM_AUTH_METHOD=local
-      - POSTGRES_SSL=False
-      - REDIS_URL=redis://redis:6379/0
+    configs:
+      file: .envs/.production/.django
     volumes:
       - ./staticfiles:/staticfiles:rw,z
     healthcheck:
@@ -71,9 +51,8 @@ services:
     #  - 5000:5000
 
   translator:
-    environment:
-      - TRANSLATOR_HOSTNAME=localhost
-      - TRANSLATOR_URL="ws://django:5000/ws/route_manager/translator_block/"
+    configs:
+      file: .envs/.production/.translator
     networks:
       default: {}
 
@@ -114,4 +93,3 @@ networks:
           gateway: ${SCRAM_V4_GATEWAY}
         - subnet: ${SCRAM_V6_SUBNET}
           gateway: ${SCRAM_V6_GATEWAY}
-
