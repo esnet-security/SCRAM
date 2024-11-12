@@ -26,6 +26,7 @@ jobs:
           POSTGRES_USER: scram
           POSTGRES_PASSWORD: ''
           POSTGRES_DB: test_scram
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
