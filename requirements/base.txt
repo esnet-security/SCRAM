@@ -7,7 +7,6 @@ celery==5.2.7  # pyup: < 6.0  # https://github.com/celery/celery
 django-celery-beat  # https://github.com/celery/django-celery-beat
 flower==1.0.0  # https://github.com/mher/flower
 uvicorn[standard]==0.17.6  # https://github.com/encode/uvicorn
-# asgiref~=3.5.0  # https://github.com/django/asgiref
 
 # Django
 # ------------------------------------------------------------------------------
