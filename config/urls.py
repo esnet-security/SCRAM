@@ -28,7 +28,8 @@ if settings.AUTH_METHOD == "oidc":
     import mozilla_django_oidc  # noqa: F401
 
     urlpatterns += [path("oidc/", include("mozilla_django_oidc.urls"))]
-
+elif settings.AUTH_METHOD == "local":
+    urlpatterns += [path("auth/", include("scram.local_auth.urls", namespace="local_auth"))]
 # API URLS
 api_version_urls = (
     [

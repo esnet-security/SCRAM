@@ -191,15 +191,15 @@ if AUTH_METHOD == "oidc":
 
 elif AUTH_METHOD == "local":
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-    LOGIN_URL = "/login"
+    LOGIN_URL = "local_auth:login"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
     LOGIN_REDIRECT_URL = "route_manager:home"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-    LOGOUT_URL = "/logout"
+    LOGOUT_URL = "local_auth:logout"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-redirect-url
-    LOGOUT_REDIRECT_URL = "/"
+    LOGOUT_REDIRECT_URL = "route_manager:home"
 else:
     raise Exception(f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'")
