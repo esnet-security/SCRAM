@@ -65,6 +65,11 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
+      - name: Display Coverage Metrics
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          minimum_coverage: '50'
+
       - name: Stop Services
         if: always()
         run: make stop
