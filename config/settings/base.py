@@ -1,7 +1,6 @@
 """
 Base settings to build other settings files upon.
 """
-import os
 from pathlib import Path
 
 import environ
@@ -97,12 +96,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "route_manager:home"
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "admin:login"
-# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "admin:logout"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -292,9 +285,6 @@ SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 # Take in comment to show with history changes on models
 SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
 SIMPLE_HISTORY_ENABLED = True
-
-# Are you using local passwords or oidc?
-AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
 
 # Users in these groups have full privileges, including Django is_superuser
 SCRAM_ADMIN_GROUPS = ["svc_scram_admin"]
