@@ -69,7 +69,6 @@ jobs:
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: '50'
-          only_changed_files: 'true'
 
       - name: Stop Services
         if: always()
