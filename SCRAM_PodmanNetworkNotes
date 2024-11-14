@@ -1,0 +1,90 @@
+This file contains a number of notes and configuration snippets to help things make more sense.
+
+In the (installed) SCRAM pod we have the following networks
+
+NETWORK ID    NAME                  DRIVER
+2f259bab93aa  podman                bridge
+399b5841a66a  scram_podman_default  bridge
+e60c71373ed7  scram_podman_peering  macvlan
+
+These networks provide the following functionality:
+
+scram_podman_default: network for different containers to talk amongst themselves.
+scram_podman_peering: network attached to a dedicated interface that will talk to the external router. Only the gobgp container instance will be connnected to this network.
+
+Notes on each of these follow.
+
+-------------- scram_podman_default --------------
+
+The config for the scram_podman_default looks like:
+
+          "name": "scram_podman_default",
+          "id": "399b5841a66abf71233de6a1d9b1052f0ed87e9346d2d7eee20c80c3ad890ed7",
+          "driver": "bridge",
+          "network_interface": "podman1",
+          "created": "2024-11-12T06:04:45.494674612Z",
+          "subnets": [
+               {
+                    "subnet": "200:c0:ff:ee::/64",
+                    "gateway": "200:c0:ff:ee::1"
+               },
+               {
+                    "subnet": "10.89.0.0/24",
+                    "gateway": "10.89.0.1"
+               }
+          ],
+          "ipv6_enabled": true,
+          "internal": false,
+          "dns_enabled": true,
+          "labels": {
+               "com.docker.compose.project": "scram_podman",
+               "io.podman.compose.project": "scram_podman"
+          },
+          "ipam_options": {
+               "driver": "host-local"
+          },
+          "containers": {}
+
+
+which will show up as an interface when the pod is running which matches up to the config above:
+
+podman1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.89.0.1  netmask 255.255.255.0  broadcast 10.89.0.255
+        inet6 fe80::e033:77ff:fe99:f09e  prefixlen 64  scopeid 0x20<link>
+        inet6 200:c0:ff:ee::1  prefixlen 64  scopeid 0x0<global>
+        ether e2:33:77:99:f0:9e  txqueuelen 1000  (Ethernet)
+        RX packets 79  bytes 6136 (5.9 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 48  bytes 6958 (6.7 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+An interesting note is that you can run tcpdump on this interface outside of any of the containers, and see all the inter-container network traffic. I did not figure this out for a very long time.
+
+
+
+
+-------------- scram_podman_peering --------------
+
+The following variables are typically defined in the .env file located at the repo root. These 
+
+SCRAM_PEERING_IFACE=eth1
+SCRAM_V4_SUBNET=10.124.0.0/24
+SCRAM_V4_GATEWAY=10.124.0.1
+SCRAM_V4_ADDRESS=10.124.0.4
+SCRAM_V6_SUBNET=2004:600:202:9::8/126
+SCRAM_V6_GATEWAY=2004:600:202:9::9
+SCRAM_V6_ADDRESS=2004:600:202:9::a
+
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.124.0.4  netmask 255.255.240.0  broadcast 10.124.15.255
+        inet6 fe80::940b:c2ff:fee8:f6f  prefixlen 64  scopeid 0x20<link>
+        ether 96:0b:c2:e8:0f:6f  txqueuelen 1000  (Ethernet)
+        RX packets 546  bytes 38136 (37.2 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1118  bytes 79608 (77.7 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+
