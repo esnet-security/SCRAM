@@ -1,7 +1,6 @@
 name: Build sphinx docs
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches:
       - '**'
