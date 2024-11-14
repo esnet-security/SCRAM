@@ -9,8 +9,10 @@ python_files = [
 
 # ==== Coverage ====
 [tool.coverage.run]
-omit = ["*/migrations/*", "*/tests/*"]
+include = ["scram/*", "config/*", "translator/*"]
+omit = ["**/migrations/*", "scram/contrib/*", "*/tests/*"]
 plugins = ["django_coverage_plugin"]
+
 
 
 # ==== black ====
