@@ -67,3 +67,12 @@ REST_FRAMEWORK = {
 
 # Behave Django testing framework
 INSTALLED_APPS += ["behave_django"]  # noqa F405
+
+# AUTHENTICATION
+# ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+LOGIN_REDIRECT_URL = "route_manager:home"
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+LOGIN_URL = "admin:login"
+# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+LOGOUT_URL = "admin:logout"
