@@ -1,6 +1,10 @@
 ---
 version: '3.4'
 
+#
+# environmental variables are defined in the .env file in this repo root
+#
+
 volumes:
   local_postgres_data: {}
   local_postgres_data_backups: {}
