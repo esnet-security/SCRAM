@@ -1,6 +1,8 @@
 """
 Base settings to build other settings files upon.
 """
+
+import os
 from pathlib import Path
 
 import environ
@@ -274,6 +276,8 @@ REST_FRAMEWORK = {
 CORS_URLS_REGEX = r"^/api/.*$"
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Are you using local passwords or oidc?
+AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True

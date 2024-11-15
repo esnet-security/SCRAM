@@ -2,7 +2,7 @@ import logging
 import os
 
 from .base import *  # noqa
-from .base import AUTHENTICATION_BACKENDS, MIDDLEWARE, env
+from .base import AUTH_METHOD, AUTHENTICATION_BACKENDS, MIDDLEWARE, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -142,9 +142,6 @@ LOGGING = {
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-# Are you using local passwords or oidc?
-AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
-
 logging.info(f"Using AUTH METHOD = {AUTH_METHOD}")
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
