@@ -138,10 +138,24 @@ you can use podman commands like:
 
 
 
+----------------
 
 new diffs
 move symlink from system to python 3.12
 use pip3.12 to install pkgs
-check out Podman-0.1
+check out Podman-0.2
 tar xvf envs.tar
+
+----------------
+nginx container
+
+	nginx config file is located compose/production/nginx/nginx.conf
+
+	The file on the podman server (/etc/scram/ssl/server.crt) will be mounted here /etc/ssl/server.crt
+	The file on the podman server (/etc/scram/ssl/server.key) will be mounted here /etc/ssl/server.key
+
+
+----------------
+
+
 
