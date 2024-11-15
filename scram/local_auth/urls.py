@@ -1,9 +1,13 @@
-from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 
 app_name = "local_auth"
 
 urlpatterns = [
-    path("login/", auth_views.login, {"template_name": "account/login.html"}, name="login"),
-    path("logout/", auth_views.logout, {"template_name": "logged_out.html"}, name="logout"),
+    path(
+        "login/",
+        LoginView.as_view(template_name="local_auth/login.html", success_url="route_manager:home"),
+        name="login",
+    ),
+    path("logout/", LogoutView.as_view(), name="logout"),
 ]
