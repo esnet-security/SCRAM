@@ -1,9 +1,9 @@
+from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from scram.local_auth.views import login, logout
+app_name = "local_auth"
 
-app_name = "users"
 urlpatterns = [
-    path("login/", view=login, name="update"),
-    path("logout/", view=logout, name="detail"),
+    path("login/", auth_views.login, {"template_name": "account/login.html"}, name="login"),
+    path("logout/", auth_views.logout, {"template_name": "logged_out.html"}, name="logout"),
 ]

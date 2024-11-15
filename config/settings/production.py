@@ -157,7 +157,7 @@ if AUTH_METHOD == "oidc":
     LOGIN_URL = "oidc_authentication_init"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-    LOGIN_REDIRECT_URL = "/"
+    LOGIN_REDIRECT_URL = "route_manager:home"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "oidc_logout"
@@ -166,7 +166,7 @@ if AUTH_METHOD == "oidc":
     # https://github.com/mozilla/mozilla-django-oidc/issues/118
     # Using `/` because named urls don't work for this package
     # https://github.com/mozilla/mozilla-django-oidc/issues/434
-    LOGOUT_REDIRECT_URL = "/"
+    LOGOUT_REDIRECT_URL = "route_manager:home"
 
     OIDC_OP_JWKS_ENDPOINT = os.environ.get(
         "OIDC_OP_JWKS_ENDPOINT",

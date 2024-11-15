@@ -1,11 +1,11 @@
-{% extends "account/base.html" %}
+{% extends "base.html" %}
 
 {% load i18n %}
 {% load crispy_forms_tags %}
 
 {% block head_title %}{% trans "Sign In" %}{% endblock %}
 
-{% block inner %}
+{% block content %}
 
 <h1>{% trans "Sign In" %}</h1>
 
@@ -13,7 +13,7 @@
 <p>{% blocktrans %}If you have not created an account yet, then please
 <a href="{{ signup_url }}">sign up</a> first.{% endblocktrans %}</p>
 
-<form class="login" method="POST" action="{% url 'local_auth:login' %}">
+<form class="login" method="POST" action="{% url '' %}">
   {% csrf_token %}
   {{ form|crispy }}
   {% if redirect_field_value %}
