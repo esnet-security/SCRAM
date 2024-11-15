@@ -41,6 +41,14 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+OIDC_OP_JWKS_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/certs"
+OIDC_OP_AUTHORIZATION_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/auth"
+OIDC_OP_TOKEN_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/token"
+OIDC_OP_USER_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/userinfo"
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_RP_CLIENT_ID = ""
+OIDC_RP_CLIENT_SECRET = ""
+
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
     MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405
