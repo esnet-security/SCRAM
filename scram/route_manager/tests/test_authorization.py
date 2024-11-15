@@ -125,7 +125,7 @@ class AuthzTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class OidcTest(TestCase):
+class ESnetAuthBackendTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.claims = {
