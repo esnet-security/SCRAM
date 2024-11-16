@@ -125,6 +125,7 @@ class TestTranslatorBaseCase(TestCase):
                 "route": route,
                 "comment": "test",
                 "uuid": self.uuid,
+                "who": "Test User",
             },
             format="json",
         )
@@ -182,5 +183,9 @@ class TranslatorParametersTestCase(TestTranslatorBaseCase):
             lambda ip, mask: {
                 "type": "translator_add",
                 "message": {"asn": 65550, "community": 100, "route": f"{ip}/{mask}"},
-            }
+            },
+            lambda ip, mask: {
+                "type": "translator_add",
+                "message": {"asn": 64496, "community": 4294967295, "route": f"{ip}/{mask}"},
+            },
         ]

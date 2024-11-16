@@ -1,5 +1,4 @@
 ---
-version: '3.4'
 
 volumes:
   local_postgres_data: {}
@@ -7,51 +6,33 @@ volumes:
 
 services:
   django:
+    platform: linux/amd64
     build:
-      context: .
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - $CI_PROJECT_DIR:/app:z
       - /tmp/profile_data:/tmp/profile_data
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
-    ports:
-      - "8000"
-    command: /start
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
-      interval: 30s
-      timeout: 30s
-      start_period: 30s
-      retries: 5
+    ports:
+      - "8000"
+      - 56780:56780
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG:-}
 
   postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: scram_production_postgres
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - local_postgres_data:/var/lib/postgresql/data:Z
       - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+    deploy:
+      replicas: ${POSTGRES_ENABLED:-1}
 
   docs:
     image: scram_local_docs
@@ -71,20 +52,10 @@ services:
     command: /start-docs
 
   redis:
-    image: redis:5.0
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     ports:
       - "6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   gobgp:
-    image: jauderho/gobgp:v2.32.0
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:
@@ -92,19 +63,17 @@ services:
       - "50051"
 
   translator:
-    build:
-      context: .
-      dockerfile: ./compose/local/translator/Dockerfile
-    networks:
-      default: {}
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
-    depends_on:
-      - gobgp
+    volumes:
+      - ./translator/tests/:/app/tests/
+    ports:
+      - 56781:56781
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG:-}
 
 networks:
   default:
     ipam:
       driver: default
       config:
-        - subnet: 0200:c0:ff:ee::/48
+        - subnet: 0200:c0:ff:ee::/64
