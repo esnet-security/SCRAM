@@ -111,7 +111,7 @@ pass-reset: compose.override.yml
 
 ## pytest: runs pytest inside the containers
 .Phony: pytest
-pytest: docker-compose.yaml
+pytest: compose.override.yml
 	@docker compose run --rm django coverage run -m pytest -Werror
 
 ## run: brings up the containers as described in compose.override.yml
