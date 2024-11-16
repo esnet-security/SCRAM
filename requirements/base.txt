@@ -13,7 +13,7 @@ crispy-bootstrap5==0.6  # https://github.com/django-crispy-forms/crispy-bootstra
 django~=4.2 # https://www.djangoproject.com/
 
 django-allauth==0.51.0  # https://github.com/pennersr/django-allauth
-django-environ==0.9.0  # https://github.com/joke2k/django-environ
+django-environ==0.11.2  # https://github.com/joke2k/django-environ
 django-eventstream==4.5.1 # https://github.com/fanout/django-eventstream
 django-model-utils==4.2.0  # https://github.com/jazzband/django-model-utils
 django-redis==5.3.0
