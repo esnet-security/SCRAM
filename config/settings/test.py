@@ -4,7 +4,7 @@ With these settings, tests run faster.
 
 import os
 
-from .base import MIDDLEWARE, TEMPLATES
+from .base import *  # noqa
 from .base import env
 
 # GENERAL
@@ -24,7 +24,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # TEMPLATES
 # ------------------------------------------------------------------------------
-TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index]
+TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
     (
         "django.template.loaders.cached.Loader",
         [
@@ -42,7 +42,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # Your stuff...
 # ------------------------------------------------------------------------------
 # Extend middleware to add OIDC middleware
-MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]
+MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
