@@ -33,6 +33,10 @@ EMAIL_BACKEND = env("DJANGO_EMAIL_BACKEND", default="django.core.mail.backends.c
 # http://whitenoise.evans.io/en/latest/django.html#using-whitenoise-in-development
 INSTALLED_APPS = ["whitenoise.runserver_nostatic"] + INSTALLED_APPS  # noqa F405
 
+# django-coverage-plugin
+# ------------------------------------------------------------------------------
+# https://github.com/nedbat/django_coverage_plugin?tab=readme-ov-file#django-template-coveragepy-plugin
+TEMPLATES[0]["OPTIONS"]['debug'] = True
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------

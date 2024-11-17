@@ -12,7 +12,8 @@ python_files = [
 include = ["scram/*", "config/*", "translator/*"]
 omit = ["**/migrations/*", "scram/contrib/*", "*/tests/*"]
 plugins = ["django_coverage_plugin"]
-
+branch = true
+data_file = coverage.coverage
 
 
 # ==== black ====
