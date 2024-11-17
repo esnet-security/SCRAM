@@ -15,6 +15,14 @@ plugins = ["django_coverage_plugin"]
 branch = true
 data_file = coverage.coverage
 
+[tool.coverage.report]
+exclude_also =
+    if debug:
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
 
 # ==== black ====
 [tool.black]
