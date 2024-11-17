@@ -31,3 +31,23 @@ jobs:
       - name: Run flake8
         run: |
           flake8
+
+  # This will merge into the above once the other parts pass this check
+  ensure_docstrings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.3.7
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('docker-compose.yaml') }}
+
+      - name: Install dependencies
+        run: |
+          pip install flake8 flake8-docstrings
+
+      - name: Ensure scram has docstrings
+        run: |
+          flake8 scram
