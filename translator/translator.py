@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""Define the main event loop for the translator."""
+
 import asyncio
 import ipaddress
 import json
@@ -14,9 +16,14 @@ debug_mode = os.environ.get("DEBUG")
 if debug_mode:
 
     def install_deps():
-        # Because of how we build translator currently, we don't have a great way to selectively install things at
-        # build, so we just do it here! Right now this also includes base.txt, which is unecessary, but in the
-        # future when we build a little better, it'll already be setup.
+        """
+        Install necessary dependencies for debuggers.
+
+        Because of how we build translator currently, we don't have a great way to selectively
+        install things at build, so we just do it here! Right now this also includes base.txt,
+        which is unecessary, but in the future when we build a little better, it'll already be
+        setup.
+        """
         logging.info("Installing dependencies for debuggers")
 
         import subprocess
@@ -58,6 +65,7 @@ url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/tran
 
 
 async def main():
+    """Connect to the websocket and start listening for messages."""
     g = GoBGP("gobgp:50051")
     async for websocket in websockets.connect(url):
         try:
