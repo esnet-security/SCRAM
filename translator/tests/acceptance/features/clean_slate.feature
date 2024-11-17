@@ -6,4 +6,3 @@ Feature: Tests run correctly
 
   Scenario: No leftover v6 blocks
     Then ::/0 is unblocked
-    aaaaaaaaaaaaaaaa
