@@ -1,3 +1,5 @@
+"""Define unit tests for the websockets-based communication."""
+
 import json
 from asyncio import gather
 from contextlib import asynccontextmanager
@@ -15,7 +17,7 @@ from scram.route_manager.models import ActionType, Client, WebSocketMessage, Web
 
 @asynccontextmanager
 async def get_communicators(actiontypes, should_match, *args, **kwds):
-    """Creates a set of communicators, and then handles tear-down.
+    """Create a set of communicators, and then handle tear-down.
 
     Given two lists of the same length, a set of actiontypes, and set of boolean values,
     creates that many communicators, one for each actiontype-bool pair.
@@ -48,6 +50,7 @@ class TestTranslatorBaseCase(TestCase):
     """Base case that other test cases build on top of. Three translators in one group, test one v4 and one v6."""
 
     def setUp(self):
+        """Set up our test environment."""
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@example.net", "admintestpassword")
@@ -80,7 +83,7 @@ class TestTranslatorBaseCase(TestCase):
         self.local_setUp()
 
     def local_setUp(self):
-        # Allow child classes to override this if desired
+        """Allow child classes to override this if desired."""
         return
 
     async def get_messages(self, communicator, messages, should_match):
@@ -95,6 +98,7 @@ class TestTranslatorBaseCase(TestCase):
         assert await communicator.receive_nothing(timeout=0.1, interval=0.01) is False
 
     async def add_ip(self, ip, mask):
+        """Ensure we can add an IP to block."""
         async with get_communicators(self.actiontypes, self.should_match) as communicators:
             await self.api_create_entry(ip)
 
@@ -119,6 +123,7 @@ class TestTranslatorBaseCase(TestCase):
     # Django ensures that the create is synchronous, so we have some extra steps to do
     @sync_to_async
     def api_create_entry(self, route):
+        """Ensure we can create an Entry via the API."""
         return self.client.post(
             self.url,
             {
@@ -131,12 +136,14 @@ class TestTranslatorBaseCase(TestCase):
         )
 
     async def test_add_v4(self):
+        """Test adding a few v4 routes."""
         await self.add_ip("192.0.2.224", 32)
         await self.add_ip("192.0.2.225", 32)
         await self.add_ip("192.0.2.226", 32)
         await self.add_ip("198.51.100.224", 32)
 
     async def test_add_v6(self):
+        """Test adding a few v6 routes."""
         await self.add_ip("2001:DB8:FDF0::", 128)
         await self.add_ip("2001:DB8:FDF0::D", 128)
         await self.add_ip("2001:DB8:FDF0::DB", 128)
@@ -147,6 +154,7 @@ class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
     """Two translators in the same group, two in another group, single IP, ensure we get only the messages we expect."""
 
     def local_setUp(self):
+        """Define the actions and what we expect."""
         self.actiontypes = ["block", "block", "noop", "noop"]
         self.should_match = [True, True, False, False]
 
@@ -155,6 +163,7 @@ class TranslatorSequenceTestCase(TestTranslatorBaseCase):
     """Test a sequence of WebSocket messages."""
 
     def local_setUp(self):
+        """Define the messages we want to send."""
         wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
         _ = WebSocketSequenceElement.objects.create(
             websocketmessage=wsm2, verb="A", action_type=self.actiontype, order_num=20
@@ -175,6 +184,7 @@ class TranslatorParametersTestCase(TestTranslatorBaseCase):
     """Additional parameters in the JSONField."""
 
     def local_setUp(self):
+        """Define the message we want to send."""
         wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
         wsm.msg_data = {"asn": 65550, "community": 100, "route": "Ensure this gets overwritten."}
         wsm.save()

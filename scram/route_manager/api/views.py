@@ -1,3 +1,5 @@
+"""Views provide mappings between the underlying model and how they're listed in the API."""
+
 import ipaddress
 import logging
 
@@ -20,6 +22,8 @@ channel_layer = get_channel_layer()
 
 
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
+
     queryset = ActionType.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = ActionTypeSerializer
@@ -27,6 +31,8 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
+    """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
+
     queryset = IgnoreEntry.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = IgnoreEntrySerializer
@@ -34,6 +40,8 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 
 class ClientViewSet(viewsets.ModelViewSet):
+    """Lookup Client by hostname on POSTs regardless of authentication, and bind to the serializer."""
+
     queryset = Client.objects.all()
     # We want to allow a client to be registered from anywhere
     permission_classes = (AllowAny,)
@@ -43,20 +51,27 @@ class ClientViewSet(viewsets.ModelViewSet):
 
 
 class EntryViewSet(viewsets.ModelViewSet):
+    """Lookup Entry when authenticated, and bind to the serializer."""
+
     queryset = Entry.objects.filter(is_active=True)
     permission_classes = (IsAuthenticated,)
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
     http_method_names = ["get", "post", "head", "delete"]
 
-    # Ovveride the permissions classes for POST method since we want to accept Entry creates from any client
-    # Note: We make authorization decisions on whether to actually create the object in the perform_create method later
     def get_permissions(self):
+        """
+        Override the permissions classes for POST method since we want to accept Entry creates from any client.
+
+        Note: We make authorization decisions on whether to actually create the object in the perform_create method
+        later.
+        """
         if self.request.method == "POST":
             return [AllowAny()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
+        """Create a new Entry, causing that route to receive the actiontype (i.e. block)."""
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
         if self.request.user.username:
@@ -126,6 +141,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def find_entries(arg, active_filter=None):
+        """Query entries either by pk or overlapping route."""
         if not arg:
             return Entry.objects.none()
 
@@ -149,6 +165,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Entry.objects.filter(query)
 
     def retrieve(self, request, pk=None, **kwargs):
+        """Limit retrieval to a single route."""
         entries = self.find_entries(pk, active_filter=True)
         # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
         if entries.count() != 1:
@@ -157,6 +174,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
+        """Only delete active (e.g. announced) entries."""
         for entry in self.find_entries(pk, active_filter=True):
             entry.delete()
 
