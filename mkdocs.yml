@@ -1,0 +1,20 @@
+site_name: Security Catch and Release Automation Manager
+
+theme:
+  name: "material"
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_submodules: true
+  - section-index
+
+markdown_extensions:
+#  - pymdownx.highlight
+#  - deduplicate-toc
+#  - toc:
+#      permalink: "#"
+
