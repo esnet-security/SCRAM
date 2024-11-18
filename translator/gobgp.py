@@ -1,3 +1,5 @@
+"""A translator interface for GoBGP (https://github.com/osrg/gobgp)."""
+
 import logging
 
 import attribute_pb2
@@ -18,7 +20,10 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class GoBGP(object):
+    """Represents a GoBGP instance."""
+
     def __init__(self, url):
+        """Configure the channel used for communication."""
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
@@ -116,6 +121,7 @@ class GoBGP(object):
         )
 
     def add_path(self, ip, event_data):
+        """Announce a single route."""
         logging.info(f"Blocking {ip}")
         try:
             path = self._build_path(ip, event_data)
@@ -128,11 +134,13 @@ class GoBGP(object):
             logging.warning(f"ASN assertion failed with error: {e}")
 
     def del_all_paths(self):
+        """Remove all routes from being announced."""
         logging.warning("Withdrawing ALL routes")
 
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
 
     def del_path(self, ip, event_data):
+        """Remove a single route from being announced."""
         logging.info(f"Unblocking {ip}")
         try:
             path = self._build_path(ip, event_data)
@@ -144,6 +152,7 @@ class GoBGP(object):
             logging.warning(f"ASN assertion failed with error: {e}")
 
     def get_prefixes(self, ip):
+        """Retrieve the routes that match a prefix and are announced."""
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
         family_afi = self._get_family_AFI(ip.ip.version)
         result = self.stub.ListPath(
@@ -157,4 +166,5 @@ class GoBGP(object):
         return list(result)
 
     def is_blocked(self, ip):
+        """Return True if at least one route matching the prefix is being announced."""
         return len(self.get_prefixes(ip)) > 0

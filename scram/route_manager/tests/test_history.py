@@ -1,3 +1,5 @@
+"""Define tests for the history feature."""
+
 from django.test import TestCase
 from simple_history.utils import get_change_reason_from_object, update_change_reason
 
@@ -5,10 +7,14 @@ from scram.route_manager.models import ActionType, Entry, Route
 
 
 class TestActiontypeHistory(TestCase):
+    """Test the history on an action type."""
+
     def setUp(self):
+        """Set up the test environment."""
         self.atype = ActionType.objects.create(name="Block")
 
     def test_comments(self):
+        """Ensure we can go back and set a reason."""
         self.atype.name = "Nullroute"
         self.atype._change_reason = "Use more descriptive name"
         self.atype.save()
@@ -16,9 +22,12 @@ class TestActiontypeHistory(TestCase):
 
 
 class TestEntryHistory(TestCase):
+    """Test the history on an Entry."""
+
     routes = ["192.0.2.16/32", "198.51.100.16/28"]
 
     def setUp(self):
+        """Set up the test environment."""
         self.atype = ActionType.objects.create(name="Block")
         for r in self.routes:
             route = Route.objects.create(route=r)
@@ -28,6 +37,7 @@ class TestEntryHistory(TestCase):
             self.assertEqual(entry.get_change_reason(), create_reason)
 
     def test_comments(self):
+        """Ensure we can update the reason."""
         for r in self.routes:
             route_old = Route.objects.get(route=r)
             e = Entry.objects.get(route=route_old)

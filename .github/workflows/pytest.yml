@@ -1,3 +1,4 @@
+---
 name: Run pytest
 
 on:
@@ -72,7 +73,10 @@ jobs:
           POSTGRES_DB: test_scram
         run: make coverage.xml
 
-      - name: Upload Coverage Report
+      - name: Upload Coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+
+      - name: Upload Coverage to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
