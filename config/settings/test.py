@@ -39,6 +39,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+# These variables are required by the ESnetAuthBackend called in our OidcTest case
 OIDC_OP_JWKS_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/certs"
 OIDC_OP_AUTHORIZATION_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/auth"
 OIDC_OP_TOKEN_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid-connect/token"
