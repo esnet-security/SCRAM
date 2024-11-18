@@ -4,12 +4,15 @@ theme:
   name: "material"
 
 plugins:
-  - search
   - mkdocstrings:
       handlers:
         python:
+          import:
+            - url: https://docs.djangoproject.com/en/4.2/_objects/
+              base_url: https://docs.djangoproject.com/en/4.2/
           options:
             show_submodules: true
+  - search
   - section-index
 
 markdown_extensions:
