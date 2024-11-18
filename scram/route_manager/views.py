@@ -1,3 +1,5 @@
+"""Define the Views that will handle the HTTP requests."""
+
 import ipaddress
 import json
 
@@ -23,6 +25,7 @@ channel_layer = get_channel_layer()
 
 
 def home_page(request, prefilter=Entry.objects.all()):
+    """Return the home page, autocreating a user if none exists."""
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
@@ -60,6 +63,7 @@ def home_page(request, prefilter=Entry.objects.all()):
 
 
 def search_entries(request):
+    """Wrap the home page with a specified CIDR to restrict Entries to."""
     # Using ipaddress because we needed to turn off strict mode
     # (which netfields uses by default with seemingly no toggle)
     # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
@@ -77,11 +81,14 @@ delete_entry_api = EntryViewSet.as_view({"post": "destroy"})
 @require_POST
 @permission_required(["route_manager.view_entry", "route_manager.delete_entry"])
 def delete_entry(request, pk):
+    """Wrap delete via the API and redirect to the home page."""
     delete_entry_api(request, pk)
     return redirect("route_manager:home")
 
 
 class EntryDetailView(PermissionRequiredMixin, DetailView):
+    """Define a view for the API to use."""
+
     permission_required = ["route_manager.view_entry"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
@@ -92,6 +99,7 @@ add_entry_api = EntryViewSet.as_view({"post": "create"})
 
 @permission_required(["route_manager.view_entry", "route_manager.add_entry"])
 def add_entry(request):
+    """Send a WebSocket message when adding a new entry."""
     with transaction.atomic():
         res = add_entry_api(request)
 
@@ -121,6 +129,7 @@ def add_entry(request):
 
 
 def process_expired(request):
+    """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
     current_time = timezone.now()
     with transaction.atomic():
         entries_start = Entry.objects.filter(is_active=True).count()
@@ -140,10 +149,13 @@ def process_expired(request):
 
 
 class EntryListView(ListView):
+    """Define a view for the API to use."""
+
     model = Entry
     template_name = "route_manager/entry_list.html"
 
     def get_context_data(self, **kwargs):
+        """Group entries by action type."""
         context = {"entries": {}}
         for at in ActionType.objects.all():
             queryset = Entry.objects.filter(actiontype=at).order_by("-pk")

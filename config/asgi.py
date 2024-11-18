@@ -19,10 +19,10 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
-debug_mode = os.environ.get("DEBUG")
-if debug_mode:
-    logging.info(f"Django is set to use a debugger. Provided debug mode: {debug_mode}")
-    if debug_mode == "pycharm-pydevd":
+debug = os.environ.get("DEBUG")
+if debug:
+    logging.info(f"Django is set to use a debugger. Provided debug mode: {debug}")
+    if debug == "pycharm-pydevd":
         logging.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
 
         import pydevd_pycharm
@@ -30,7 +30,7 @@ if debug_mode:
         pydevd_pycharm.settrace("host.docker.internal", port=56783, stdoutToServer=True, stderrToServer=True)
 
         logging.info("Debugger started.")
-    elif debug_mode == "debugpy":
+    elif debug == "debugpy":
         logging.info("Entering debug mode for debugpy (VSCode)")
 
         import debugpy
@@ -39,7 +39,7 @@ if debug_mode:
 
         logging.info("Debugger listening on port 56780.")
     else:
-        logging.warning(f"Invalid debug mode given: {debug_mode}. Debugger not started")
+        logging.warning(f"Invalid debug mode given: {debug}. Debugger not started")
 
 # This allows easy placement of apps within the interior
 # scram directory.

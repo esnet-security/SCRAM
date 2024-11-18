@@ -1,3 +1,5 @@
+"""Register ourselves with Django."""
+
 import logging
 
 from django.apps import AppConfig
@@ -7,10 +9,13 @@ logger = logging.getLogger(__name__)
 
 
 class UsersConfig(AppConfig):
+    """Define the name of the module for the Users app."""
+
     name = "scram.users"
     verbose_name = _("Users")
 
     def ready(self):
+        """Check if signals are registered for User events."""
         try:
             import scram.users.signals  # noqa F401
         except ImportError:

@@ -1,3 +1,5 @@
+"""Define the models used in the route_manager app."""
+
 import logging
 import uuid as uuid_lib
 
@@ -10,33 +12,36 @@ from simple_history.models import HistoricalRecords
 
 
 class Route(models.Model):
-    """Model describing a route"""
+    """Define a route as a CIDR route and a UUID."""
 
     route = CidrAddressField(unique=True)
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
     def get_absolute_url(self):
+        """Ensure we use UUID on the API side instead."""
         return reverse("")
 
     def __str__(self):
+        """Don't display the UUID, only the route."""
         return str(self.route)
 
 
 class ActionType(models.Model):
-    """Defines an action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
+    """Define a type of action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
 
     name = models.CharField(help_text="One-word description of the action", max_length=30)
     available = models.BooleanField(help_text="Is this a valid choice for new entries?", default=True)
     history = HistoricalRecords()
 
     def __str__(self):
+        """Display clearly whether the action is currently available."""
         if not self.available:
             return f"{self.name} (Inactive)"
         return self.name
 
 
 class WebSocketMessage(models.Model):
-    """Defines a single message sent to downstream translators via WebSocket."""
+    """Define a single message sent to downstream translators via WebSocket."""
 
     msg_type = models.CharField("The type of the message", max_length=50)
     msg_data = models.JSONField("The JSON payload. See also msg_data_route_field.", default=dict)
@@ -47,11 +52,12 @@ class WebSocketMessage(models.Model):
     )
 
     def __str__(self):
+        """Display clearly what the fields are used for."""
         return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
 
 
 class WebSocketSequenceElement(models.Model):
-    """In a sequence of messages, defines a single element."""
+    """In a sequence of messages, define a single element."""
 
     websocketmessage = models.ForeignKey("WebSocketMessage", on_delete=models.CASCADE)
     order_num = models.SmallIntegerField(
@@ -70,6 +76,7 @@ class WebSocketSequenceElement(models.Model):
     action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
 
     def __str__(self):
+        """Summarize the fields into something short and readable."""
         return (
             f"{self.websocketmessage} as order={self.order_num} for "
             + f"{self.verb} actions on actiontype={self.action_type}"
@@ -96,6 +103,7 @@ class Entry(models.Model):
     )
 
     def delete(self, *args, **kwargs):
+        """Set inactive instead of deleting, as we want to ensure a history of entries."""
         if not self.is_active:
             # We've already expired this route, don't send another message
             return
@@ -115,36 +123,43 @@ class Entry(models.Model):
             )
 
     class Meta:
+        """Ensure that multiple routes can be added as long as they have different action types."""
+
         unique_together = ["route", "actiontype"]
         verbose_name_plural = "Entries"
 
     def __str__(self):
+        """Summarize the most important fields to something easily readable."""
         desc = f"{self.route} ({self.actiontype})"
         if not self.is_active:
             desc += " (inactive)"
         return desc
 
     def get_change_reason(self):
+        """Traverse come complex relationships to determine the most recent change reason."""
         hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
         return hist_mgr.order_by("-history_date").first().history_change_reason
 
 
 class IgnoreEntry(models.Model):
-    """For cidrs you NEVER want to block ie don't shoot yourself in the foot list"""
+    """Define CIDRs you NEVER want to block (i.e. the "don't shoot yourself in the foot" list)."""
 
     route = CidrAddressField(unique=True)
     comment = models.CharField(max_length=100)
     history = HistoricalRecords()
 
     class Meta:
+        """Ensure the plural is grammatically correct."""
+
         verbose_name_plural = "Ignored Entries"
 
     def __str__(self):
+        """Only display the route."""
         return str(self.route)
 
 
 class Client(models.Model):
-    """Any client that would like to hit the API to add entries (e.g. Zeek)"""
+    """Any client that would like to hit the API to add entries (e.g. Zeek)."""
 
     hostname = models.CharField(max_length=50, unique=True)
     uuid = models.UUIDField()
@@ -153,6 +168,7 @@ class Client(models.Model):
     authorized_actiontypes = models.ManyToManyField(ActionType)
 
     def __str__(self):
+        """Only display the hostname."""
         return str(self.hostname)
 
 
