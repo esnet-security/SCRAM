@@ -1,6 +1,4 @@
-"""
-This module provides a location for code that we want to share between all translators.
-"""
+"""This module provides a location for code that we want to share between all translators."""
 
 from exceptions import ASNError
 

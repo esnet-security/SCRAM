@@ -1,3 +1,5 @@
+"""Serializers provide mappings between the API and the underlying model."""
+
 import logging
 
 from netfields import rest_framework
@@ -11,15 +13,23 @@ logger = logging.getLogger(__name__)
 
 
 class ActionTypeSerializer(serializers.ModelSerializer):
+    """This serializer defines no new fields."""
+
     class Meta:
+        """Maps to the ActionType model, and specifies the fields exposed by the API."""
+
         model = ActionType
         fields = ["pk", "name", "available"]
 
 
 class RouteSerializer(serializers.ModelSerializer):
+    """Exposes route as a CIDR field."""
+
     route = rest_framework.CidrAddressField()
 
     class Meta:
+        """Maps to the Route model, and specifies the fields exposed by the API."""
+
         model = Route
         fields = [
             "route",
@@ -27,12 +37,18 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
+    """This serializer defines no new fields."""
+
     class Meta:
+        """Maps to the Client model, and specifies the fields exposed by the API."""
+
         model = Client
         fields = ["hostname", "uuid"]
 
 
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
+    """Due to the use of ForeignKeys, this follows some relationships to make sense via the API."""
+
     url = serializers.HyperlinkedIdentityField(
         view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
     )
@@ -46,13 +62,17 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     comment = serializers.CharField()
 
     class Meta:
+        """Maps to the Entry model, and specifies the fields exposed by the API."""
+
         model = Entry
         fields = ["route", "actiontype", "url", "comment", "who"]
 
     def get_comment(self, obj):
+        """Provide a nicer name for change reason."""
         return obj.get_change_reason()
 
     def create(self, validated_data):
+        """Implement custom logic and validates creating a new route."""
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         comment = validated_data.pop("comment")
@@ -68,6 +88,10 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
+    """This serializer defines no new fields."""
+
     class Meta:
+        """Maps to the IgnoreEntry model, and specifies the fields exposed by the API."""
+
         model = IgnoreEntry
         fields = ["route", "comment"]

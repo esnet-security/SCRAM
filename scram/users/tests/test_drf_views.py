@@ -1,3 +1,5 @@
+"""Test Django Request Framework Views in the Users application."""
+
 import pytest
 from django.test import RequestFactory
 
@@ -8,7 +10,10 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUserViewSet:
+    """Test a couple simple View operations."""
+
     def test_get_queryset(self, user: User, rf: RequestFactory):
+        """Ensure we can view an arbitrary URL."""
         view = UserViewSet()
         request = rf.get("/fake-url/")
         request.user = user
@@ -18,6 +23,7 @@ class TestUserViewSet:
         assert user in view.get_queryset()
 
     def test_me(self, user: User, rf: RequestFactory):
+        """Ensure we can view info on the current user."""
         view = UserViewSet()
         request = rf.get("/fake-url/")
         request.user = user
