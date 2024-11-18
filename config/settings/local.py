@@ -1,5 +1,5 @@
 from .base import *  # noqa
-from .base import env
+from .base import AUTH_METHOD, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -70,8 +70,10 @@ INSTALLED_APPS += ["behave_django"]  # noqa F405
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "route_manager:home"
+# We shouldn't be using OIDC in local dev mode as of now, but might be worth pursuing later
+if AUTH_METHOD == "oidc":
+    raise NotImplementedError("oidc is not yet implemented")
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "admin:login"
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
