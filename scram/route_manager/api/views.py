@@ -165,7 +165,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         return Entry.objects.filter(query)
 
     def retrieve(self, request, pk=None, **kwargs):
-        """Limit retrieval to a single route."""
+        """Retrieve a single route."""
         entries = self.find_entries(pk, active_filter=True)
         # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
         if entries.count() != 1:

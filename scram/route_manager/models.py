@@ -34,7 +34,7 @@ class ActionType(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        """Display clearly whether or not the action is currently available."""
+        """Display clearly whether the action is currently available."""
         if not self.available:
             return f"{self.name} (Inactive)"
         return self.name

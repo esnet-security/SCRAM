@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 
 
 class PrefixTooLarge(APIException):
-    """The CIDR prefix that was specified is larger than 32 bits for IPv4 of 128 bits for IPv6."""
+    """The CIDR prefix that was specified is larger than the prefix allowed in the settings."""
 
     v4_min_prefix = getattr(settings, "V4_MINPREFIX", 0)
     v6_min_prefix = getattr(settings, "V6_MINPREFIX", 0)

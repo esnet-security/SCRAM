@@ -1,4 +1,4 @@
-"""Define steps used extensively by the Behave tests."""
+"""Define steps used exclusively by the Behave tests."""
 
 import datetime
 import time
