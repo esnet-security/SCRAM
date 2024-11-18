@@ -26,8 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install flake8
+          pip install flake8 flake8-docstrings
 
       - name: Run flake8
         run: |
-          flake8
+          flake8 scram translator
