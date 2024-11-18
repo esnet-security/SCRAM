@@ -12,7 +12,6 @@ from scram.users.models import User
 @pytest.mark.django_db
 def test_autocreate_admin(settings):
     """Test that an admin user is auto-created when AUTOCREATE_ADMIN is True."""
-
     settings.AUTOCREATE_ADMIN = True
     client = Client()
     response = client.get(reverse("route_manager:home"))
@@ -30,7 +29,6 @@ def test_autocreate_admin(settings):
 @pytest.mark.django_db
 def test_autocreate_admin_disabled(settings):
     """Test that an admin user is not auto-created when AUTOCREATE_ADMIN is False."""
-
     settings.AUTOCREATE_ADMIN = False
     client = Client()
     response = client.get(reverse("route_manager:home"))
@@ -41,7 +39,6 @@ def test_autocreate_admin_disabled(settings):
 @pytest.mark.django_db
 def test_autocreate_admin_existing_user(settings):
     """Test that an admin user is not auto-created when an existing user is present."""
-
     settings.AUTOCREATE_ADMIN = True
     User.objects.create_user("testuser", "test@example.com", "password")
     client = Client()

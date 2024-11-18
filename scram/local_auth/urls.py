@@ -1,3 +1,5 @@
+"""Register URLs for local auth known to Django, and the View that will handle each."""
+
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import path
 

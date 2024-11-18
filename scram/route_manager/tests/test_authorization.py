@@ -132,8 +132,9 @@ class AuthzTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
 
-
 class ESnetAuthBackendTest(TestCase):
+    """Define tests using OIDC authentication with our ESnetAuthBackend."""
+
     def setUp(self):
         """Create a sample OIDC user."""
         self.client = Client()
