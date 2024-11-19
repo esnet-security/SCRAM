@@ -280,6 +280,9 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+LOGIN_REDIRECT_URL = "route_manager:home"
+
 logging.info(f"Using AUTH METHOD = {AUTH_METHOD}")
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
@@ -290,9 +293,6 @@ if AUTH_METHOD == "oidc":
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "oidc_authentication_init"
-
-    # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-    LOGIN_REDIRECT_URL = "route_manager:home"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "oidc_logout"
@@ -328,9 +328,6 @@ elif AUTH_METHOD == "local":
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "local_auth:login"
 
-    # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-    LOGIN_REDIRECT_URL = "route_manager:home"
-
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "local_auth:logout"
 
@@ -365,8 +362,6 @@ SCRAM_DENIED_GROUPS = ["svc_scram_denied"]
 
 # This is the set of all the groups
 SCRAM_GROUPS = SCRAM_ADMIN_GROUPS + SCRAM_READWRITE_GROUPS + SCRAM_READONLY_GROUPS + SCRAM_DENIED_GROUPS
-
-# This is the full set of groups
 
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 10
