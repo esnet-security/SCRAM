@@ -283,6 +283,30 @@ AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = "route_manager:home"
 
+# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+# https://github.com/mozilla/mozilla-django-oidc/issues/118
+# Using `/` because named urls don't work for this package
+# https://github.com/mozilla/mozilla-django-oidc/issues/434
+LOGOUT_REDIRECT_URL = "route_manager:home"
+
+OIDC_OP_JWKS_ENDPOINT = os.environ.get(
+    "OIDC_OP_JWKS_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/certs",
+)
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
+    "OIDC_OP_AUTHORIZATION_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/auth",
+)
+OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
+    "OIDC_OP_TOKEN_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/token",
+)
+OIDC_OP_USER_ENDPOINT = os.environ.get(
+    "OIDC_OP_USER_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/userinfo",
+)
+OIDC_RP_SIGN_ALGO = "RS256"
+
 logging.info(f"Using AUTH METHOD = {AUTH_METHOD}")
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
@@ -297,30 +321,6 @@ if AUTH_METHOD == "oidc":
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "oidc_logout"
 
-    # Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
-    # https://github.com/mozilla/mozilla-django-oidc/issues/118
-    # Using `/` because named urls don't work for this package
-    # https://github.com/mozilla/mozilla-django-oidc/issues/434
-    LOGOUT_REDIRECT_URL = "route_manager:home"
-
-    OIDC_OP_JWKS_ENDPOINT = os.environ.get(
-        "OIDC_OP_JWKS_ENDPOINT",
-        "https://example.com/auth/realms/example/protocol/openid-connect/certs",
-    )
-    OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
-        "OIDC_OP_AUTHORIZATION_ENDPOINT",
-        "https://example.com/auth/realms/example/protocol/openid-connect/auth",
-    )
-    OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
-        "OIDC_OP_TOKEN_ENDPOINT",
-        "https://example.com/auth/realms/example/protocol/openid-connect/token",
-    )
-    OIDC_OP_USER_ENDPOINT = os.environ.get(
-        "OIDC_OP_USER_ENDPOINT",
-        "https://example.com/auth/realms/example/protocol/openid-connect/userinfo",
-    )
-    OIDC_RP_SIGN_ALGO = "RS256"
-
     OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
     OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET")
 
@@ -330,9 +330,6 @@ elif AUTH_METHOD == "local":
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "local_auth:logout"
-
-    # https://docs.djangoproject.com/en/dev/ref/settings/#logout-redirect-url
-    LOGOUT_REDIRECT_URL = "route_manager:home"
 else:
     raise ValueError(f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'")
 
