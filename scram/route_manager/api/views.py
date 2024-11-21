@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import Http404
 from django.utils.dateparse import parse_datetime
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -21,6 +22,10 @@ from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer
 channel_layer = get_channel_layer()
 
 
+@extend_schema(
+    description="API endpoint for actiontypes",
+    responses={200: "Success"},
+)
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
 
@@ -30,6 +35,10 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = "name"
 
 
+@extend_schema(
+    description="API endpoint for ignore entries",
+    responses={200: "Success"},
+)
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
     """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
 
@@ -39,6 +48,10 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
     lookup_field = "route"
 
 
+@extend_schema(
+    description="API endpoint for clients",
+    responses={200: "Success"},
+)
 class ClientViewSet(viewsets.ModelViewSet):
     """Lookup Client by hostname on POSTs regardless of authentication, and bind to the serializer."""
 
@@ -50,6 +63,10 @@ class ClientViewSet(viewsets.ModelViewSet):
     http_method_names = ["post"]
 
 
+@extend_schema(
+    description="API endpoint for entries",
+    responses={200: "Success"},
+)
 class EntryViewSet(viewsets.ModelViewSet):
     """Lookup Entry when authenticated, and bind to the serializer."""
 
