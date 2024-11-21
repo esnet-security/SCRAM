@@ -14,10 +14,3 @@ plugins:
             show_submodules: true
   - search
   - section-index
-
-markdown_extensions:
-#  - pymdownx.highlight
-#  - deduplicate-toc
-#  - toc:
-#      permalink: "#"
-
