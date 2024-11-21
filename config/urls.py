@@ -45,6 +45,13 @@ urlpatterns += [
     path("auth-token/", obtain_auth_token),
 ]
 
+# Swagger OpenAPI URLs
+urlpatterns += [
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+]
+
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit
     # these url in browser to see how these error pages look like.
@@ -70,10 +77,3 @@ if settings.DEBUG:
         import debug_toolbar
 
         urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
-
-if "drf_spectacular" in settings.INSTALLED_APPS:
-    urlpatterns += [
-        path("schema/", SpectacularAPIView.as_view(), name="schema"),
-        path("schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-        path("schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    ]
