@@ -15,6 +15,7 @@ behave-django==1.4.0  # https://github.com/behave/behave-django
 # ------------------------------------------------------------------------------
 sphinx==5.0.1  # https://github.com/sphinx-doc/sphinx
 sphinx-autobuild==2021.3.14 # https://github.com/GaretJax/sphinx-autobuild
+drf-spectacular # https://github.com/tfranzel/drf-spectacular
 
 # Code quality
 # ------------------------------------------------------------------------------
