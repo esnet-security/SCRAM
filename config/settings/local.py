@@ -36,7 +36,7 @@ INSTALLED_APPS = ["whitenoise.runserver_nostatic"] + INSTALLED_APPS  # noqa F405
 # django-coverage-plugin
 # ------------------------------------------------------------------------------
 # https://github.com/nedbat/django_coverage_plugin?tab=readme-ov-file#django-template-coveragepy-plugin
-TEMPLATES[0]["OPTIONS"]['debug'] = True # noqa F405
+TEMPLATES[0]["OPTIONS"]["debug"] = True  # noqa F405
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------
@@ -67,10 +67,14 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # Behave Django testing framework
 INSTALLED_APPS += ["behave_django"]  # noqa F405
+
+# Swagger related tooling
+INSTALLED_APPS += ["drf_spectacular"]  # noqa F405
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
