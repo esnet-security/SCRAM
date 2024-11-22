@@ -1,5 +1,5 @@
 from .base import *  # noqa
-from .base import env
+from .base import AUTH_METHOD, REST_FRAMEWORK, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ INSTALLED_APPS = ["whitenoise.runserver_nostatic"] + INSTALLED_APPS  # noqa F405
 # django-coverage-plugin
 # ------------------------------------------------------------------------------
 # https://github.com/nedbat/django_coverage_plugin?tab=readme-ov-file#django-template-coveragepy-plugin
-TEMPLATES[0]["OPTIONS"]['debug'] = True # noqa F405
+TEMPLATES[0]["OPTIONS"]["debug"] = True  # noqa F405
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------
@@ -64,10 +64,18 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
-}
+REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] = ("rest_framework.permissions.IsAdminUser",)
 
 # Behave Django testing framework
 INSTALLED_APPS += ["behave_django"]  # noqa F405
+
+# AUTHENTICATION
+# ------------------------------------------------------------------------------
+# We shouldn't be using OIDC in local dev mode as of now, but might be worth pursuing later
+if AUTH_METHOD == "oidc":
+    raise NotImplementedError("oidc is not yet implemented")
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+LOGIN_URL = "admin:login"
+# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+LOGOUT_URL = "admin:logout"

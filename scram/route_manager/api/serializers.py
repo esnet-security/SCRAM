@@ -2,6 +2,7 @@
 
 import logging
 
+from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
@@ -10,6 +11,13 @@ from simple_history.utils import update_change_reason
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
 logger = logging.getLogger(__name__)
+
+
+@extend_schema_field(field={"type": "string", "format": "cidr"})
+class CustomCidrAddressField(rest_framework.CidrAddressField):
+    """This serializer defines a wrapper field so swagger can properly handle the inherited field."""
+
+    pass
 
 
 class ActionTypeSerializer(serializers.ModelSerializer):
@@ -25,7 +33,7 @@ class ActionTypeSerializer(serializers.ModelSerializer):
 class RouteSerializer(serializers.ModelSerializer):
     """Exposes route as a CIDR field."""
 
-    route = rest_framework.CidrAddressField()
+    route = CustomCidrAddressField()
 
     class Meta:
         """Maps to the Route model, and specifies the fields exposed by the API."""
@@ -52,7 +60,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
     )
-    route = rest_framework.CidrAddressField()
+    route = CustomCidrAddressField()
     actiontype = serializers.CharField(default="block")
     if CurrentUserDefault():
         # This is set if we are calling this serializer from WUI
@@ -89,6 +97,8 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
     """This serializer defines no new fields."""
+
+    route = CustomCidrAddressField()
 
     class Meta:
         """Maps to the IgnoreEntry model, and specifies the fields exposed by the API."""

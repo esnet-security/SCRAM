@@ -38,6 +38,9 @@ To get a basic implementation up and running locally:
 - Create ``$scram_home/.envs/.production/.postgres`` a template exists in the docs/templates directory
     - Make sure to set the right credentials
     - By default this template assumes you have a service defined in docker compose file called postgres. If you use another postgres server, make sure to update that setting as well
+- Create a ``.env`` file with the necessary environment variables:
+    - [comment]: # This chooses if you want to use oidc or local accounts. This can be local or oidc only. Default: `local`
+    - scram_auth_method: "local"
 - ``make build``
 - ``make toggle-prod``
     - This will turn off debug mode in django and start using nginx to reverse proxy for the app
