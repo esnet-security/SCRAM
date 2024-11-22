@@ -1,3 +1,5 @@
+"""This file contains tests for the swagger API endpoints."""
+
 import pytest
 from django.urls import reverse
 
@@ -5,43 +7,22 @@ from django.urls import reverse
 @pytest.mark.django_db
 def test_swagger_api(client):
     """Test that the Swagger API endpoint returns a successful response."""
-
     url = reverse("swagger-ui")
     response = client.get(url)
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
-def test_swagger_api_entry_list(client):
-    """Test that the Swagger API endpoint for the entry list returns a successful response."""
-
-    url = reverse("swagger-ui") + "?url=/api/v1/entry-list"
+def test_redoc_api(client):
+    """Test that the Redoc API endpoint returns a successful response."""
+    url = reverse("redoc")
     response = client.get(url)
     assert response.status_code == 200
 
 
 @pytest.mark.django_db
-def test_swagger_api_entry_detail(client):
-    """Test that the Swagger API endpoint for an entry detail returns a successful response."""
-
-    url = reverse("swagger-ui") + "?url=/api/v1/entry-detail/1"
-    response = client.get(url)
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_swagger_api_ignore_entry_list(client):
-    """Test that the Swagger API endpoint for the ignore entry list returns a successful response."""
-
-    url = reverse("swagger-ui") + "?url=/api/v1/ignoreentry-list"
-    response = client.get(url)
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_swagger_api_ignore_entry_detail(client):
-    """Test that the Swagger API endpoint for an ignore entry detail returns a successful response."""
-
-    url = reverse("swagger-ui") + "?url=/api/v1/ignoreentry-detail/1"
+def test_schema_api(client):
+    """Test that the Schema API endpoint returns a successful response."""
+    url = reverse("schema")
     response = client.get(url)
     assert response.status_code == 200
