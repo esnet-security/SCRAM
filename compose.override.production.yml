@@ -26,6 +26,7 @@ services:
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
+      - /etc/vault.d/secrets/kv_root_security.env
     deploy:
       replicas: ${POSTGRES_ENABLED:-0}
 
