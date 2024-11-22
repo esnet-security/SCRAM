@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 @extend_schema_field(field={"type": "string", "format": "cidr"})
 class CustomCidrAddressField(rest_framework.CidrAddressField):
+    """This serializer defines a wrapper field so swagger can properly handle the inherited field"""
+
     pass
 
 
