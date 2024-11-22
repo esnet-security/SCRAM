@@ -24,7 +24,7 @@ channel_layer = get_channel_layer()
 
 @extend_schema(
     description="API endpoint for actiontypes",
-    responses={200: "Success"},
+    responses={200: ActionTypeSerializer},
 )
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
@@ -37,7 +37,7 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(
     description="API endpoint for ignore entries",
-    responses={200: "Success"},
+    responses={200: IgnoreEntrySerializer},
 )
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
     """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
@@ -50,7 +50,7 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 @extend_schema(
     description="API endpoint for clients",
-    responses={200: "Success"},
+    responses={200: ClientSerializer},
 )
 class ClientViewSet(viewsets.ModelViewSet):
     """Lookup Client by hostname on POSTs regardless of authentication, and bind to the serializer."""
@@ -65,7 +65,7 @@ class ClientViewSet(viewsets.ModelViewSet):
 
 @extend_schema(
     description="API endpoint for entries",
-    responses={200: "Success"},
+    responses={200: EntrySerializer},
 )
 class EntryViewSet(viewsets.ModelViewSet):
     """Lookup Entry when authenticated, and bind to the serializer."""
