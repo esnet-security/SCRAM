@@ -26,3 +26,5 @@ def test_schema_api(client):
     url = reverse("schema")
     response = client.get(url)
     assert response.status_code == 200
+    expected_strings = [b"entries", b"actiontypes", b"ignore_entries", b"user"]
+    assert all(string in response.content for string in expected_strings)
