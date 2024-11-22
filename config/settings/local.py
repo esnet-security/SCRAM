@@ -1,5 +1,5 @@
 from .base import *  # noqa
-from .base import AUTH_METHOD, env
+from .base import AUTH_METHOD, REST_FRAMEWORK, env
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -64,17 +64,10 @@ INSTALLED_APPS += ["django_extensions"]  # noqa F405
 
 # Your stuff...
 # ------------------------------------------------------------------------------
-
-REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAdminUser",),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
+REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"] = ("rest_framework.permissions.IsAdminUser",)
 
 # Behave Django testing framework
 INSTALLED_APPS += ["behave_django"]  # noqa F405
-
-# Swagger related tooling
-INSTALLED_APPS += ["drf_spectacular"]  # noqa F405
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
