@@ -263,7 +263,7 @@ CHANNEL_LAYERS = {
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
 # Swagger related tooling
-INSTALLED_APPS += ["drf_spectacular"]  # noqa F405
+INSTALLED_APPS += ["drf_spectacular"]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
@@ -311,10 +311,10 @@ OIDC_RP_SIGN_ALGO = "RS256"
 logging.info("Using AUTH METHOD=%s", AUTH_METHOD)
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
-    MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405
+    MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]
 
     # Extend middleware to add OIDC auth backend
-    AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]  # noqa F405
+    AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "oidc_authentication_init"

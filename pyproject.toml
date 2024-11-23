@@ -45,6 +45,7 @@ select = [
     "COM",   # commas
     "D",     # pydocstyle
     "DJ",    # django
+    "DOC",   # pydoclint
     "DTZ",   # datetimez
     "E",     # pycodestyle
     "EM",    # errmsg
@@ -63,8 +64,9 @@ select = [
     "PL",    # pylint
     "PTH",   # use-pathlib
     "Q",     # quotes
-    "RSE",   # raise
     "RET",   # return
+    "RSE",   # raise
+    "RUF",   # Ruff
     "S",     # bandit
     "SIM",   # simplify
     "SLF",   # self
@@ -74,6 +76,7 @@ select = [
     "UP",    # pyupgrade
 ]
 ignore = [
+    "RUF012", # need more widespread typing
     "SIM102", # Use a single `if` statement instead of nested `if` statements
     "SIM108", # Use ternary operator instead of `if`-`else`-block
 ]

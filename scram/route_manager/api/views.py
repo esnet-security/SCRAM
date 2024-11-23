@@ -100,7 +100,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         tmp_exp = self.request.data.get("expiration", "")
 
         try:
-            expiration = parse_datetime(tmp_exp)  # noqa: F841
+            expiration = parse_datetime(tmp_exp)
         except ValueError:
             logging.warning("Could not parse expiration DateTime string: %s", tmp_exp)
 
