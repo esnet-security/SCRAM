@@ -38,6 +38,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      redis:
+        image: redis:5.0
+        ports:
+          - 6379:6379
+
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
@@ -77,4 +82,5 @@ jobs:
       - name: Run Pytest
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          REDIS_HOST: "localhost"
         run: pytest
