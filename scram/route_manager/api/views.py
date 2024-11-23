@@ -20,6 +20,7 @@ from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
 
 channel_layer = get_channel_layer()
+logger = logging.getLogger(__name__)
 
 
 @extend_schema(
@@ -96,18 +97,19 @@ class EntryViewSet(viewsets.ModelViewSet):
             )
             authorized_client = Client.objects.filter(uuid=uuid).values("is_authorized")
             if not authorized_client or actiontype not in authorized_actiontypes:
-                logging.debug("Client: %s, actiontypes: %s", uuid, authorized_actiontypes)
-                logging.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
+                logger.debug("Client: %s, actiontypes: %s", uuid, authorized_actiontypes)
+                logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied
 
-    def check_ignore_list(self, route):
+    @staticmethod
+    def check_ignore_list(route):
         """Ensure that we're not trying to block something from the ignore list."""
         overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
         if overlapping_ignore.count():
             ignore_entries = [str(ignore_entry["route"]) for ignore_entry in overlapping_ignore.values()]
-            logging.info("Cannot proceed adding %s. The ignore list contains %s.", route, ignore_entries)
+            logger.info("Cannot proceed adding %s. The ignore list contains %s.", route, ignore_entries)
             raise IgnoredRoute
 
     def perform_create(self, serializer):
@@ -126,7 +128,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         try:
             expiration = parse_datetime(tmp_exp)
         except ValueError:
-            logging.warning("Could not parse expiration DateTime string: %s", tmp_exp)
+            logger.warning("Could not parse expiration DateTime string: %s", tmp_exp)
 
         # Make sure we put in an acceptable sized prefix
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
@@ -138,7 +140,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
         if not elements:
-            logging.warning("No elements found for actiontype: %s", actiontype)
+            logger.warning("No elements found for actiontype: %s", actiontype)
 
         for element in elements:
             msg = element.websocketmessage
@@ -157,7 +159,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         entry.who = who
         entry.is_active = True
         entry.comment = comment
-        logging.info("Created entry: %s", entry)
+        logger.info("Created entry: %s", entry)
         entry.save()
 
     @staticmethod

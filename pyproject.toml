@@ -27,13 +27,13 @@ exclude_also = [
 
 # ===== ruff ====
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
 exclude = [
     "migrations",
 ]
 
 line-length = 119
 target-version = 'py312'
+preview = true
 
 [tool.ruff.lint]
 select = [
@@ -77,6 +77,9 @@ select = [
     "UP",    # pyupgrade
 ]
 ignore = [
+    "COM812", # handled by the formatter
+    "DOC501", # add possible exceptions to the docstring (TODO)
+    "ISC001", # handled by the formatter
     "RUF012", # need more widespread typing
     "SIM102", # Use a single `if` statement instead of nested `if` statements
     "SIM108", # Use ternary operator instead of `if`-`else`-block
@@ -87,6 +90,9 @@ max-complexity = 7 # our current code adheres to this without too much effort
 
 [tool.ruff.lint.per-file-ignores]
 "**/{tests}/*" = [
+    "DOC201", # documenting return values
+    "DOC402", # documenting yield values
+    "PLR6301", # could be a static method
     "S101", # use of assert
     "S106", # hardcoded password
 ]
@@ -94,21 +100,16 @@ max-complexity = 7 # our current code adheres to this without too much effort
     "S105", # hardcoded password as argument
 ]
 "scram/users/**" = [
+    "DOC201", # documenting return values
     "FBT001", # minimal issue; don't need to mess with in the User app
     "PLR2004", # magic values when checking HTTP status codes
 ]
-
-# ==== isort ====
-[tool.isort]
-profile = "black"
-line_length = 119
-known_first_party = [
-    "scram",
-    "config",
+"**/views.py" = [
+    "DOC201", # documenting return values; it's fairly obvious in a View
 ]
-skip = ["venv/"]
-skip_glob = ["**/migrations/*.py"]
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 # ==== mypy ====
 [tool.mypy]
@@ -130,53 +131,3 @@ ignore_errors = true
 
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
-
-
-# ==== PyLint ====
-[tool.pylint.MASTER]
-load-plugins = [
-    "pylint_django",
-]
-django-settings-module = "config.settings.local"
-
-[tool.pylint.FORMAT]
-max-line-length = 119
-
-[tool.pylint."MESSAGES CONTROL"]
-disable = [
-    "missing-docstring",
-    "invalid-name",
-]
-
-[tool.pylint.DESIGN]
-max-parents = 13
-
-[tool.pylint.TYPECHECK]
-generated-members = [
-    "REQUEST",
-    "acl_users",
-    "aq_parent",
-    "[a-zA-Z]+_set{1,2}",
-    "save",
-    "delete",
-]
-
-
-# ==== djLint ====
-[tool.djlint]
-blank_line_after_tag = "load,extends"
-close_void_tags = true
-format_css = true
-format_js = true
-# TODO: remove T002 when fixed https://github.com/Riverside-Healthcare/djLint/issues/687
-ignore = "H006,H021,H023,H025,H029,H030,H031,T002,T003"
-include = "H017,H035"
-indent = 2
-max_line_length = 119
-profile = "django"
-
-[tool.djlint.css]
-indent_size = 2
-
-[tool.djlint.js]
-indent_size = 2

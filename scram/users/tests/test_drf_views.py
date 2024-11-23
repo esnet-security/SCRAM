@@ -20,7 +20,7 @@ class TestUserViewSet:
 
         view.request = request
 
-        assert user in view.get_queryset()
+        self.assertIn(user, view.get_queryset())
 
     def test_me(self, user: User, rf: RequestFactory):
         """Ensure we can view info on the current user."""
@@ -32,8 +32,11 @@ class TestUserViewSet:
 
         response = view.me(request)
 
-        assert response.data == {
-            "username": user.username,
-            "name": user.name,
-            "url": f"http://testserver/api/v1/users/{user.username}/",
-        }
+        self.assertEqual(
+            response.data,
+            {
+                "username": user.username,
+                "name": user.name,
+                "url": f"http://testserver/api/v1/users/{user.username}/",
+            },
+        )

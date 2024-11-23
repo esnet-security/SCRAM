@@ -8,13 +8,15 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from scram.route_manager.models import Entry, WebSocketSequenceElement
 
+logger = logging.getLogger(__name__)
+
 
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Translator(s)."""
 
     async def connect(self):
         """Handle the initial connection with adding to the right group."""
-        logging.info("Translator connected")
+        logger.info("Translator connected")
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
 
@@ -26,7 +28,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num"),
         )
         if not elements:
-            logging.warning("No elements found for actiontype=%s.", extra=self.actiontype)
+            logger.warning("No elements found for actiontype=%s.", extra=self.actiontype)
             return
 
         # Avoid lazy evaluation
@@ -40,7 +42,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, close_code):
         """Discard any remaining messages on disconnect."""
-        logging.info("Disconnect received: %s", close_code)
+        logger.info("Disconnect received: %s", close_code)
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):

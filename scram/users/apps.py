@@ -14,7 +14,8 @@ class UsersConfig(AppConfig):
     name = "scram.users"
     verbose_name = _("Users")
 
-    def ready(self):
+    @staticmethod
+    def ready():
         """Check if signals are registered for User events."""
         try:
             import scram.users.signals  # noqa F401

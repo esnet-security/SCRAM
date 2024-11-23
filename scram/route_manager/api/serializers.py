@@ -75,19 +75,25 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         model = Entry
         fields = ["route", "actiontype", "url", "comment", "who"]
 
-    def get_comment(self, obj):
-        """Provide a nicer name for change reason."""
+    @staticmethod
+    def get_comment(obj):
+        """Provide a nicer name for change reason.
+
+        Returns:
+            string: The change reason that modified the Entry.
+        """
         return obj.get_change_reason()
 
-    def create(self, validated_data):
-        """Implement custom logic and validates creating a new route."""
+    @staticmethod
+    def create(validated_data):
+        """Implement custom logic and validates creating a new route."""  # noqa: DOC201
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         comment = validated_data.pop("comment")
 
-        route_instance, created = Route.objects.get_or_create(route=valid_route)
+        route_instance, _ = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
+        entry_instance, _ = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
 
         logger.debug("Created entry with comment: %s", comment)
         update_change_reason(entry_instance, comment)

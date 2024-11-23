@@ -154,7 +154,8 @@ class EntryListView(ListView):
     model = Entry
     template_name = "route_manager/entry_list.html"
 
-    def get_context_data(self, **kwargs):
+    @staticmethod
+    def get_context_data(**kwargs):
         """Group entries by action type."""
         context = {"entries": {}}
         for at in ActionType.objects.all():

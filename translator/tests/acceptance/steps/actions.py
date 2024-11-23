@@ -27,7 +27,11 @@ def del_block(context, route, asn, community):
 
 
 def get_block_status(context, ip):
-    """Check if the IP is currently blocked."""
+    """Check if the IP is currently blocked.
+
+    Returns:
+        bool: The return value. True if the IP is currently blocked, False otherwise.
+    """
     # Allow our add/delete requests to settle
     time.sleep(1)
 

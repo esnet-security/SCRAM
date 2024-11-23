@@ -6,6 +6,8 @@ from pathlib import Path
 
 import environ
 
+logger = logging.getLogger(__name__)
+
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # scram/
 APPS_DIR = ROOT_DIR / "scram"
@@ -308,7 +310,7 @@ OIDC_OP_USER_ENDPOINT = os.environ.get(
 )
 OIDC_RP_SIGN_ALGO = "RS256"
 
-logging.info("Using AUTH METHOD=%s", AUTH_METHOD)
+logger.info("Using AUTH METHOD=%s", AUTH_METHOD)
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
     MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]

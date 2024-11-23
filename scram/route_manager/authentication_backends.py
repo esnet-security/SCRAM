@@ -8,7 +8,8 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 class ESnetAuthBackend(OIDCAuthenticationBackend):
     """Extend the OIDC backend with a custom permission model."""
 
-    def update_groups(self, user, claims):
+    @staticmethod
+    def update_groups(user, claims):
         """Set the user's group(s) to whatever is in the claims."""
         effective_groups = []
         claimed_groups = claims.get("groups", [])
@@ -28,12 +29,12 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         user.save()
 
     def create_user(self, claims):
-        """Wrap the superclass's user creation."""
+        """Wrap the superclass's user creation."""  # noqa: DOC201
         user = super().create_user(claims)
         return self.update_user(user, claims)
 
     def update_user(self, user, claims):
-        """Determine the user name from the claims and update said user's groups."""
+        """Determine the user name from the claims and update said user's groups."""  # noqa: DOC201
         user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
         if claims.get("groups", False):
