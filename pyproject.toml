@@ -56,6 +56,7 @@ select = [
     "ISC",   # implicit-str-concat
     "LOG",   # logging
     "N",     # pep8-naming
+    "PIE",   # pie
     "S",     # bandit
     "SIM",   # simplify
     "UP",    # pyupgrade

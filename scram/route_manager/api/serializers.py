@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 class CustomCidrAddressField(rest_framework.CidrAddressField):
     """Define a wrapper field so swagger can properly handle the inherited field."""
 
-    pass
 
 
 class ActionTypeSerializer(serializers.ModelSerializer):
