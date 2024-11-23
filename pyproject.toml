@@ -39,9 +39,11 @@ target-version = 'py312'
 select = [
     "ASYNC", # flake8-async
     "B",     # flake8-bugbear
+    "BLE",   # flake8-blind-except
     "D",     # pydocstyle
     "E",     # pycodestyle
     "F",     # pyflakes
+    "FBT",   # boolean-trap
     "I",     # isort
     "N",     # pep8-naming
     "S",     # flake8-bandit
@@ -60,6 +62,9 @@ ignore = [
 ]
 "test.py" = [
     "S105", # hardcoded password as argument
+]
+"factories.py" = [
+    "FBT001", # minimal issue; don't need to mess with in the User app
 ]
 
 # ==== isort ====

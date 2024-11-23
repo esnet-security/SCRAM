@@ -7,7 +7,7 @@ from channels.testing import WebsocketCommunicator
 from config.asgi import ws_application
 
 
-async def query_translator(route, actiontype, is_announced=True):
+async def query_translator(route, actiontype, is_announced):
     """Ensure the specified route is currently either blocked or unblocked."""
     communicator = WebsocketCommunicator(ws_application, f"/ws/route_manager/webui_{actiontype}/")
     connected, subprotocol = await communicator.connect()
@@ -25,7 +25,7 @@ async def query_translator(route, actiontype, is_announced=True):
 @async_run_until_complete
 async def check_blocked(context, route, actiontype):
     """Ensure the specified route is currently blocked."""
-    await query_translator(route, actiontype)
+    await query_translator(route, actiontype, is_announced=True)
 
 
 @then("{route} is not announced by {actiontype} translators")
