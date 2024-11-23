@@ -107,7 +107,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         # Make sure we put in an acceptable sized prefix
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
         if route.prefixlen < min_prefix:
-            raise PrefixTooLarge()
+            raise PrefixTooLarge
 
         # Make sure this client is authorized to add this entry with this actiontype
         if self.request.data.get("uuid"):
@@ -120,9 +120,9 @@ class EntryViewSet(viewsets.ModelViewSet):
             if not authorized_client or actiontype not in authorized_actiontypes:
                 logging.debug("Client", client_uuid, "actiontypes:", authorized_actiontypes)
                 logging.info(client_uuid, "is not allowed to add an entry to the", actiontype, "list")
-                raise ActiontypeNotAllowed()
+                raise ActiontypeNotAllowed
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
-            raise PermissionDenied()
+            raise PermissionDenied
 
         # Don't process if we have the entry in the ignorelist
         overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
@@ -173,7 +173,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
             min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
             if cidr.prefixlen < min_prefix:
-                raise PrefixTooLarge() from exc
+                raise PrefixTooLarge from exc
 
             query = Q(route__route__net_overlaps=cidr)
 

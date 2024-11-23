@@ -18,7 +18,6 @@ class CustomCidrAddressField(rest_framework.CidrAddressField):
     """Define a wrapper field so swagger can properly handle the inherited field."""
 
 
-
 class ActionTypeSerializer(serializers.ModelSerializer):
     """Map the serializer to the model via Meta."""
 

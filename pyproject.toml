@@ -57,8 +57,11 @@ select = [
     "LOG",   # logging
     "N",     # pep8-naming
     "PIE",   # pie
+    "Q",     # quotes
+    "RSE",   # raise
     "S",     # bandit
     "SIM",   # simplify
+    "T20",   # print
     "UP",    # pyupgrade
 ]
 ignore = [
