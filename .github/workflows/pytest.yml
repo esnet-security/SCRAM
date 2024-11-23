@@ -50,7 +50,7 @@ jobs:
 
       - name: Apply unapplied migrations
         env:
-          DATABASE_URL: postgres://scram:@postgres:5432/test_scram
+          DATABASE_URL: postgres://scram:@localhost:5432/test_scram
         run: |
           python manage.py makemigrations --noinput || true
           UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
@@ -64,7 +64,7 @@ jobs:
 
       - name: Check for duplicate migrations
         env:
-          DATABASE_URL: postgres://scram:@postgres:5432/test_scram
+          DATABASE_URL: postgres://scram:@localhost:5432/test_scram
         run: |
           if python manage.py makemigrations --dry-run | grep "No changes detected"; then
             echo "No duplicate migrations detected."
@@ -74,5 +74,5 @@ jobs:
 
       - name: Run Pytest
         env:
-          DATABASE_URL: postgres://scram:@postgres:5432/test_scram
+          DATABASE_URL: postgres://scram:@localhost:5432/test_scram
         run: pytest
