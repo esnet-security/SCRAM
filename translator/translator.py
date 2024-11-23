@@ -13,6 +13,13 @@ from gobgp import GoBGP
 
 logger = logging.getLogger(__name__)
 
+KNOWN_MESSAGES = {
+    "translator_add",
+    "translator_remove",
+    "translator_remove_all",
+    "translator_check",
+}
+
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
 debug_mode = os.environ.get("DEBUG")
 if debug_mode:
@@ -63,25 +70,6 @@ if debug_mode:
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
 url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/translator_block/")
-KNOWN_MESSAGES = [
-    "translator_add",
-    "translator_remove",
-    "translator_remove_all",
-    "translator_check",
-]
-
-
-def block_or_unblock(gobgp, event_type, event_data, ip):
-    """Receive one message and pass it off to the right function."""
-    # TODO: Maybe only allow this in testing?
-    if event_type == "translator_remove_all":
-        gobgp.del_all_paths()
-        return
-
-    if event_type == "translator_add":
-        gobgp.add_path(ip, event_data)
-    elif event_type == "translator_remove":
-        gobgp.del_path(ip, event_data)
 
 
 async def main():
@@ -90,26 +78,30 @@ async def main():
     async for websocket in websockets.connect(url):
         try:
             async for message in websocket:
-                raw_message = json.loads(message)
-                event_type = raw_message.get("type")
-                event_data = raw_message.get("message")
+                json_message = json.loads(message)
+                event_type = json_message.get("type")
+                event_data = json_message.get("message")
                 if event_type not in KNOWN_MESSAGES:
                     logger.error("Unknown event type received: %s", event_type)
-                    continue
-
-                try:
-                    ip = ipaddress.ip_interface(event_data["route"])
-                except:  # noqa E722
-                    logger.exception("Error parsing message: %s", raw_message)
-                    continue
-
-                if event_type == "translator_check":
-                    raw_message["type"] = "translator_check_resp"
-                    raw_message["message"]["is_blocked"] = g.is_blocked(ip)
-                    raw_message["message"]["translator_name"] = hostname
-                    await websocket.send(json.dumps(raw_message))
+                # TODO: Maybe only allow this in testing?
+                elif event_type == "translator_remove_all":
+                    g.del_all_paths()
                 else:
-                    await block_or_unblock(g, event_type, event_data, ip)
+                    try:
+                        ip = ipaddress.ip_interface(event_data["route"])
+                    except:  # noqa E722
+                        logger.exception("Error parsing message: %s", message)
+                        continue
+
+                    if event_type == "translator_add":
+                        g.add_path(ip, event_data)
+                    elif event_type == "translator_remove":
+                        g.del_path(ip, event_data)
+                    elif event_type == "translator_check":
+                        json_message["type"] = "translator_check_resp"
+                        json_message["message"]["is_blocked"] = g.is_blocked(ip)
+                        json_message["message"]["translator_name"] = hostname
+                        await websocket.send(json.dumps(json_message))
 
         except websockets.ConnectionClosed:
             continue
