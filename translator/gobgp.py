@@ -49,7 +49,7 @@ class GoBGP:
         origin.Pack(
             attribute_pb2.OriginAttribute(
                 origin=2,
-            )
+            ),
         )
 
         # IP prefix and its associated length
@@ -58,7 +58,7 @@ class GoBGP:
             attribute_pb2.IPAddressPrefix(
                 prefix_len=ip.network.prefixlen,
                 prefix=str(ip.ip),
-            )
+            ),
         )
 
         # Set the next hop to the correct value depending on IP family
@@ -71,14 +71,14 @@ class GoBGP:
                     family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
                     next_hops=[next_hops],
                     nlris=[nlri],
-                )
+                ),
             )
         else:
             next_hops = event_data.get("next_hop", DEFAULT_V4_NEXTHOP)
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
                     next_hop=next_hops,
-                )
+                ),
             )
 
         # Set our AS Path

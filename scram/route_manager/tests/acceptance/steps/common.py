@@ -17,7 +17,8 @@ def create_actiontype(context, name):
     """Create an actiontype of that name."""
     context.channel_layer = get_channel_layer()
     async_to_sync(context.channel_layer.group_send)(
-        f"translator_{name}", {"type": "translator_remove_all", "message": {}}
+        f"translator_{name}",
+        {"type": "translator_remove_all", "message": {}},
     )
 
     at, created = ActionType.objects.get_or_create(name=name)
@@ -154,7 +155,8 @@ def remove_expired(context):
 def add_ignore_entry(context, value):
     """Add an IgnoreEntry with the specified route."""
     context.response = context.test.client.post(
-        reverse("api:v1:ignoreentry-list"), {"route": value, "comment": "test api"}
+        reverse("api:v1:ignoreentry-list"),
+        {"route": value, "comment": "test api"},
     )
 
 

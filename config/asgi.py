@@ -62,5 +62,5 @@ application = ProtocolTypeRouter(
     {
         "http": django_application,
         "websocket": ws_application,
-    }
+    },
 )

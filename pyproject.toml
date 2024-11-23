@@ -37,9 +37,11 @@ target-version = 'py312'
 
 [tool.ruff.lint]
 select = [
+    "A",     # flake8-builtins
     "ASYNC", # flake8-async
     "B",     # flake8-bugbear
     "BLE",   # flake8-blind-except
+    "COM",   # flake8-commas
     "D",     # pydocstyle
     "E",     # pycodestyle
     "F",     # pyflakes

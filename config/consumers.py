@@ -23,7 +23,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
         # Filter WebSocketSequenceElements by actiontype
         elements = await sync_to_async(list)(
-            WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num")
+            WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num"),
         )
         if not elements:
             logging.warning(f"No elements found for actiontype={self.actiontype}.")

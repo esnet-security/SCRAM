@@ -69,7 +69,9 @@ class TestTranslatorBaseCase(TestCase):
 
         wsm, _ = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
         _, _ = WebSocketSequenceElement.objects.get_or_create(
-            websocketmessage=wsm, verb="A", action_type=self.actiontype
+            websocketmessage=wsm,
+            verb="A",
+            action_type=self.actiontype,
         )
 
         # Set some defaults; some child classes override this
@@ -164,11 +166,17 @@ class TranslatorSequenceTestCase(TestTranslatorBaseCase):
         """Define the messages we want to send."""
         wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
         _ = WebSocketSequenceElement.objects.create(
-            websocketmessage=wsm2, verb="A", action_type=self.actiontype, order_num=20
+            websocketmessage=wsm2,
+            verb="A",
+            action_type=self.actiontype,
+            order_num=20,
         )
         wsm3 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="bar")
         _ = WebSocketSequenceElement.objects.create(
-            websocketmessage=wsm3, verb="A", action_type=self.actiontype, order_num=2
+            websocketmessage=wsm3,
+            verb="A",
+            action_type=self.actiontype,
+            order_num=2,
         )
 
         self.generate_add_msgs = [

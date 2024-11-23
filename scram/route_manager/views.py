@@ -144,7 +144,7 @@ def process_expired(request):
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
-            }
+            },
         ),
         content_type="application/json",
     )

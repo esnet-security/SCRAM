@@ -26,7 +26,7 @@ class TestUserCreationForm:
                 "username": user.username,
                 "password1": user.password,
                 "password2": user.password,
-            }
+            },
         )
 
         assert not form.is_valid()

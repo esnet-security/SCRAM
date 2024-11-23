@@ -58,7 +58,9 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     """Due to the use of ForeignKeys, this follows some relationships to make sense via the API."""
 
     url = serializers.HyperlinkedIdentityField(
-        view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
+        view_name="api:v1:entry-detail",
+        lookup_url_kwarg="pk",
+        lookup_field="route",
     )
     route = CustomCidrAddressField()
     actiontype = serializers.CharField(default="block")

@@ -113,7 +113,8 @@ class EntryViewSet(viewsets.ModelViewSet):
         if self.request.data.get("uuid"):
             client_uuid = self.request.data["uuid"]
             authorized_actiontypes = Client.objects.filter(uuid=client_uuid).values_list(
-                "authorized_actiontypes__name", flat=True
+                "authorized_actiontypes__name",
+                flat=True,
             )
             authorized_client = Client.objects.filter(uuid=client_uuid).values("is_authorized")
             if not authorized_client or actiontype not in authorized_actiontypes:
@@ -141,7 +142,8 @@ class EntryViewSet(viewsets.ModelViewSet):
                 msg.msg_data[msg.msg_data_route_field] = str(route)
                 # Must match a channel name defined in asgi.py
                 async_to_sync(channel_layer.group_send)(
-                    f"translator_{actiontype}", {"type": msg.msg_type, "message": msg.msg_data}
+                    f"translator_{actiontype}",
+                    {"type": msg.msg_type, "message": msg.msg_data},
                 )
 
             serializer.save()
