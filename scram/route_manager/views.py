@@ -127,7 +127,7 @@ def add_entry(request):
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     with transaction.atomic():
         home = home_page(request)
-    return home
+    return home  # noqa RET504
 
 
 def process_expired(request):

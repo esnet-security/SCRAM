@@ -132,30 +132,29 @@ class EntryViewSet(viewsets.ModelViewSet):
                 ignore_entries.append(str(ignore_entry["route"]))
             logging.info("Cannot proceed adding", route, " The ignore list contains", ignore_entries)
             raise IgnoredRoute
-        else:
-            elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
-            if not elements:
-                logging.warning("No elements found for actiontype:", actiontype)
+        elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
+        if not elements:
+            logging.warning("No elements found for actiontype:", actiontype)
 
-            for element in elements:
-                msg = element.websocketmessage
-                msg.msg_data[msg.msg_data_route_field] = str(route)
-                # Must match a channel name defined in asgi.py
-                async_to_sync(channel_layer.group_send)(
-                    f"translator_{actiontype}",
-                    {"type": msg.msg_type, "message": msg.msg_data},
-                )
+        for element in elements:
+            msg = element.websocketmessage
+            msg.msg_data[msg.msg_data_route_field] = str(route)
+            # Must match a channel name defined in asgi.py
+            async_to_sync(channel_layer.group_send)(
+                f"translator_{actiontype}",
+                {"type": msg.msg_type, "message": msg.msg_data},
+            )
 
-            serializer.save()
+        serializer.save()
 
-            entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-            if expiration:
-                entry.expiration = expiration
-            entry.who = who
-            entry.is_active = True
-            entry.comment = comment
-            logging.info("Created entry:", entry)
-            entry.save()
+        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
+        if expiration:
+            entry.expiration = expiration
+        entry.who = who
+        entry.is_active = True
+        entry.comment = comment
+        logging.info("Created entry:", entry)
+        entry.save()
 
     @staticmethod
     def find_entries(arg, active_filter=None):

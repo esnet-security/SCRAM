@@ -59,6 +59,7 @@ select = [
     "PIE",   # pie
     "Q",     # quotes
     "RSE",   # raise
+    "RET",   # return
     "S",     # bandit
     "SIM",   # simplify
     "T20",   # print

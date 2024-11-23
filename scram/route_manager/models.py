@@ -120,20 +120,19 @@ class Entry(models.Model):
         if not self.is_active:
             # We've already expired this route, don't send another message
             return
-        else:
-            # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-            logging.info("Deactivating", self.route)
-            self.is_active = False
-            self.save()
+        # We don't actually delete records; we set them to inactive and then tell the translator to remove them
+        logging.info("Deactivating", self.route)
+        self.is_active = False
+        self.save()
 
-            # Unblock it
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{self.actiontype}",
-                {
-                    "type": "translator_remove",
-                    "message": {"route": str(self.route)},
-                },
-            )
+        # Unblock it
+        async_to_sync(channel_layer.group_send)(
+            f"translator_{self.actiontype}",
+            {
+                "type": "translator_remove",
+                "message": {"route": str(self.route)},
+            },
+        )
 
     def get_change_reason(self):
         """Traverse come complex relationships to determine the most recent change reason."""
