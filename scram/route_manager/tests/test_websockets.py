@@ -151,7 +151,7 @@ class TestTranslatorBaseCase(TestCase):
 
 
 class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
-    """Two translators in the same group, two in another group, single IP, ensure we get only the messages we expect."""
+    """Two translators in one group, two in another group, single IP, ensure we get only the messages we expect."""
 
     def local_setUp(self):
         """Define the actions and what we expect."""

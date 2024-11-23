@@ -25,11 +25,21 @@ exclude_also = [
     "if __name__ == .__main__.:",
     ]
 
-# ==== black ====
-[tool.black]
-line-length = 119
-target-version = ['py311']
+# ===== ruff ====
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "migrations",
+]
 
+line-length = 119
+target-version = 'py312'
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+]
 
 # ==== isort ====
 [tool.isort]

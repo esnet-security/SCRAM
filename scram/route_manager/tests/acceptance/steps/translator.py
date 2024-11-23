@@ -23,13 +23,13 @@ async def query_translator(route, actiontype, is_announced=True):
 
 @then("{route} is announced by {actiontype} translators")
 @async_run_until_complete
-async def step_impl(context, route, actiontype):
+async def check_blocked(context, route, actiontype):
     """Ensure the specified route is currently blocked."""
     await query_translator(route, actiontype)
 
 
 @then("{route} is not announced by {actiontype} translators")
 @async_run_until_complete
-async def step_impl(context, route, actiontype):
+async def check_unblocked(context, route, actiontype):
     """Ensure the specified route is currently unblocked."""
     await query_translator(route, actiontype, is_announced=False)

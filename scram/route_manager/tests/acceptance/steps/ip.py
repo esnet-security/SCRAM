@@ -7,7 +7,7 @@ from django.urls import reverse
 
 
 @then("{route} is contained in our list of {model}s")
-def step_impl(context, route, model):
+def check_route(context, route, model):
     """Perform a CIDR match on the matching object."""
     objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
     ip_target = ipaddress.ip_address(route)
@@ -23,7 +23,7 @@ def step_impl(context, route, model):
 
 
 @when("we query for {ip}")
-def step_impl(context, ip):
+def check_ip(context, ip):
     """Find an Entry for the specified IP."""
     try:
         context.response = context.test.client.get(reverse("api:v1:entry-detail", args=[ip]))
@@ -34,13 +34,13 @@ def step_impl(context, ip):
 
 
 @then("we get a ValueError")
-def step_impl(context):
+def check_error(context):
     """Ensure we received a ValueError exception."""
     assert isinstance(context.queryException, ValueError)
 
 
 @then("the change entry for {value:S} is {comment}")
-def step_impl(context, value, comment):
+def check_comment(context, value, comment):
     """Verify the comment for the Entry."""
     try:
         objs = context.test.client.get(reverse("api:v1:entry-detail", args=[value]))
