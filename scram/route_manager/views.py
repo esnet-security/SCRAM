@@ -115,11 +115,9 @@ def add_entry(request):
         errors = []
         if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
             for k, v in res.data.items():
-                for error in v:
-                    errors.append(f"'{k}' error: {str(error)}")
+                errors.extend(f"'{k}' error: {str(error)}" for error in v)
         else:
-            for v in res.data.values():
-                errors.append(f"error: {str(v)}")
+            errors.extend(f"error: {str(v)}" for v in res.data.values())
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
     elif res.status_code == 403:  # noqa: PLR2004
         messages.add_message(request, messages.ERROR, "Permission Denied")

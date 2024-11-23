@@ -51,12 +51,14 @@ select = [
     "ERA",   # eradicate
     "F",     # pyflakes
     "FBT",   # boolean-trap
+    "FLY",   # flynt
     "G",     # logging-format
     "I",     # isort
     "ICN",   # import-conventions
     "ISC",   # implicit-str-concat
     "LOG",   # logging
     "N",     # pep8-naming
+    "PERF",  # perflint
     "PIE",   # pie
     "PL",    # pylint
     "PTH",   # use-pathlib

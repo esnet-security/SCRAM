@@ -127,9 +127,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         # Don't process if we have the entry in the ignorelist
         overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
         if overlapping_ignore.count():
-            ignore_entries = []
-            for ignore_entry in overlapping_ignore.values():
-                ignore_entries.append(str(ignore_entry["route"]))
+            ignore_entries = [str(ignore_entry["route"]) for ignore_entry in overlapping_ignore.values()]
             logging.info("Cannot proceed adding %s. The ignore list contains %s.", route, ignore_entries)
             raise IgnoredRoute
         elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
