@@ -1,4 +1,4 @@
-"""Define steps used exclusively by the Behave tests."""
+scram/route_manager/tests/acceptance/steps/common.py"""Define steps used exclusively by the Behave tests."""
 
 import datetime
 import time
@@ -123,7 +123,7 @@ def add_entry_with_absolute_expiration(context, value, exp):
 def add_entry_with_relative_expiration(context, value, secs):
     """Block the provided route and add a relative expiration."""
     td = datetime.timedelta(seconds=secs)
-    expiration = datetime.datetime.now() + td
+    expiration = datetime.datetime.now(tz=datetime.UTC) + td
 
     context.response = context.test.client.post(
         reverse("api:v1:entry-list"),
