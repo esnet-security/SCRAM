@@ -332,7 +332,8 @@ elif AUTH_METHOD == "local":
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "local_auth:logout"
 else:
-    raise ValueError(f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'")
+    msg = f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'"
+    raise ValueError(msg)
 
 
 # Should we create an admin user for you

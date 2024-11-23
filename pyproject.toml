@@ -37,21 +37,23 @@ target-version = 'py312'
 
 [tool.ruff.lint]
 select = [
-    "A",     # flake8-builtins
-    "ASYNC", # flake8-async
-    "B",     # flake8-bugbear
-    "BLE",   # flake8-blind-except
-    "C4",    # flake8-comprehensions
-    "COM",   # flake8-commas
+    "A",     # builtins
+    "ASYNC", # async
+    "B",     # bugbear
+    "BLE",   # blind-except
+    "C4",    # comprehensions
+    "COM",   # commas
     "D",     # pydocstyle
-    "DTZ",   # flake8-datetimez
+    "DJ",    # django
+    "DTZ",   # datetimez
     "E",     # pycodestyle
+    "EM",    # errmsg
     "F",     # pyflakes
     "FBT",   # boolean-trap
     "I",     # isort
     "N",     # pep8-naming
-    "S",     # flake8-bandit
-    "SIM",   # flake8-simplify
+    "S",     # bandit
+    "SIM",   # simplify
     "UP",    # pyupgrade
 ]
 ignore = [

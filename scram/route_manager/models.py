@@ -17,13 +17,13 @@ class Route(models.Model):
     route = CidrAddressField(unique=True)
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
-    def get_absolute_url(self):
-        """Ensure we use UUID on the API side instead."""
-        return reverse("")
-
     def __str__(self):
         """Don't display the UUID, only the route."""
         return str(self.route)
+
+    def get_absolute_url(self):
+        """Ensure we use UUID on the API side instead."""
+        return reverse("")
 
 
 class ActionType(models.Model):
@@ -88,7 +88,7 @@ class Entry(models.Model):
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
-    comment = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
     # TODO: fix name if this works
     history = HistoricalRecords()
@@ -98,9 +98,22 @@ class Entry(models.Model):
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
         max_length=200,
-        null=True,
         blank=True,
+        default="",
     )
+
+    class Meta:
+        """Ensure that multiple routes can be added as long as they have different action types."""
+
+        unique_together = ["route", "actiontype"]
+        verbose_name_plural = "Entries"
+
+    def __str__(self):
+        """Summarize the most important fields to something easily readable."""
+        desc = f"{self.route} ({self.actiontype})"
+        if not self.is_active:
+            desc += " (inactive)"
+        return desc
 
     def delete(self, *args, **kwargs):
         """Set inactive instead of deleting, as we want to ensure a history of entries."""
@@ -121,19 +134,6 @@ class Entry(models.Model):
                     "message": {"route": str(self.route)},
                 },
             )
-
-    class Meta:
-        """Ensure that multiple routes can be added as long as they have different action types."""
-
-        unique_together = ["route", "actiontype"]
-        verbose_name_plural = "Entries"
-
-    def __str__(self):
-        """Summarize the most important fields to something easily readable."""
-        desc = f"{self.route} ({self.actiontype})"
-        if not self.is_active:
-            desc += " (inactive)"
-        return desc
 
     def get_change_reason(self):
         """Traverse come complex relationships to determine the most recent change reason."""

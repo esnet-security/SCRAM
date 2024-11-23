@@ -73,7 +73,8 @@ INSTALLED_APPS += ["behave_django"]  # noqa F405
 # ------------------------------------------------------------------------------
 # We shouldn't be using OIDC in local dev mode as of now, but might be worth pursuing later
 if AUTH_METHOD == "oidc":
-    raise NotImplementedError("oidc is not yet implemented")
+    msg = "oidc is not yet implemented"
+    raise NotImplementedError(msg)
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
 LOGIN_URL = "admin:login"

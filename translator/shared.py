@@ -17,9 +17,11 @@ def asn_is_valid(asn: int) -> bool:
 
     """
     if not isinstance(asn, int):
-        raise ASNError(f"ASN {asn} is not an Integer, has type {type(asn)}")
+        msg = f"ASN {asn} is not an Integer, has type {type(asn)}"
+        raise ASNError(msg)
     if not 0 < asn < 4294967295:
         # This is the max as stated in rfc6996
-        raise ASNError(f"ASN {asn} is out of range. Must be between 0 and 4294967295")
+        msg = f"ASN {asn} is out of range. Must be between 0 and 4294967295"
+        raise ASNError(msg)
 
     return True
