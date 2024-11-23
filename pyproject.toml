@@ -51,6 +51,7 @@ select = [
     "F",     # pyflakes
     "FBT",   # boolean-trap
     "I",     # isort
+    "ISC",   # implicit-str-concat
     "N",     # pep8-naming
     "S",     # bandit
     "SIM",   # simplify

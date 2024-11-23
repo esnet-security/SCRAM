@@ -62,7 +62,7 @@ class WebSocketSequenceElement(models.Model):
     websocketmessage = models.ForeignKey("WebSocketMessage", on_delete=models.CASCADE)
     order_num = models.SmallIntegerField(
         "Sequences are sent from the smallest order_num to the highest. "
-        + "Messages with the same order_num could be sent in any order",
+        "Messages with the same order_num could be sent in any order",
         default=0,
     )
 
@@ -79,7 +79,7 @@ class WebSocketSequenceElement(models.Model):
         """Summarize the fields into something short and readable."""
         return (
             f"{self.websocketmessage} as order={self.order_num} for "
-            + f"{self.verb} actions on actiontype={self.action_type}"
+            f"{self.verb} actions on actiontype={self.action_type}"
         )
 
 
