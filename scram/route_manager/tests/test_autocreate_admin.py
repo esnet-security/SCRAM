@@ -7,6 +7,9 @@ from django.urls import reverse
 
 from scram.users.models import User
 
+LEVEL_SUCCESS = 25
+LEVEL_INFO = 20
+
 
 @pytest.mark.django_db
 def test_autocreate_admin(settings):
@@ -14,15 +17,15 @@ def test_autocreate_admin(settings):
     settings.AUTOCREATE_ADMIN = True
     client = Client()
     response = client.get(reverse("route_manager:home"))
-    assert response.status_code == 200
+    assert response.status_code == 200  # noqa: PLR2004
     assert User.objects.count() == 1
     user = User.objects.get(username="admin")
     assert user.is_superuser
     assert user.email == "admin@example.com"
     messages = list(get_messages(response.wsgi_request))
-    assert len(messages) == 2
-    assert messages[0].level == 25  # SUCCESS
-    assert messages[1].level == 20  # INFO
+    assert len(messages) == 2  # noqa: PLR2004
+    assert messages[0].level == LEVEL_SUCCESS
+    assert messages[1].level == LEVEL_INFO
 
 
 @pytest.mark.django_db
@@ -31,7 +34,7 @@ def test_autocreate_admin_disabled(settings):
     settings.AUTOCREATE_ADMIN = False
     client = Client()
     response = client.get(reverse("route_manager:home"))
-    assert response.status_code == 200
+    assert response.status_code == 200  # noqa: PLR2004
     assert User.objects.count() == 0
 
 
@@ -42,6 +45,6 @@ def test_autocreate_admin_existing_user(settings):
     User.objects.create_user("testuser", "test@example.com", "password")
     client = Client()
     response = client.get(reverse("route_manager:home"))
-    assert response.status_code == 200
+    assert response.status_code == 200  # noqa: PLR2004
     assert User.objects.count() == 1
     assert not User.objects.filter(username="admin").exists()

@@ -40,7 +40,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, close_code):
         """Discard any remaining messages on disconnect."""
-        logging.info("Disconnect received:", close_code)
+        logging.info("Disconnect received: %s", close_code)
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):

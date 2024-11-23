@@ -89,7 +89,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         actiontype_instance = ActionType.objects.get(name=actiontype)
         entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
 
-        logger.debug("Created entry with comment:", comment)
+        logger.debug("Created entry with comment: %s", comment)
         update_change_reason(entry_instance, comment)
 
         return entry_instance

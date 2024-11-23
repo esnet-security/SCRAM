@@ -308,7 +308,7 @@ OIDC_OP_USER_ENDPOINT = os.environ.get(
 )
 OIDC_RP_SIGN_ALGO = "RS256"
 
-logging.info("Using AUTH METHOD =", AUTH_METHOD)
+logging.info("Using AUTH METHOD=%s", AUTH_METHOD)
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
     MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405

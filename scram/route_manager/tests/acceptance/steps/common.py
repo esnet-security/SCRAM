@@ -3,10 +3,10 @@
 import datetime
 import time
 
-import django.conf as conf
 from asgiref.sync import async_to_sync
 from behave import given, step, then, when
 from channels.layers import get_channel_layer
+from django import conf
 from django.urls import reverse
 
 from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement

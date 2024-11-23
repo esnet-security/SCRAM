@@ -121,7 +121,7 @@ class Entry(models.Model):
             # We've already expired this route, don't send another message
             return
         # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-        logging.info("Deactivating", self.route)
+        logging.info("Deactivating %s", self.route)
         self.is_active = False
         self.save()
 

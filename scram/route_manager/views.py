@@ -105,13 +105,13 @@ def add_entry(request):
     with transaction.atomic():
         res = add_entry_api(request)
 
-    if res.status_code == 201:
+    if res.status_code == 201:  # noqa: PLR2004
         messages.add_message(
             request,
             messages.SUCCESS,
             "Entry successfully added",
         )
-    elif res.status_code == 400:
+    elif res.status_code == 400:  # noqa: PLR2004
         errors = []
         if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
             for k, v in res.data.items():
@@ -121,7 +121,7 @@ def add_entry(request):
             for v in res.data.values():
                 errors.append(f"error: {str(v)}")
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
-    elif res.status_code == 403:
+    elif res.status_code == 403:  # noqa: PLR2004
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")

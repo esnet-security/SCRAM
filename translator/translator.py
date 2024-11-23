@@ -32,7 +32,7 @@ if debug_mode:
 
         logging.info("Done installing dependencies for debuggers")
 
-    logging.info("Translator is set to use a debugger. Provided debug mode:", debug_mode)
+    logging.info("Translator is set to use a debugger. Provided debug mode: %s", debug_mode)
     # We have to setup the debugger appropriately for various IDEs. It'd be nice if they all used the same thing but
     # sadly, we live in a fallen world.
     if debug_mode == "pycharm-pydevd":
@@ -56,7 +56,7 @@ if debug_mode:
 
         logging.info("Debugger listening on port 56781.")
     else:
-        logging.warning("Invalid debug mode given:", debug_mode, "Debugger not started")
+        logging.warning("Invalid debug mode given: %s. Debugger not started", debug_mode)
 
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
@@ -78,7 +78,7 @@ async def main():
                     "translator_remove_all",
                     "translator_check",
                 ]:
-                    logging.error("Unknown event type received:", event_type)
+                    logging.error("Unknown event type received: %s", event_type)
                 # TODO: Maybe only allow this in testing?
                 elif event_type == "translator_remove_all":
                     g.del_all_paths()
@@ -86,7 +86,7 @@ async def main():
                     try:
                         ip = ipaddress.ip_interface(event_data["route"])
                     except:  # noqa E722
-                        logging.error("Error parsing message:", message)
+                        logging.error("Error parsing message: %s", message)
                         continue
 
                     if event_type == "translator_add":

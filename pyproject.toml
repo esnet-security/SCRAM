@@ -58,6 +58,7 @@ select = [
     "LOG",   # logging
     "N",     # pep8-naming
     "PIE",   # pie
+    "PL",    # pylint
     "PTH",   # use-pathlib
     "Q",     # quotes
     "RSE",   # raise
@@ -82,8 +83,9 @@ ignore = [
 "test.py" = [
     "S105", # hardcoded password as argument
 ]
-"factories.py" = [
+"scram/users/**" = [
     "FBT001", # minimal issue; don't need to mess with in the User app
+    "PLR2004", # magic values when checking HTTP status codes
 ]
 
 # ==== isort ====

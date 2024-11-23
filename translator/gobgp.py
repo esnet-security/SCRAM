@@ -15,6 +15,9 @@ DEFAULT_ASN = 65400
 DEFAULT_COMMUNITY = 666
 DEFAULT_V4_NEXTHOP = "192.0.2.199"
 DEFAULT_V6_NEXTHOP = "100::1"
+MAX_SMALL_ASN = 2**16
+MAX_SMALL_COMM = 2**16
+IPV6 = 6
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -28,7 +31,7 @@ class GoBGP:
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
     def _get_family_afi(self, ip_version):
-        if ip_version == 6:
+        if ip_version == IPV6:
             return gobgp_pb2.Family.AFI_IP6
         return gobgp_pb2.Family.AFI_IP
 
@@ -63,7 +66,7 @@ class GoBGP:
         # Set the next hop to the correct value depending on IP family
         next_hop = Any()
         family_afi = self._get_family_afi(ip_version)
-        if ip_version == 6:
+        if ip_version == IPV6:
             next_hops = event_data.get("next_hop", DEFAULT_V6_NEXTHOP)
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
@@ -95,13 +98,13 @@ class GoBGP:
         communities = Any()
         # Standard community
         # Since we pack both into the community string we need to make sure they will both fit
-        if asn < 65536 and community < 65536:
+        if asn < MAX_SMALL_ASN and community < MAX_SMALL_COMM:
             # We bitshift ASN left by 16 so that there is room to add the community on the end of it. This is because
             # GoBGP wants the community sent as a single integer.
             comm_id = (asn << 16) + community
             communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
         else:
-            logging.info("LargeCommunity Used - ASN:", asn, "Community:", community)
+            logging.info("LargeCommunity Used - ASN: %s. Community: %s", asn, community)
             global_admin = asn
             local_data1 = community
             # set to 0 because there's no use case for it, but we need a local_data2 for gobgp to read any of it
@@ -123,7 +126,7 @@ class GoBGP:
 
     def add_path(self, ip, event_data):
         """Announce a single route."""
-        logging.info("Blocking", ip)
+        logging.info("Blocking %s", ip)
         try:
             path = self._build_path(ip, event_data)
 
@@ -132,7 +135,7 @@ class GoBGP:
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
-            logging.warning("ASN assertion failed with error:", e)
+            logging.warning("ASN assertion failed with error: %s", e)
 
     def del_all_paths(self):
         """Remove all routes from being announced."""
@@ -142,7 +145,7 @@ class GoBGP:
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
-        logging.info("Unblocking", ip)
+        logging.info("Unblocking %s", ip)
         try:
             path = self._build_path(ip, event_data)
             self.stub.DeletePath(
@@ -150,7 +153,7 @@ class GoBGP:
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
-            logging.warning("ASN assertion failed with error:", e)
+            logging.warning("ASN assertion failed with error: %s", e)
 
     def get_prefixes(self, ip):
         """Retrieve the routes that match a prefix and are announced."""
