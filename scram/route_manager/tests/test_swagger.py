@@ -1,4 +1,4 @@
-"""This file contains tests for the swagger API endpoints."""
+"""Test the swagger API endpoints."""
 
 import pytest
 from django.urls import reverse

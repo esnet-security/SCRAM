@@ -1,4 +1,4 @@
-"""This file contains tests for the auto-creation of an admin user."""
+"""Test the auto-creation of an admin user."""
 
 import pytest
 from django.contrib.messages import get_messages

@@ -1,5 +1,4 @@
-"""
-ASGI config for SCRAM project.
+"""ASGI config for SCRAM project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

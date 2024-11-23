@@ -16,8 +16,7 @@ debug_mode = os.environ.get("DEBUG")
 if debug_mode:
 
     def install_deps():
-        """
-        Install necessary dependencies for debuggers.
+        """Install necessary dependencies for debuggers.
 
         Because of how we build translator currently, we don't have a great way to selectively
         install things at build, so we just do it here! Right now this also includes base.txt,

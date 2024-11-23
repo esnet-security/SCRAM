@@ -1,3 +1,5 @@
+"""Define logic for the WebSocket consumers."""
+
 import logging
 from functools import partial
 
@@ -8,7 +10,10 @@ from scram.route_manager.models import Entry, WebSocketSequenceElement
 
 
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
+    """Handle messages from the Translator(s)."""
+
     async def connect(self):
+        """Handle the initial connection with adding to the right group."""
         logging.info("Translator connected")
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
@@ -34,11 +39,12 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_json({"type": msg.msg_type, "message": msg.msg_data})
 
     async def disconnect(self, close_code):
+        """Discard any remaining messages on disconnect."""
         logging.info(f"Disconnect received: {close_code}")
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):
-        """Received a WebSocket message"""
+        """Handle a WebSocket message."""
         if content["type"] == "translator_check_resp":
             # We received a check response from a translator, forward to web UI.
             channel = content.pop("channel")
@@ -59,14 +65,17 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
+    """Handle messages from the Web UI."""
+
     async def connect(self):
+        """Handle the initial connection with adding to the right group."""
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
 
         await self.accept()
 
-    # Receive message from WebSocket
     async def receive_json(self, content):
+        """Receive message from WebSocket."""
         if content["type"] == "wui_check_req":
             # Web UI asks us to check; forward to translator(s)
             await self.channel_layer.group_send(

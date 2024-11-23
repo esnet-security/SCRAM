@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 @extend_schema_field(field={"type": "string", "format": "cidr"})
 class CustomCidrAddressField(rest_framework.CidrAddressField):
-    """This serializer defines a wrapper field so swagger can properly handle the inherited field."""
+    """Define a wrapper field so swagger can properly handle the inherited field."""
 
     pass
 
 
 class ActionTypeSerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the serializer to the model via Meta."""
 
     class Meta:
         """Maps to the ActionType model, and specifies the fields exposed by the API."""
@@ -45,7 +45,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the serializer to the model via Meta."""
 
     class Meta:
         """Maps to the Client model, and specifies the fields exposed by the API."""
@@ -96,7 +96,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the route to the right field type."""
 
     route = CustomCidrAddressField()
 

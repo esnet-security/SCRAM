@@ -1,3 +1,5 @@
+"""Define URLs for the WebSocket consumers."""
+
 from django.urls import re_path
 
 from . import consumers

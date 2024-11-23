@@ -1,4 +1,7 @@
+"""TODO: Find out if this is used."""
+
 async def websocket_application(scope, receive, send):
+    """Handle WebSocket messages. I guess."""
     while True:
         event = await receive()
 

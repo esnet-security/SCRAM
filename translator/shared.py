@@ -1,11 +1,10 @@
-"""This module provides a location for code that we want to share between all translators."""
+"""Provide a location for code that we want to share between all translators."""
 
 from exceptions import ASNError
 
 
 def asn_is_valid(asn: int) -> bool:
-    """
-    asn_is_valid makes sure that an ASN passed in is a valid 2 or 4 Byte ASN.
+    """asn_is_valid makes sure that an ASN passed in is a valid 2 or 4 Byte ASN.
 
     Args:
         asn (int): The Autonomous System Number that we want to validate
@@ -15,6 +14,7 @@ def asn_is_valid(asn: int) -> bool:
 
     Returns:
         bool: _description_
+
     """
     if not isinstance(asn, int):
         raise ASNError(f"ASN {asn} is not an Integer, has type {type(asn)}")

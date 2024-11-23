@@ -77,8 +77,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "head", "delete"]
 
     def get_permissions(self):
-        """
-        Override the permissions classes for POST method since we want to accept Entry creates from any client.
+        """Override the permissions classes for POST method since we want to accept Entry creates from any client.
 
         Note: We make authorization decisions on whether to actually create the object in the perform_create method
         later.
