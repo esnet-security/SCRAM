@@ -1,4 +1,4 @@
-scram/route_manager/tests/acceptance/steps/common.py"""Define steps used exclusively by the Behave tests."""
+"""Define steps used exclusively by the Behave tests."""
 
 import datetime
 import time
