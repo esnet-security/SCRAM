@@ -68,6 +68,7 @@ select = [
     "SLF",   # self
     "SLOT",  # slots
     "T20",   # print
+    "TRY",   # tryceratops
     "UP",    # pyupgrade
 ]
 ignore = [

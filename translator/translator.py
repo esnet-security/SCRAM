@@ -86,7 +86,7 @@ async def main():
                     try:
                         ip = ipaddress.ip_interface(event_data["route"])
                     except:  # noqa E722
-                        logging.error("Error parsing message: %s", message)
+                        logging.exception("Error parsing message: %s", message)
                         continue
 
                     if event_type == "translator_add":
