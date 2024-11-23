@@ -5,6 +5,15 @@ from django.contrib.auth.models import Group
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 
+def groups_overlap(a, b):
+    """Helper function to see if a and b have any overlap.
+
+    Returns:
+        bool: True if there's any overlap between a and b.
+    """
+    return not set(a).isdisjoint(b)
+
+
 class ESnetAuthBackend(OIDCAuthenticationBackend):
     """Extend the OIDC backend with a custom permission model."""
 
@@ -14,14 +23,14 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         effective_groups = []
         claimed_groups = claims.get("groups", [])
 
-        if any(claimed_groups in settings.SCRAM_DENIED_GROUPS):
+        if groups_overlap(claimed_groups, settings.SCRAM_DENIED_GROUPS):
             is_admin = False
         # Don't even look at anything else if they're denied
         else:
-            is_admin = any(claimed_groups in settings.SCRAM_ADMIN_GROUPS)
-            if any(claimed_groups in settings.SCRAM_READWRITE_GROUPS):
+            is_admin = groups_overlap(claimed_groups, settings.SCRAM_ADMIN_GROUPS)
+            if groups_overlap(claimed_groups, settings.SCRAM_READWRITE_GROUPS):
                 effective_groups += Group.objects.get(name="readwrite")
-            if any(claimed_groups in settings.SCRAM_READONLY_GROUPS):
+            if groups_overlap(claimed_groups, settings.SCRAM_READONLY_GROUPS):
                 effective_groups += Group.objects.get(name="readonly")
 
         user.groups.set(effective_groups)
