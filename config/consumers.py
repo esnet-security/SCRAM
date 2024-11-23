@@ -1,8 +1,8 @@
 import logging
+from functools import partial
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from functools import partial
 
 from scram.route_manager.models import Entry, WebSocketSequenceElement
 
