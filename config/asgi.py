@@ -35,7 +35,7 @@ if debug:
 
         import debugpy
 
-        debugpy.listen(("0.0.0.0", 56780))
+        debugpy.listen(("0.0.0.0", 56780)) # noqa S104 (doesn't like binding to all interfaces)
 
         logging.info("Debugger listening on port 56780.")
     else:
