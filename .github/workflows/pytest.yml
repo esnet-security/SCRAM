@@ -42,7 +42,7 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5 
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -72,6 +72,7 @@ jobs:
             echo "No duplicate migrations detected."
           else
             echo "Warning: Potential duplicate migrations detected. Please review."
+          fi
 
       - name: Run Pytest
         env:
