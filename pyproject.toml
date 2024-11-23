@@ -62,6 +62,7 @@ select = [
     "RET",   # return
     "S",     # bandit
     "SIM",   # simplify
+    "SLF",   # self
     "T20",   # print
     "UP",    # pyupgrade
 ]
