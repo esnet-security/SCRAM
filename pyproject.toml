@@ -37,8 +37,9 @@ target-version = 'py312'
 
 [tool.ruff.lint]
 select = [
-    # pycodestyle
-    "E",
+    "E",     # pycodestyle
+    "F",     # pyflakes
+    "UP",    # pyupgrade
 ]
 
 # ==== isort ====

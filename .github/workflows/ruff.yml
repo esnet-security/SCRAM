@@ -13,16 +13,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  flake8:
+  ruff:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Cache Docker images.
-        uses: ScribeMD/docker-cache@0.3.7
-        with:
-          key: docker-${{ runner.os }}-${{ hashFiles('docker-compose.yaml') }}
 
       - name: Install dependencies
         run: pip install ruff

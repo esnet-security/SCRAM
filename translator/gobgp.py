@@ -19,7 +19,7 @@ DEFAULT_V6_NEXTHOP = "100::1"
 logging.basicConfig(level=logging.DEBUG)
 
 
-class GoBGP(object):
+class GoBGP:
     """Represents a GoBGP instance."""
 
     def __init__(self, url):

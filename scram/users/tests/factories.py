@@ -1,6 +1,7 @@
 """Define Factory tests for the Users application."""
 
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 from django.contrib.auth import get_user_model
 from factory import Faker, post_generation

@@ -42,7 +42,7 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
 
     def create_user(self, claims):
         """Wrap the superclass's user creation."""
-        user = super(ESnetAuthBackend, self).create_user(claims)
+        user = super().create_user(claims)
         return self.update_user(user, claims)
 
     def update_user(self, user, claims):
