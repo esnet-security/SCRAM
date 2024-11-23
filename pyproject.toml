@@ -40,7 +40,12 @@ select = [
     "B",     # flake8-bugbear
     "E",     # pycodestyle
     "F",     # pyflakes
+    "SIM",   # flake8-simplify
     "UP",    # pyupgrade
+]
+ignore = [
+    "SIM102", # Use a single `if` statement instead of nested `if` statements
+    "SIM108", # Use ternary operator instead of `if`-`else`-block
 ]
 
 # ==== isort ====

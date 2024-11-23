@@ -33,11 +33,7 @@ def get_block_status(context, ip):
 
     ip_obj = ipaddress.ip_interface(ip)
 
-    for path in context.gobgp.get_prefixes(ip_obj):
-        if ip_obj in ipaddress.ip_network(path.destination.prefix):
-            return True
-
-    return False
+    return any(ip_obj in ipaddress.ip_network(path.destination.prefix) for path in context.gobgp.get_prefixes(ip_obj))
 
 
 @capture
