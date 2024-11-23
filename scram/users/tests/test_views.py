@@ -36,7 +36,7 @@ class TestUserUpdateView:
 
         view.request = request
 
-        self.assertEqual(view.get_success_url(), f"/users/{user.username}/")
+        assert view.get_success_url() == f"/users/{user.username}/"
 
     def test_get_object(self, user: User, rf: RequestFactory):
         """Ensure we can retrieve the User object."""
@@ -46,7 +46,7 @@ class TestUserUpdateView:
 
         view.request = request
 
-        self.assertEqual(view.get_object(), user)
+        assert view.get_object() == user
 
     def test_form_valid(self, user: User, rf: RequestFactory):
         """Ensure the form validation works."""
@@ -66,7 +66,7 @@ class TestUserUpdateView:
         view.form_valid(form)
 
         messages_sent = [m.message for m in messages.get_messages(request)]
-        self.assertEqual(messages_sent, ["Information successfully updated"])
+        assert messages_sent == ["Information successfully updated"]
 
 
 class TestUserRedirectView:
@@ -80,7 +80,7 @@ class TestUserRedirectView:
 
         view.request = request
 
-        self.assertEqual(view.get_redirect_url(), f"/users/{user.username}/")
+        assert view.get_redirect_url() == f"/users/{user.username}/"
 
 
 class TestUserDetailView:
@@ -93,7 +93,7 @@ class TestUserDetailView:
 
         response = user_detail_view(request, username=user.username)
 
-        self.assertEqual(response.status_code, 200)
+        assert response.status_code == 200
 
     def test_not_authenticated(self, user: User, rf: RequestFactory):
         """Ensure an unauthenticated user gets redirected to login."""
@@ -103,5 +103,5 @@ class TestUserDetailView:
         response = user_detail_view(request, username=user.username)
         login_url = reverse(settings.LOGIN_URL)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, f"{login_url}?next=/fake-url/")
+        assert response.status_code == 302
+        assert response.url == f"{login_url}?next=/fake-url/"

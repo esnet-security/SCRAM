@@ -29,9 +29,9 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         else:
             is_admin = groups_overlap(claimed_groups, settings.SCRAM_ADMIN_GROUPS)
             if groups_overlap(claimed_groups, settings.SCRAM_READWRITE_GROUPS):
-                effective_groups += Group.objects.get(name="readwrite")
+                effective_groups.append(Group.objects.get(name="readwrite"))
             if groups_overlap(claimed_groups, settings.SCRAM_READONLY_GROUPS):
-                effective_groups += Group.objects.get(name="readonly")
+                effective_groups.append(Group.objects.get(name="readonly"))
 
         user.groups.set(effective_groups)
         user.is_staff = user.is_superuser = is_admin

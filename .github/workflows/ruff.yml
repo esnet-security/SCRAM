@@ -23,7 +23,7 @@ jobs:
         run: pip install ruff
 
       - name: Fail if we have any style errors
-        run: ruff check
+        run: ruff check --output-format=github
 
       - name: Fail if the code is not formatted correctly (like Black)
         run: ruff format --diff

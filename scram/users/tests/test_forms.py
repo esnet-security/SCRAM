@@ -29,7 +29,7 @@ class TestUserCreationForm:
             },
         )
 
-        self.assertFalse(form.is_valid())
-        self.assertEqual(len(form.errors), 1)
-        self.assertIn("username", form.errors)
-        self.assertEqual(form.errors["username"][0], _("This username has already been taken."))
+        assert not form.is_valid()
+        assert len(form.errors) == 1
+        assert "username" in form.errors
+        assert form.errors["username"][0] == _("This username has already been taken.")
