@@ -21,7 +21,7 @@ from django.core.asgi import get_asgi_application
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
 debug = os.environ.get("DEBUG")
 if debug:
-    logging.info(f"Django is set to use a debugger. Provided debug mode: {debug}")
+    logging.info("Django is set to use a debugger. Provided debug mode:", debug)
     if debug == "pycharm-pydevd":
         logging.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
 
@@ -39,7 +39,7 @@ if debug:
 
         logging.info("Debugger listening on port 56780.")
     else:
-        logging.warning(f"Invalid debug mode given: {debug}. Debugger not started")
+        logging.warning("Invalid debug mode given: %s.", "Debugger not started", extra=debug)
 
 # This allows easy placement of apps within the interior
 # scram directory.

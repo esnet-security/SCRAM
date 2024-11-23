@@ -26,7 +26,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num"),
         )
         if not elements:
-            logging.warning(f"No elements found for actiontype={self.actiontype}.")
+            logging.warning("No elements found for actiontype=%s.", extra=self.actiontype)
             return
 
         # Avoid lazy evaluation
@@ -40,7 +40,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, close_code):
         """Discard any remaining messages on disconnect."""
-        logging.info(f"Disconnect received: {close_code}")
+        logging.info("Disconnect received:", close_code)
         await self.channel_layer.group_discard(self.translator_group, self.channel_name)
 
     async def receive_json(self, content):

@@ -102,7 +102,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         try:
             expiration = parse_datetime(tmp_exp)  # noqa: F841
         except ValueError:
-            logging.info(f"Could not parse expiration DateTime string {tmp_exp!r}.")
+            logging.warning("Could not parse expiration DateTime string:", tmp_exp)
 
         # Make sure we put in an acceptable sized prefix
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
@@ -118,8 +118,8 @@ class EntryViewSet(viewsets.ModelViewSet):
             )
             authorized_client = Client.objects.filter(uuid=client_uuid).values("is_authorized")
             if not authorized_client or actiontype not in authorized_actiontypes:
-                logging.debug(f"Client {client_uuid} actiontypes: {authorized_actiontypes}")
-                logging.info(f"{client_uuid} is not allowed to add an entry to the {actiontype} list")
+                logging.debug("Client", client_uuid, "actiontypes:", authorized_actiontypes)
+                logging.info(client_uuid, "is not allowed to add an entry to the", actiontype, "list")
                 raise ActiontypeNotAllowed()
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied()
@@ -130,12 +130,12 @@ class EntryViewSet(viewsets.ModelViewSet):
             ignore_entries = []
             for ignore_entry in overlapping_ignore.values():
                 ignore_entries.append(str(ignore_entry["route"]))
-            logging.info(f"Cannot proceed adding {route}. The ignore list contains {ignore_entries}")
+            logging.info("Cannot proceed adding", route, " The ignore list contains", ignore_entries)
             raise IgnoredRoute
         else:
             elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
             if not elements:
-                logging.warning(f"No elements found for actiontype={actiontype}.")
+                logging.warning("No elements found for actiontype:", actiontype)
 
             for element in elements:
                 msg = element.websocketmessage
@@ -154,7 +154,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.who = who
             entry.is_active = True
             entry.comment = comment
-            logging.info(f"{entry}")
+            logging.info("Created entry:", entry)
             entry.save()
 
     @staticmethod

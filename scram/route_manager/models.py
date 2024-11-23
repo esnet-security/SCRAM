@@ -122,7 +122,7 @@ class Entry(models.Model):
             return
         else:
             # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-            logging.info(f"Deactivating {self.route}")
+            logging.info("Deactivating", self.route)
             self.is_active = False
             self.save()
 

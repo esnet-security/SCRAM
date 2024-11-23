@@ -50,8 +50,11 @@ select = [
     "EM",    # errmsg
     "F",     # pyflakes
     "FBT",   # boolean-trap
+    "G",     # logging-format
     "I",     # isort
+    "ICN",   # import-conventions
     "ISC",   # implicit-str-concat
+    "LOG",   # logging
     "N",     # pep8-naming
     "S",     # bandit
     "SIM",   # simplify

@@ -102,7 +102,7 @@ class GoBGP:
             comm_id = (asn << 16) + community
             communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
         else:
-            logging.info(f"LargeCommunity Used - ASN:{asn} Community: {community}")
+            logging.info("LargeCommunity Used - ASN:", asn, "Community:", community)
             global_admin = asn
             local_data1 = community
             # set to 0 because there's no use case for it, but we need a local_data2 for gobgp to read any of it
@@ -124,7 +124,7 @@ class GoBGP:
 
     def add_path(self, ip, event_data):
         """Announce a single route."""
-        logging.info(f"Blocking {ip}")
+        logging.info("Blocking", ip)
         try:
             path = self._build_path(ip, event_data)
 
@@ -133,7 +133,7 @@ class GoBGP:
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
-            logging.warning(f"ASN assertion failed with error: {e}")
+            logging.warning("ASN assertion failed with error:", e)
 
     def del_all_paths(self):
         """Remove all routes from being announced."""
@@ -143,7 +143,7 @@ class GoBGP:
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
-        logging.info(f"Unblocking {ip}")
+        logging.info("Unblocking", ip)
         try:
             path = self._build_path(ip, event_data)
             self.stub.DeletePath(
@@ -151,7 +151,7 @@ class GoBGP:
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
-            logging.warning(f"ASN assertion failed with error: {e}")
+            logging.warning("ASN assertion failed with error:", e)
 
     def get_prefixes(self, ip):
         """Retrieve the routes that match a prefix and are announced."""
