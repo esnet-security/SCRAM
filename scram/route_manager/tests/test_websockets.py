@@ -26,15 +26,13 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
 
     Returns a list of (communicator, should_match bool) pairs.
     """
-    assert len(actiontypes) == len(should_match)
-
     router = URLRouter(websocket_urlpatterns)
     communicators = [
         WebsocketCommunicator(router, f"/ws/route_manager/translator_{actiontype}/") for actiontype in actiontypes
     ]
-    response = zip(communicators, should_match)
+    response = zip(communicators, should_match, strict=True)
 
-    for communicator, should_match in response:
+    for communicator, _ in response:
         connected, _ = await communicator.connect()
         assert connected
 
@@ -42,7 +40,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
         yield response
 
     finally:
-        for communicator, should_match in response:
+        for communicator, _ in response:
             await communicator.disconnect()
 
 
