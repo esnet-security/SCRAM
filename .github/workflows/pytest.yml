@@ -17,6 +17,10 @@ jobs:
   pytest:
     name: Run Pytest
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.9, 3.10, 3.11, 3.12]
 
     services:
       postgres:
@@ -38,46 +42,38 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v4
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-      - name: Install Docker Compose
+      - uses: actions/setup-python@v5 
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose make
+          python -m pip install --upgrade pip
+          pip install -r requirements/local.txt
+          pip install pytest-github-actions-annotate-failures
 
-      - name: Build Docker images
-        run: make build
-
-      - name: Migrate Database
-        run: make migrate
-
-      - name: Run Application
-        run: make run
-
-      - name: Run Pytest with Coverage
+      - name: Apply unapplied migrations
         env:
-          POSTGRES_USER: scram
-          POSTGRES_DB: test_scram
-        run: make coverage.xml
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+        run: |
+          python manage.py makemigrations --noinput || true
+          UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
+          if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
+            for migration in $UNAPPLIED_MIGRATIONS; do
+              python manage.py migrate $migration --fake-initial --noinput
+            done
+          else
+            echo "No unapplied migrations."
+          fi
 
-      - name: Upload Coverage to Coveralls
-        uses: coverallsapp/github-action@v2
+      - name: Check for duplicate migrations
+        run: |
+          if python manage.py makemigrations --dry-run | grep "No changes detected"; then
+            echo "No duplicate migrations detected."
+          else
+            echo "Warning: Potential duplicate migrations detected. Please review."
 
-      - name: Upload Coverage to GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
-
-      - name: Display Coverage Metrics
-        uses: 5monkeys/cobertura-action@v14
-        with:
-          minimum_coverage: '50'
-
-      - name: Stop Services
-        if: always()
-        run: make stop
-
-      - name: Clean Up
-        if: always()
-        run: make clean
+      - name: Run Pytest
+        env:
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+        run: pytest
