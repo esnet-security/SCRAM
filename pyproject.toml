@@ -42,6 +42,7 @@ select = [
     "B",     # bugbear
     "BLE",   # blind-except
     "C4",    # comprehensions
+    "C90",   # complexity
     "COM",   # commas
     "D",     # pydocstyle
     "DJ",    # django
@@ -80,6 +81,9 @@ ignore = [
     "SIM102", # Use a single `if` statement instead of nested `if` statements
     "SIM108", # Use ternary operator instead of `if`-`else`-block
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 7 # our current code adheres to this without too much effort
 
 [tool.ruff.lint.per-file-ignores]
 "**/{tests}/*" = [

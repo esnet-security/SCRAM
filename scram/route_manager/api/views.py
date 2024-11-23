@@ -86,6 +86,30 @@ class EntryViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return super().get_permissions()
 
+    def check_client_authorization(self, actiontype):
+        """Ensure that a given client is authorized to use a given actiontype."""
+        uuid = self.request.data.get("uuid")
+        if uuid:
+            authorized_actiontypes = Client.objects.filter(uuid=uuid).values_list(
+                "authorized_actiontypes__name",
+                flat=True,
+            )
+            authorized_client = Client.objects.filter(uuid=uuid).values("is_authorized")
+            if not authorized_client or actiontype not in authorized_actiontypes:
+                logging.debug("Client: %s, actiontypes: %s", uuid, authorized_actiontypes)
+                logging.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
+                raise ActiontypeNotAllowed
+        elif not self.request.user.has_perm("route_manager.can_add_entry"):
+            raise PermissionDenied
+
+    def check_ignore_list(self, route):
+        """Ensure that we're not trying to block something from the ignore list."""
+        overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
+        if overlapping_ignore.count():
+            ignore_entries = [str(ignore_entry["route"]) for ignore_entry in overlapping_ignore.values()]
+            logging.info("Cannot proceed adding %s. The ignore list contains %s.", route, ignore_entries)
+            raise IgnoredRoute
+
     def perform_create(self, serializer):
         """Create a new Entry, causing that route to receive the actiontype (i.e. block)."""
         actiontype = serializer.validated_data["actiontype"]
@@ -109,27 +133,9 @@ class EntryViewSet(viewsets.ModelViewSet):
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge
 
-        # Make sure this client is authorized to add this entry with this actiontype
-        if self.request.data.get("uuid"):
-            client_uuid = self.request.data["uuid"]
-            authorized_actiontypes = Client.objects.filter(uuid=client_uuid).values_list(
-                "authorized_actiontypes__name",
-                flat=True,
-            )
-            authorized_client = Client.objects.filter(uuid=client_uuid).values("is_authorized")
-            if not authorized_client or actiontype not in authorized_actiontypes:
-                logging.debug("Client: %s, actiontypes: %s", client_uuid, authorized_actiontypes)
-                logging.info("%s is not allowed to add an entry to the %s list.", client_uuid, actiontype)
-                raise ActiontypeNotAllowed
-        elif not self.request.user.has_perm("route_manager.can_add_entry"):
-            raise PermissionDenied
+        self.check_client_authorization(actiontype)
+        self.check_ignore_list(route)
 
-        # Don't process if we have the entry in the ignorelist
-        overlapping_ignore = IgnoreEntry.objects.filter(route__net_overlaps=route)
-        if overlapping_ignore.count():
-            ignore_entries = [str(ignore_entry["route"]) for ignore_entry in overlapping_ignore.values()]
-            logging.info("Cannot proceed adding %s. The ignore list contains %s.", route, ignore_entries)
-            raise IgnoredRoute
         elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
         if not elements:
             logging.warning("No elements found for actiontype: %s", actiontype)
