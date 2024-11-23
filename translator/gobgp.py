@@ -27,7 +27,7 @@ class GoBGP:
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
 
-    def _get_family_AFI(self, ip_version):
+    def _get_family_afi(self, ip_version):
         if ip_version == 6:
             return gobgp_pb2.Family.AFI_IP6
         else:
@@ -63,7 +63,7 @@ class GoBGP:
 
         # Set the next hop to the correct value depending on IP family
         next_hop = Any()
-        family_afi = self._get_family_AFI(ip_version)
+        family_afi = self._get_family_afi(ip_version)
         if ip_version == 6:
             next_hops = event_data.get("next_hop", DEFAULT_V6_NEXTHOP)
             next_hop.Pack(
@@ -156,7 +156,7 @@ class GoBGP:
     def get_prefixes(self, ip):
         """Retrieve the routes that match a prefix and are announced."""
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
-        family_afi = self._get_family_AFI(ip.ip.version)
+        family_afi = self._get_family_afi(ip.ip.version)
         result = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
                 table_type=gobgp_pb2.GLOBAL,
