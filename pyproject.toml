@@ -48,6 +48,7 @@ select = [
     "DTZ",   # datetimez
     "E",     # pycodestyle
     "EM",    # errmsg
+    "ERA",   # eradicate
     "F",     # pyflakes
     "FBT",   # boolean-trap
     "G",     # logging-format
@@ -57,12 +58,14 @@ select = [
     "LOG",   # logging
     "N",     # pep8-naming
     "PIE",   # pie
+    "PTH",   # use-pathlib
     "Q",     # quotes
     "RSE",   # raise
     "RET",   # return
     "S",     # bandit
     "SIM",   # simplify
     "SLF",   # self
+    "SLOT",  # slots
     "T20",   # print
     "UP",    # pyupgrade
 ]
