@@ -33,8 +33,10 @@ class GoBGP:
         else:
             return gobgp_pb2.Family.AFI_IP
 
-    def _build_path(self, ip, event_data={}):
+    def _build_path(self, ip, event_data=None):
         # Grab ASN and Community from our event_data, or use the defaults
+        if not event_data:
+            event_data = {}
         asn = event_data.get("asn", DEFAULT_ASN)
         community = event_data.get("community", DEFAULT_COMMUNITY)
         ip_version = ip.ip.version

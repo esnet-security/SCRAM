@@ -166,13 +166,13 @@ class EntryViewSet(viewsets.ModelViewSet):
         try:
             pk = int(arg)
             query = Q(pk=pk)
-        except ValueError:
+        except ValueError as exc:
             # Maybe a CIDR? We want the ValueError at this point, if not.
             cidr = ipaddress.ip_network(arg, strict=False)
 
             min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
             if cidr.prefixlen < min_prefix:
-                raise PrefixTooLarge()
+                raise PrefixTooLarge() from exc
 
             query = Q(route__route__net_overlaps=cidr)
 

@@ -2,6 +2,7 @@ import logging
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from functools import partial
 
 from scram.route_manager.models import Entry, WebSocketSequenceElement
 
@@ -28,7 +29,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
         for route in routes:
             for element in elements:
-                msg = await sync_to_async(lambda: element.websocketmessage)()
+                msg = await sync_to_async(partial(element.websocketmessage))
                 msg.msg_data[msg.msg_data_route_field] = str(route)
                 await self.send_json({"type": msg.msg_type, "message": msg.msg_data})
 

@@ -24,8 +24,10 @@ from .models import ActionType, Entry
 channel_layer = get_channel_layer()
 
 
-def home_page(request, prefilter=Entry.objects.all()):
+def home_page(request, prefilter=None):
     """Return the home page, autocreating a user if none exists."""
+    if not prefilter:
+        prefilter = Entry.objects.all()
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
@@ -116,7 +118,7 @@ def add_entry(request):
                 for error in v:
                     errors.append(f"'{k}' error: {str(error)}")
         else:
-            for k, v in res.data.items():
+            for v in res.data.values():
                 errors.append(f"error: {str(v)}")
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
     elif res.status_code == 403:
