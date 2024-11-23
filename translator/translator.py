@@ -28,7 +28,7 @@ if debug_mode:
         import subprocess
         import sys
 
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/requirements/local.txt"]) # noqa: S603 TODO: add this to the container build
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/requirements/local.txt"])  # noqa: S603 TODO: add this to the container build
 
         logging.info("Done installing dependencies for debuggers")
 
@@ -52,7 +52,7 @@ if debug_mode:
 
         import debugpy
 
-        debugpy.listen(("0.0.0.0", 56781)) # noqa S104 (doesn't like binding to all interfaces)
+        debugpy.listen(("0.0.0.0", 56781))  # noqa S104 (doesn't like binding to all interfaces)
 
         logging.info("Debugger listening on port 56781.")
     else:
