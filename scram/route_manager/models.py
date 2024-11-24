@@ -138,7 +138,7 @@ class Entry(models.Model):
         )
 
     def get_change_reason(self):
-        """Traverse come complex relationships to determine the most recent change reason.
+        """Traverse some complex relationships to determine the most recent change reason.
 
         Returns:
            str: The most recent change reason
