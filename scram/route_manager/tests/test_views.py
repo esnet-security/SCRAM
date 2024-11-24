@@ -41,7 +41,6 @@ class HomePageLogoutTest(TestCase):
         response = self.client.post(reverse(settings.LOGOUT_URL), follow=True)
         self.assertEqual(response.status_code, 200)
         response = self.client.get(reverse("route_manager:home"))
-        print(response.content)
 
         self.assertNotContains(response, b"An admin user was created for you.")
         self.assertNotContains(response, b'type="submit">Logout')
