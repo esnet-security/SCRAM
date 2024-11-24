@@ -1,5 +1,5 @@
 ---
-name: Run pytest
+name: Run pytest with unsupported Python versions
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ['3.13']
 
     services:
       postgres:
@@ -83,4 +83,5 @@ jobs:
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
           REDIS_HOST: "localhost"
-        run: pytest
+        run: |
+          pytest || echo "::warning:: Failed on future Python version ${{ matrix.python-version }}."
