@@ -1,5 +1,6 @@
 """Define simple tests for the template-based Views."""
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import resolve, reverse
 
@@ -29,3 +30,30 @@ class HomePageFirstVisitTest(TestCase):
     def test_first_homepage_view_is_logged_in(self):
         """The first time we view the home page, we're logged in."""
         self.assertContains(self.response, b'type="submit">Logout')
+
+
+class HomePageLogoutTest(TestCase):
+    """Verify that once logged out, we can't view anything."""
+
+    def test_homepage_logout_links_missing(self):
+        """After logout, we can't see anything."""
+        response = self.client.get(reverse("route_manager:home"))
+        response = self.client.post(reverse(settings.LOGOUT_URL), follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("route_manager:home"))
+        print(response.content)
+
+        self.assertNotContains(response, b"An admin user was created for you.")
+        self.assertNotContains(response, b'type="submit">Logout')
+        self.assertNotContains(response, b">Admin</a>")
+
+
+class NotFoundTest(TestCase):
+    """Verify that our custom 404 page is being served up."""
+
+    def test_404(self):
+        """Grab a bad URL."""
+        response = self.client.get("/foobarbaz")
+        self.assertContains(
+            response, b'<div class="mb-4 lead">The page you are looking for was not found.</div>', status_code=404
+        )
