@@ -59,7 +59,7 @@ jobs:
 
       - name: Apply unapplied migrations
         env:
-          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
           python manage.py makemigrations --noinput || true
           UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
