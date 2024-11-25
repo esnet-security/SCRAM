@@ -20,13 +20,11 @@ RUN apt-get update \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && rm -rf /var/lib/apt/lists/*
 
-# Requirements are installed here to ensure they will be cached.
-COPY ./requirements /requirements
-# All imports needed for autodoc.
-RUN pip install -r /requirements/local.txt -r /requirements/production.txt
 
-COPY ./compose/local/docs/start /start-docs
-RUN sed -i 's/\r$//g' /start-docs
-RUN chmod +x /start-docs
+# Only re-run the pip install if these files have changed
+COPY requirements/base.txt requirements/local.txt requirements/production.txt /app/requirements/
+RUN pip install -r /app/requirements/local.txt -r /app/requirements/production.txt
 
-WORKDIR /docs
+COPY . /app/
+
+WORKDIR /app
