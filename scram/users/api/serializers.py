@@ -7,10 +7,10 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map to the User model."""
 
     class Meta:
-        """Maps to the User model, and specifies the fields exposed by the API."""
+        """Specify the fields exposed by the API."""
 
         model = User
         fields = ["username", "name", "url"]
