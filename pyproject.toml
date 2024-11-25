@@ -6,6 +6,9 @@ python_files = [
     "tests.py",
     "test_*.py",
 ]
+filterwarnings = [
+    "ignore::Warning:migrations",
+]
 
 # ==== Coverage ====
 [tool.coverage.run]
