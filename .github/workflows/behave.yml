@@ -17,22 +17,10 @@ jobs:
   behave:
     name: Run Behave
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: scram
-          POSTGRES_PASSWORD: ''
-          POSTGRES_DB: test_scram
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U scram"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.11']
 
     steps:
       - name: Check out the code
@@ -40,6 +28,7 @@ jobs:
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
+
       - name: Install Docker Compose
         run: |
           sudo apt-get update
@@ -50,6 +39,8 @@ jobs:
 
       - name: Build Docker images
         run: make build
+        env:
+          PYTHON_IMAGE_VER: "${{ matrix.python-version }}"
 
       - name: Migrate Database
         run: make migrate
@@ -83,7 +74,6 @@ jobs:
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: '50'
-
 
       - name: Check Docker state (post-test)
         if: always()
