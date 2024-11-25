@@ -37,7 +37,8 @@ behave-translator: compose.override.yml
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
 build: compose.override.yml
-	@docker compose up -d --no-deps --build $(CONTAINER)
+	@docker compose build --build-arg PYTHON_IMAGE_VER=${PYTHON_IMAGE_VER} --build-arg POSTGRES_IMAGE_VER=${POSTGRES_IMAGE_VER} $(CONTAINER)
+	@docker compose up -d --no-deps $(CONTAINER)
 	@docker compose restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
