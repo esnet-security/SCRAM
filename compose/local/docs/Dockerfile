@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM python:${PYTHON_IMAGE_VER:-3.12}-slim-bookworm
 
 ENV PIP_ROOT_USER_ACTION ignore
 ENV PYTHONUNBUFFERED 1
