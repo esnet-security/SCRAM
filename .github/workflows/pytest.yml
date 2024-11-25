@@ -65,6 +65,8 @@ jobs:
           python manage.py migrate --noinput
 
       - name: Check for duplicate migrations
+        env:
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
           if python manage.py makemigrations --dry-run | grep "No changes detected"; then
             echo "No duplicate migrations detected."
