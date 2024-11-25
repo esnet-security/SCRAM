@@ -1,3 +1,5 @@
+"""Use pytest to unit test the API."""
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -7,7 +9,10 @@ from scram.route_manager.models import Client
 
 
 class TestAddRemoveIP(APITestCase):
+    """Ensure that we can block IPs, and that duplicate blocks don't generate an error."""
+
     def setUp(self):
+        """Set up the environment for our tests."""
         self.url = reverse("api:v1:entry-list")
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
@@ -19,6 +24,7 @@ class TestAddRemoveIP(APITestCase):
         self.authorized_client.authorized_actiontypes.set([1])
 
     def test_block_ipv4(self):
+        """Block a v4 IP."""
         response = self.client.post(
             self.url,
             {
@@ -31,6 +37,7 @@ class TestAddRemoveIP(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv4(self):
+        """Block an existing v4 IP and ensure we don't get an error."""
         self.client.post(
             self.url,
             {
@@ -52,6 +59,7 @@ class TestAddRemoveIP(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_ipv6(self):
+        """Block a v6 IP."""
         response = self.client.post(
             self.url,
             {
@@ -64,6 +72,7 @@ class TestAddRemoveIP(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_block_duplicate_ipv6(self):
+        """Block an existing v6 IP and ensure we don't get an error."""
         self.client.post(
             self.url,
             {
@@ -86,11 +95,15 @@ class TestAddRemoveIP(APITestCase):
 
 
 class TestUnauthenticatedAccess(APITestCase):
+    """Ensure that an unathenticated client can't do anything."""
+
     def setUp(self):
+        """Define some helper variables."""
         self.entry_url = reverse("api:v1:entry-list")
         self.ignore_url = reverse("api:v1:ignoreentry-list")
 
     def test_unauthenticated_users_have_no_create_access(self):
+        """Ensure an unauthenticated client can't add an Entry."""
         response = self.client.post(
             self.entry_url,
             {
@@ -104,9 +117,11 @@ class TestUnauthenticatedAccess(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
+        """Ensure an unauthenticated client can't add an IgnoreEntry."""
         response = self.client.post(self.ignore_url, {"route": "192.0.2.4"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_list_access(self):
+        """Ensure an unauthenticated client can't list Entries."""
         response = self.client.get(self.entry_url, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

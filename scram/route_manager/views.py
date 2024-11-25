@@ -1,3 +1,5 @@
+"""Define the Views that will handle the HTTP requests."""
+
 import ipaddress
 import json
 
@@ -22,7 +24,10 @@ from .models import ActionType, Entry
 channel_layer = get_channel_layer()
 
 
-def home_page(request, prefilter=Entry.objects.all()):
+def home_page(request, prefilter=None):
+    """Return the home page, autocreating a user if none exists."""
+    if not prefilter:
+        prefilter = Entry.objects.all()
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
@@ -60,6 +65,7 @@ def home_page(request, prefilter=Entry.objects.all()):
 
 
 def search_entries(request):
+    """Wrap the home page with a specified CIDR to restrict Entries to."""
     # Using ipaddress because we needed to turn off strict mode
     # (which netfields uses by default with seemingly no toggle)
     # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
@@ -77,11 +83,14 @@ delete_entry_api = EntryViewSet.as_view({"post": "destroy"})
 @require_POST
 @permission_required(["route_manager.view_entry", "route_manager.delete_entry"])
 def delete_entry(request, pk):
+    """Wrap delete via the API and redirect to the home page."""
     delete_entry_api(request, pk)
     return redirect("route_manager:home")
 
 
 class EntryDetailView(PermissionRequiredMixin, DetailView):
+    """Define a view for the API to use."""
+
     permission_required = ["route_manager.view_entry"]
     model = Entry
     template_name = "route_manager/entry_detail.html"
@@ -92,35 +101,35 @@ add_entry_api = EntryViewSet.as_view({"post": "create"})
 
 @permission_required(["route_manager.view_entry", "route_manager.add_entry"])
 def add_entry(request):
+    """Send a WebSocket message when adding a new entry."""
     with transaction.atomic():
         res = add_entry_api(request)
 
-    if res.status_code == 201:
+    if res.status_code == 201:  # noqa: PLR2004
         messages.add_message(
             request,
             messages.SUCCESS,
             "Entry successfully added",
         )
-    elif res.status_code == 400:
+    elif res.status_code == 400:  # noqa: PLR2004
         errors = []
         if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
             for k, v in res.data.items():
-                for error in v:
-                    errors.append(f"'{k}' error: {str(error)}")
+                errors.extend(f"'{k}' error: {error!s}" for error in v)
         else:
-            for k, v in res.data.items():
-                errors.append(f"error: {str(v)}")
+            errors.extend(f"error: {v!s}" for v in res.data.values())
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
-    elif res.status_code == 403:
+    elif res.status_code == 403:  # noqa: PLR2004
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     with transaction.atomic():
         home = home_page(request)
-    return home
+    return home  # noqa RET504
 
 
 def process_expired(request):
+    """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
     current_time = timezone.now()
     with transaction.atomic():
         entries_start = Entry.objects.filter(is_active=True).count()
@@ -133,17 +142,21 @@ def process_expired(request):
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
-            }
+            },
         ),
         content_type="application/json",
     )
 
 
 class EntryListView(ListView):
+    """Define a view for the API to use."""
+
     model = Entry
     template_name = "route_manager/entry_list.html"
 
-    def get_context_data(self, **kwargs):
+    @staticmethod
+    def get_context_data(**kwargs):
+        """Group entries by action type."""
         context = {"entries": {}}
         for at in ActionType.objects.all():
             queryset = Entry.objects.filter(actiontype=at).order_by("-pk")

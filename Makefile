@@ -85,6 +85,11 @@ down: compose.override.yml
 exec: compose.override.yml
 	@docker compose exec $(CONTAINER) $(COMMAND)
 
+## gobgp-neighbor: shows the gobgp neighbor information (append neighbor IP for specific information)
+.Phony: gobgp-neighbor
+gobgp-neighbor: compose.override.yml
+	@docker compose exec gobgp gobgp neighbor $(NEIGHBOR)
+
 # This automatically builds the help target based on commands prepended with a double hashbang
 ## help: print this help output
 .Phony: help

@@ -1,0 +1,86 @@
+---
+name: Run pytest
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.12']
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: test_scram
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scram"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:5.0
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/local.txt
+          pip install pytest-github-actions-annotate-failures
+
+      - name: Apply unapplied migrations
+        env:
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+        run: |
+          python manage.py makemigrations --noinput || true
+          UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
+          if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
+            for migration in $UNAPPLIED_MIGRATIONS; do
+              python manage.py migrate $migration --fake-initial --noinput
+            done
+          else
+            echo "No unapplied migrations."
+          fi
+
+      - name: Check for duplicate migrations
+        run: |
+          if python manage.py makemigrations --dry-run | grep "No changes detected"; then
+            echo "No duplicate migrations detected."
+          else
+            echo "Warning: Potential duplicate migrations detected. Please review."
+          fi
+
+      - name: Run Pytest
+        env:
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          REDIS_HOST: "localhost"
+        run: pytest
