@@ -138,3 +138,13 @@ tail-log: compose.override.yml
 .Phony: type-check
 type-check: compose.override.yml
 	@docker compose run --rm django mypy scram
+
+## docs-build: build the documentation
+.Phony: docs-build
+docs-build:
+	@docker compose run --rm docs mkdocs build
+
+## docs-serve: build and run a server with the documentation
+.Phony: docs-serve
+docs-serve:
+	@docker compose run --rm docs mkdocs serve -a 0.0.0.0:8888
