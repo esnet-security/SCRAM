@@ -61,7 +61,7 @@ jobs:
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
-          python manage.py makemigrations --noinput || true
+          python manage.py makemigrations --noinput
           UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
           if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
             for migration in $UNAPPLIED_MIGRATIONS; do
