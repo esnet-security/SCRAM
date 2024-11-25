@@ -7,10 +7,10 @@ from channels.testing import WebsocketCommunicator
 from config.asgi import ws_application
 
 
-async def query_translator(route, actiontype, is_announced=True):
+async def query_translator(route, actiontype, is_announced):
     """Ensure the specified route is currently either blocked or unblocked."""
     communicator = WebsocketCommunicator(ws_application, f"/ws/route_manager/webui_{actiontype}/")
-    connected, subprotocol = await communicator.connect()
+    connected, _ = await communicator.connect()
     assert connected
 
     await communicator.send_json_to({"type": "wui_check_req", "message": {"route": route}})
@@ -23,13 +23,13 @@ async def query_translator(route, actiontype, is_announced=True):
 
 @then("{route} is announced by {actiontype} translators")
 @async_run_until_complete
-async def step_impl(context, route, actiontype):
+async def check_blocked(context, route, actiontype):
     """Ensure the specified route is currently blocked."""
-    await query_translator(route, actiontype)
+    await query_translator(route, actiontype, is_announced=True)
 
 
 @then("{route} is not announced by {actiontype} translators")
 @async_run_until_complete
-async def step_impl(context, route, actiontype):
+async def check_unblocked(context, route, actiontype):
     """Ensure the specified route is currently unblocked."""
     await query_translator(route, actiontype, is_announced=False)

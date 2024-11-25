@@ -4,7 +4,7 @@ Security Catch and Release Automation Manager
 
 [<img src="https://coveralls.io/repos/github/esnet-security/SCRAM/badge.svg">](<https://coveralls.io/github/esnet-security/SCRAM>)
 [<img src="https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter">](<https://github.com/pydanny/cookiecutter-django/>)
-[<img src="https://img.shields.io/badge/code%20style-black-000000.svg">](<https://github.com/ambv/black>)
+[<img src="https://img.shields.io/badge/code%20style-ruff-41B5BE.svg">](<https://docs.astral.sh/ruff/>)
 
 ## Overview
 

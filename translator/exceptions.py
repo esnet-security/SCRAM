@@ -1,4 +1,4 @@
-"""This module holds all of the exceptions we want to raise in our translators."""
+"""Define all of the exceptions we want to raise in our translators."""
 
 
 class ASNError(TypeError):

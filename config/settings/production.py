@@ -28,7 +28,7 @@ CACHES = {
             # https://github.com/jazzband/django-redis#memcached-exceptions-behavior
             "IGNORE_EXCEPTIONS": True,
         },
-    }
+    },
 }
 
 # SECURITY
@@ -68,7 +68,7 @@ TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
             "django.template.loaders.filesystem.Loader",
             "django.template.loaders.app_directories.Loader",
         ],
-    )
+    ),
 ]
 
 # EMAIL
@@ -108,7 +108,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
     "formatters": {
-        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(process)d %(thread)d %(message)s"}
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"},
     },
     "handlers": {
         "mail_admins": {
