@@ -20,7 +20,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.11', '3.12']
 
     services:
       postgres:
@@ -28,7 +28,7 @@ jobs:
         env:
           POSTGRES_USER: scram
           POSTGRES_PASSWORD: ''
-          POSTGRES_DB: test_scram
+          POSTGRES_DB: test_scram_${{ matrix.python-version }}
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
@@ -81,6 +81,6 @@ jobs:
 
       - name: Run Pytest
         env:
-          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
           REDIS_HOST: "localhost"
         run: pytest
