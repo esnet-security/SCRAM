@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pytest:
+  pytest_next_python:
     name: Run Pytest
     runs-on: ubuntu-latest
     strategy:

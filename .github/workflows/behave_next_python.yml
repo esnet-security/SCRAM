@@ -1,0 +1,75 @@
+---
+name: Run behave
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  behave_next_python:
+    name: Run Behave
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.13']
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose make
+
+      - name: Check Docker state (pre-build)
+        run: docker ps
+
+      - name: Build Docker images
+        run: make build
+        env:
+          PYTHON_IMAGE_VER: "${{ matrix.python-version }}"
+
+      - name: Migrate Database
+        run: make migrate
+
+      - name: Run Application
+        run: make run
+
+      - name: Check Docker state (pre-test)
+        run: docker ps
+
+      - name: Run pytest + behave with Coverage
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_DB: test_scram
+        run: |
+          make coverage.xml || echo "::warning:: Failed on future Python version ${{ matrix.python-version }}."
+
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
+
+      - name: Check Docker state (post-test)
+        if: always()
+        run: docker ps
+
+      - name: Stop Services
+        if: always()
+        run: make stop
+
+      - name: Clean Up
+        if: always()
+        run: make clean
