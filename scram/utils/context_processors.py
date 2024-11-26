@@ -4,7 +4,11 @@ from django.conf import settings
 
 
 def settings_context(_request):
-    """Define settings available by default to the templates context."""
+    """Define settings available by default to the templates context.
+
+    Returns:
+         dict: Whether or not we have DEBUG on
+    """
     # Note: we intentionally do NOT expose the entire settings
     # to prevent accidental leaking of sensitive information
     return {"DEBUG": settings.DEBUG}

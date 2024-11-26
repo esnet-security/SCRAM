@@ -18,14 +18,14 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUserUpdateView:
-    """
-    Define tests related to the Update View.
+    """Define tests related to the Update View.
 
-    TODO:
+    Todo:
         extracting view initialization code as class-scoped fixture
         would be great if only pytest-django supported non-function-scoped
         fixture db access -- this is a work-in-progress for now:
         https://github.com/pytest-dev/pytest-django/pull/258
+
     """
 
     def test_get_success_url(self, user: User, rf: RequestFactory):

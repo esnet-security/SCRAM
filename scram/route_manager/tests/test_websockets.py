@@ -26,15 +26,13 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
 
     Returns a list of (communicator, should_match bool) pairs.
     """
-    assert len(actiontypes) == len(should_match)
-
     router = URLRouter(websocket_urlpatterns)
     communicators = [
         WebsocketCommunicator(router, f"/ws/route_manager/translator_{actiontype}/") for actiontype in actiontypes
     ]
-    response = zip(communicators, should_match)
+    response = zip(communicators, should_match, strict=True)
 
-    for communicator, should_match in response:
+    for communicator, _ in response:
         connected, _ = await communicator.connect()
         assert connected
 
@@ -42,7 +40,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
         yield response
 
     finally:
-        for communicator, should_match in response:
+        for communicator, _ in response:
             await communicator.disconnect()
 
 
@@ -71,7 +69,9 @@ class TestTranslatorBaseCase(TestCase):
 
         wsm, _ = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
         _, _ = WebSocketSequenceElement.objects.get_or_create(
-            websocketmessage=wsm, verb="A", action_type=self.actiontype
+            websocketmessage=wsm,
+            verb="A",
+            action_type=self.actiontype,
         )
 
         # Set some defaults; some child classes override this
@@ -80,9 +80,9 @@ class TestTranslatorBaseCase(TestCase):
         self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
 
         # Now we run any local setup actions by the child classes
-        self.local_setUp()
+        self.local_setup()
 
-    def local_setUp(self):
+    def local_setup(self):
         """Allow child classes to override this if desired."""
         return
 
@@ -151,9 +151,9 @@ class TestTranslatorBaseCase(TestCase):
 
 
 class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
-    """Two translators in the same group, two in another group, single IP, ensure we get only the messages we expect."""
+    """Two translators in one group, two in another group, single IP, ensure we get only the messages we expect."""
 
-    def local_setUp(self):
+    def local_setup(self):
         """Define the actions and what we expect."""
         self.actiontypes = ["block", "block", "noop", "noop"]
         self.should_match = [True, True, False, False]
@@ -162,15 +162,21 @@ class TranslatorDontCrossTheStreamsTestCase(TestTranslatorBaseCase):
 class TranslatorSequenceTestCase(TestTranslatorBaseCase):
     """Test a sequence of WebSocket messages."""
 
-    def local_setUp(self):
+    def local_setup(self):
         """Define the messages we want to send."""
         wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
         _ = WebSocketSequenceElement.objects.create(
-            websocketmessage=wsm2, verb="A", action_type=self.actiontype, order_num=20
+            websocketmessage=wsm2,
+            verb="A",
+            action_type=self.actiontype,
+            order_num=20,
         )
         wsm3 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="bar")
         _ = WebSocketSequenceElement.objects.create(
-            websocketmessage=wsm3, verb="A", action_type=self.actiontype, order_num=2
+            websocketmessage=wsm3,
+            verb="A",
+            action_type=self.actiontype,
+            order_num=2,
         )
 
         self.generate_add_msgs = [
@@ -183,7 +189,7 @@ class TranslatorSequenceTestCase(TestTranslatorBaseCase):
 class TranslatorParametersTestCase(TestTranslatorBaseCase):
     """Additional parameters in the JSONField."""
 
-    def local_setUp(self):
+    def local_setup(self):
         """Define the message we want to send."""
         wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
         wsm.msg_data = {"asn": 65550, "community": 100, "route": "Ensure this gets overwritten."}

@@ -236,7 +236,7 @@ class ESnetAuthBackendTest(TestCase):
     def test_disabled(self):
         """Pass all the groups, user should be disabled as it takes precedence."""
         claims = dict(self.claims)
-        claims["groups"] = [settings.SCRAM_GROUPS]
+        claims["groups"] = settings.SCRAM_GROUPS
         user = ESnetAuthBackend().create_user(claims)
 
         self.assertFalse(user.is_staff)

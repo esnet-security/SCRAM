@@ -1,12 +1,12 @@
-"""
-Base settings to build other settings files upon.
-"""
+"""Base settings to build other settings files upon."""
 
 import logging
 import os
 from pathlib import Path
 
 import environ
+
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # scram/
@@ -188,7 +188,7 @@ TEMPLATES = [
                 "scram.route_manager.context_processors.login_logout",
             ],
         },
-    }
+    },
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#form-renderer
@@ -238,14 +238,14 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(process)d %(thread)d %(message)s"}
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"},
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
-        }
+        },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
@@ -256,7 +256,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],
+            "hosts": [(os.environ.get("REDIS_HOST", "redis"), 6379)],
         },
     },
 }
@@ -264,6 +264,8 @@ CHANNEL_LAYERS = {
 # django-rest-framework
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
+# Swagger related tooling
+INSTALLED_APPS += ["drf_spectacular"]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
@@ -271,6 +273,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
@@ -307,13 +310,13 @@ OIDC_OP_USER_ENDPOINT = os.environ.get(
 )
 OIDC_RP_SIGN_ALGO = "RS256"
 
-logging.info(f"Using AUTH METHOD = {AUTH_METHOD}")
+logger.info("Using AUTH METHOD=%s", AUTH_METHOD)
 if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC middleware
-    MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]  # noqa F405
+    MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]
 
     # Extend middleware to add OIDC auth backend
-    AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]  # noqa F405
+    AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "oidc_authentication_init"
@@ -331,7 +334,8 @@ elif AUTH_METHOD == "local":
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "local_auth:logout"
 else:
-    raise ValueError(f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'")
+    msg = f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'"
+    raise ValueError(msg)
 
 
 # Should we create an admin user for you

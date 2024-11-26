@@ -10,6 +10,8 @@ from django.urls import reverse
 from netfields import CidrAddressField
 from simple_history.models import HistoricalRecords
 
+logger = logging.getLogger(__name__)
+
 
 class Route(models.Model):
     """Define a route as a CIDR route and a UUID."""
@@ -17,13 +19,14 @@ class Route(models.Model):
     route = CidrAddressField(unique=True)
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
-    def get_absolute_url(self):
-        """Ensure we use UUID on the API side instead."""
-        return reverse("")
-
     def __str__(self):
-        """Don't display the UUID, only the route."""
+        """Don't display the UUID, only the route."""  # noqa: DOC201
         return str(self.route)
+
+    @staticmethod
+    def get_absolute_url():
+        """Ensure we use UUID on the API side instead."""  # noqa: DOC201
+        return reverse("")
 
 
 class ActionType(models.Model):
@@ -34,7 +37,7 @@ class ActionType(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        """Display clearly whether the action is currently available."""
+        """Display clearly whether the action is currently available."""  # noqa: DOC201
         if not self.available:
             return f"{self.name} (Inactive)"
         return self.name
@@ -52,7 +55,7 @@ class WebSocketMessage(models.Model):
     )
 
     def __str__(self):
-        """Display clearly what the fields are used for."""
+        """Display clearly what the fields are used for."""  # noqa: DOC201
         return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
 
 
@@ -62,7 +65,7 @@ class WebSocketSequenceElement(models.Model):
     websocketmessage = models.ForeignKey("WebSocketMessage", on_delete=models.CASCADE)
     order_num = models.SmallIntegerField(
         "Sequences are sent from the smallest order_num to the highest. "
-        + "Messages with the same order_num could be sent in any order",
+        "Messages with the same order_num could be sent in any order",
         default=0,
     )
 
@@ -76,10 +79,10 @@ class WebSocketSequenceElement(models.Model):
     action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
 
     def __str__(self):
-        """Summarize the fields into something short and readable."""
+        """Summarize the fields into something short and readable."""  # noqa: DOC201
         return (
             f"{self.websocketmessage} as order={self.order_num} for "
-            + f"{self.verb} actions on actiontype={self.action_type}"
+            f"{self.verb} actions on actiontype={self.action_type}"
         )
 
 
@@ -88,7 +91,7 @@ class Entry(models.Model):
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
-    comment = models.TextField(blank=True, null=True)
+    comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
     # TODO: fix name if this works
     history = HistoricalRecords()
@@ -98,29 +101,9 @@ class Entry(models.Model):
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
         max_length=200,
-        null=True,
         blank=True,
+        default="",
     )
-
-    def delete(self, *args, **kwargs):
-        """Set inactive instead of deleting, as we want to ensure a history of entries."""
-        if not self.is_active:
-            # We've already expired this route, don't send another message
-            return
-        else:
-            # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-            logging.info(f"Deactivating {self.route}")
-            self.is_active = False
-            self.save()
-
-            # Unblock it
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{self.actiontype}",
-                {
-                    "type": "translator_remove",
-                    "message": {"route": str(self.route)},
-                },
-            )
 
     class Meta:
         """Ensure that multiple routes can be added as long as they have different action types."""
@@ -129,14 +112,37 @@ class Entry(models.Model):
         verbose_name_plural = "Entries"
 
     def __str__(self):
-        """Summarize the most important fields to something easily readable."""
+        """Summarize the most important fields to something easily readable."""  # noqa: DOC201
         desc = f"{self.route} ({self.actiontype})"
         if not self.is_active:
             desc += " (inactive)"
         return desc
 
+    def delete(self, *args, **kwargs):
+        """Set inactive instead of deleting, as we want to ensure a history of entries."""
+        if not self.is_active:
+            # We've already expired this route, don't send another message
+            return
+        # We don't actually delete records; we set them to inactive and then tell the translator to remove them
+        logger.info("Deactivating %s", self.route)
+        self.is_active = False
+        self.save()
+
+        # Unblock it
+        async_to_sync(channel_layer.group_send)(
+            f"translator_{self.actiontype}",
+            {
+                "type": "translator_remove",
+                "message": {"route": str(self.route)},
+            },
+        )
+
     def get_change_reason(self):
-        """Traverse come complex relationships to determine the most recent change reason."""
+        """Traverse some complex relationships to determine the most recent change reason.
+
+        Returns:
+           str: The most recent change reason
+        """
         hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
         return hist_mgr.order_by("-history_date").first().history_change_reason
 
@@ -154,7 +160,7 @@ class IgnoreEntry(models.Model):
         verbose_name_plural = "Ignored Entries"
 
     def __str__(self):
-        """Only display the route."""
+        """Only display the route."""  # noqa: DOC201
         return str(self.route)
 
 
@@ -168,7 +174,7 @@ class Client(models.Model):
     authorized_actiontypes = models.ManyToManyField(ActionType)
 
     def __str__(self):
-        """Only display the hostname."""
+        """Only display the hostname."""  # noqa: DOC201
         return str(self.hostname)
 
 

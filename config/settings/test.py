@@ -1,6 +1,4 @@
-"""
-With these settings, tests run faster.
-"""
+"""With these settings, tests run faster."""
 
 from .base import *  # noqa
 from .base import env
@@ -29,8 +27,9 @@ TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
             "django.template.loaders.filesystem.Loader",
             "django.template.loaders.app_directories.Loader",
         ],
-    )
+    ),
 ]
+TEMPLATES[0]["OPTIONS"]["debug"] = True  # noqa F405
 
 # EMAIL
 # ------------------------------------------------------------------------------

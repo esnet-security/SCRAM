@@ -2,6 +2,7 @@
 
 import logging
 
+from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
@@ -12,8 +13,13 @@ from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 logger = logging.getLogger(__name__)
 
 
+@extend_schema_field(field={"type": "string", "format": "cidr"})
+class CustomCidrAddressField(rest_framework.CidrAddressField):
+    """Define a wrapper field so swagger can properly handle the inherited field."""
+
+
 class ActionTypeSerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the serializer to the model via Meta."""
 
     class Meta:
         """Maps to the ActionType model, and specifies the fields exposed by the API."""
@@ -25,7 +31,7 @@ class ActionTypeSerializer(serializers.ModelSerializer):
 class RouteSerializer(serializers.ModelSerializer):
     """Exposes route as a CIDR field."""
 
-    route = rest_framework.CidrAddressField()
+    route = CustomCidrAddressField()
 
     class Meta:
         """Maps to the Route model, and specifies the fields exposed by the API."""
@@ -37,7 +43,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the serializer to the model via Meta."""
 
     class Meta:
         """Maps to the Client model, and specifies the fields exposed by the API."""
@@ -50,9 +56,11 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     """Due to the use of ForeignKeys, this follows some relationships to make sense via the API."""
 
     url = serializers.HyperlinkedIdentityField(
-        view_name="api:v1:entry-detail", lookup_url_kwarg="pk", lookup_field="route"
+        view_name="api:v1:entry-detail",
+        lookup_url_kwarg="pk",
+        lookup_field="route",
     )
-    route = rest_framework.CidrAddressField()
+    route = CustomCidrAddressField()
     actiontype = serializers.CharField(default="block")
     if CurrentUserDefault():
         # This is set if we are calling this serializer from WUI
@@ -67,28 +75,36 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         model = Entry
         fields = ["route", "actiontype", "url", "comment", "who"]
 
-    def get_comment(self, obj):
-        """Provide a nicer name for change reason."""
+    @staticmethod
+    def get_comment(obj):
+        """Provide a nicer name for change reason.
+
+        Returns:
+            string: The change reason that modified the Entry.
+        """
         return obj.get_change_reason()
 
-    def create(self, validated_data):
-        """Implement custom logic and validates creating a new route."""
+    @staticmethod
+    def create(validated_data):
+        """Implement custom logic and validates creating a new route."""  # noqa: DOC201
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         comment = validated_data.pop("comment")
 
-        route_instance, created = Route.objects.get_or_create(route=valid_route)
+        route_instance, _ = Route.objects.get_or_create(route=valid_route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, created = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
+        entry_instance, _ = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
 
-        logger.debug(f"{comment}")
+        logger.debug("Created entry with comment: %s", comment)
         update_change_reason(entry_instance, comment)
 
         return entry_instance
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
-    """This serializer defines no new fields."""
+    """Map the route to the right field type."""
+
+    route = CustomCidrAddressField()
 
     class Meta:
         """Maps to the IgnoreEntry model, and specifies the fields exposed by the API."""

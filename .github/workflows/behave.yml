@@ -1,0 +1,83 @@
+---
+name: Run behave
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  behave:
+    name: Run Behave
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_PASSWORD: ''
+          POSTGRES_DB: test_scram
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scram"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose make
+
+      - name: Build Docker images
+        run: make build
+
+      - name: Migrate Database
+        run: make migrate
+
+      - name: Run Application
+        run: make run
+
+      - name: Run pytest + behave with Coverage
+        env:
+          POSTGRES_USER: scram
+          POSTGRES_DB: test_scram
+        run: make coverage.xml
+
+      - name: Upload Coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+
+      - name: Upload Coverage to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Display Coverage Metrics
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          minimum_coverage: '50'
+
+      - name: Stop Services
+        if: always()
+        run: make stop
+
+      - name: Clean Up
+        if: always()
+        run: make clean
