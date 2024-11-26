@@ -43,10 +43,12 @@ jobs:
           PYTHON_IMAGE_VER: "${{ matrix.python-version }}"
 
       - name: Migrate Database
-        run: make migrate
+        run: |
+          make migrate || echo "::warning:: migrate failed on future Python version ${{ matrix.python-version }}."
 
       - name: Run Application
-        run: make run
+        run: |
+          make run || echo "::warning:: run failed on future Python version ${{ matrix.python-version }}."
 
       - name: Check Docker state (pre-test)
         run: docker ps
@@ -56,7 +58,7 @@ jobs:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
         run: |
-          make coverage.xml || echo "::warning:: Failed on future Python version ${{ matrix.python-version }}."
+          make coverage.xml || echo "::warning:: pytest + behave failed on future Python version ${{ matrix.python-version }}."
 
       - name: Dump docker logs on failure
         if: failure()
