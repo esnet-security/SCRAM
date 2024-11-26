@@ -45,6 +45,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose make
 
+      - name: Check Docker state (pre-build)
+        run: docker ps
+
       - name: Build Docker images
         run: make build
 
@@ -54,11 +57,18 @@ jobs:
       - name: Run Application
         run: make run
 
+      - name: Check Docker state (pre-test)
+        run: docker ps
+
       - name: Run pytest + behave with Coverage
         env:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
         run: make coverage.xml
+
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@v2
 
       - name: Upload Coverage to Coveralls
         uses: coverallsapp/github-action@v2
@@ -73,6 +83,11 @@ jobs:
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: '50'
+
+
+      - name: Check Docker state (post-test)
+        if: always()
+        run: docker ps
 
       - name: Stop Services
         if: always()
