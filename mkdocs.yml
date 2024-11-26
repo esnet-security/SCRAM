@@ -14,3 +14,6 @@ plugins:
             show_submodules: true
   - search
   - section-index
+
+hooks:
+  - docs/document_env_vars.py

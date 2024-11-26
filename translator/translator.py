@@ -11,7 +11,10 @@ import os
 import websockets
 from gobgp import GoBGP
 
+from scram.utils import debug
+
 logger = logging.getLogger(__name__)
+debug.setup(base_port=56732)
 
 KNOWN_MESSAGES = {
     "translator_add",
@@ -19,53 +22,6 @@ KNOWN_MESSAGES = {
     "translator_remove_all",
     "translator_check",
 }
-
-# Here we setup a debugger if this is desired. This obviously should not be run in production.
-debug_mode = os.environ.get("DEBUG")
-if debug_mode:
-
-    def install_deps():
-        """Install necessary dependencies for debuggers.
-
-        Because of how we build translator currently, we don't have a great way to selectively
-        install things at build, so we just do it here! Right now this also includes base.txt,
-        which is unecessary, but in the future when we build a little better, it'll already be
-        setup.
-        """
-        logger.info("Installing dependencies for debuggers")
-
-        import subprocess  # noqa: S404, PLC0415
-        import sys  # noqa: PLC0415
-
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/requirements/local.txt"])  # noqa: S603 TODO: add this to the container build
-
-        logger.info("Done installing dependencies for debuggers")
-
-    logger.info("Translator is set to use a debugger. Provided debug mode: %s", debug_mode)
-    # We have to setup the debugger appropriately for various IDEs. It'd be nice if they all used the same thing but
-    # sadly, we live in a fallen world.
-    if debug_mode == "pycharm-pydevd":
-        logger.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
-
-        install_deps()
-
-        import pydevd_pycharm
-
-        pydevd_pycharm.settrace("host.docker.internal", port=56782, stdoutToServer=True, stderrToServer=True)
-
-        logger.info("Debugger started.")
-    elif debug_mode == "debugpy":
-        logger.info("Entering debug mode for debugpy (VSCode)")
-
-        install_deps()
-
-        import debugpy
-
-        debugpy.listen(("0.0.0.0", 56781))  # noqa S104 (doesn't like binding to all interfaces)
-
-        logger.info("Debugger listening on port 56781.")
-    else:
-        logger.warning("Invalid debug mode given: %s. Debugger not started", debug_mode)
 
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
