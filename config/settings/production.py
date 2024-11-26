@@ -13,9 +13,9 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["django"])
 DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405
 DATABASES["default"]["ATOMIC_REQUESTS"] = True  # noqa F405
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
-if env.bool("POSTGRES_SSL"):
+if env.bool("POSTGRES_SSL", default=True):
     DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}  # noqa F405
-elif not env.bool("POSTGRES_SSL"):
+else:
     DATABASES["default"]["OPTIONS"] = {"sslmode": "disable"}  # noqa F405
 # CACHES
 # ------------------------------------------------------------------------------
