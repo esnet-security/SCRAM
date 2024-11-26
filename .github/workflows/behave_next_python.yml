@@ -1,5 +1,5 @@
 ---
-name: Run behave
+name: Run behave with unsupported Python versions
 
 on:
   push:
