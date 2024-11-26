@@ -41,9 +41,3 @@ django-debug-toolbar==3.4.0  # https://github.com/jazzband/django-debug-toolbar
 django-extensions==3.1.5  # https://github.com/django-extensions/django-extensions
 django-coverage-plugin==3.1.0  # https://github.com/nedbat/django_coverage_plugin
 pytest-django==4.5.2  # https://github.com/pytest-dev/pytest-django
-
-# Debugging
-# ------------------------------------------------------------------------------
-debugpy
-# Pycharm might force you to be on the same version IDE as library, use caution.
-pydevd-pycharm

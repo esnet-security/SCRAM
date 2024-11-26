@@ -11,6 +11,8 @@ import os
 import websockets
 from gobgp import GoBGP
 
+from config import cfg
+
 logger = logging.getLogger(__name__)
 
 KNOWN_MESSAGES = {
@@ -21,8 +23,7 @@ KNOWN_MESSAGES = {
 }
 
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
-debug_mode = os.environ.get("DEBUG")
-if debug_mode:
+if cfg.debugger:
 
     def install_deps():
         """Install necessary dependencies for debuggers.
@@ -41,10 +42,10 @@ if debug_mode:
 
         logger.info("Done installing dependencies for debuggers")
 
-    logger.info("Translator is set to use a debugger. Provided debug mode: %s", debug_mode)
+    logger.info("Translator is set to use a debugger. Provided debug mode: %s", cfg.debugger)
     # We have to setup the debugger appropriately for various IDEs. It'd be nice if they all used the same thing but
     # sadly, we live in a fallen world.
-    if debug_mode == "pycharm-pydevd":
+    if cfg.debugger == "pycharm-pydevd":
         logger.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
 
         install_deps()
@@ -54,7 +55,7 @@ if debug_mode:
         pydevd_pycharm.settrace("host.docker.internal", port=56782, stdoutToServer=True, stderrToServer=True)
 
         logger.info("Debugger started.")
-    elif debug_mode == "debugpy":
+    elif cfg.debugger == "debugpy":
         logger.info("Entering debug mode for debugpy (VSCode)")
 
         install_deps()
@@ -65,7 +66,7 @@ if debug_mode:
 
         logger.info("Debugger listening on port 56781.")
     else:
-        logger.warning("Invalid debug mode given: %s. Debugger not started", debug_mode)
+        logger.warning("Invalid debug mode given: %s. Debugger not started", cfg.debugger)
 
 # Must match the URL in asgi.py, and needs a trailing slash
 hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
