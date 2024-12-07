@@ -4,7 +4,7 @@ name: Run behave
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
@@ -20,7 +20,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.11', '3.12']
+        python-version: ["3.11", "3.12"]
 
     steps:
       - name: Check out the code
@@ -76,7 +76,7 @@ jobs:
         if: matrix.python-version == '3.12'
         uses: 5monkeys/cobertura-action@v14
         with:
-          minimum_coverage: '50'
+          minimum_coverage: "50"
 
       - name: Check Docker state (post-test)
         if: always()
