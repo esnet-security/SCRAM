@@ -20,7 +20,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.12']
+        python-version: ['3.11', '3.12']
 
     services:
       postgres:
@@ -28,7 +28,7 @@ jobs:
         env:
           POSTGRES_USER: scram
           POSTGRES_PASSWORD: ''
-          POSTGRES_DB: test_scram
+          POSTGRES_DB: test_scram_${{ matrix.python-version }}
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
@@ -58,30 +58,25 @@ jobs:
           # https://github.com/pytest-dev/pytest-github-actions-annotate-failures/pull/68 isn't yet in a release
           pip install git+https://github.com/pytest-dev/pytest-github-actions-annotate-failures.git@6e66cd895fe05cd09be8bad58f5d79110a20385f
 
-      - name: Apply unapplied migrations
+      - name: Apply migrations
         env:
-          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
-          python manage.py makemigrations --noinput || true
-          UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
-          if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
-            for migration in $UNAPPLIED_MIGRATIONS; do
-              python manage.py migrate $migration --fake-initial --noinput
-            done
-          else
-            echo "No unapplied migrations."
-          fi
+          python manage.py makemigrations --noinput
+          python manage.py migrate --noinput
 
       - name: Check for duplicate migrations
+        env:
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
           if python manage.py makemigrations --dry-run | grep "No changes detected"; then
             echo "No duplicate migrations detected."
           else
-            echo "Warning: Potential duplicate migrations detected. Please review."
+            echo "::warning:: Potential duplicate migrations detected. Please review."
           fi
 
       - name: Run Pytest
         env:
-          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
+          DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
           REDIS_HOST: "localhost"
         run: pytest
