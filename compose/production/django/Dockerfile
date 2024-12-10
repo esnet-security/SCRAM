@@ -1,6 +1,8 @@
 ARG PYTHON_IMAGE_VER=3.12
 
+
 FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
+
 
 ENV PYTHONUNBUFFERED 1
 
