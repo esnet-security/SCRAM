@@ -1,3 +1,7 @@
+# It'd be nice to keep these in sync with the defaults of the Dockerfiles
+PYTHON_IMAGE_VER ?= 3.12
+POSTGRES_IMAGE_VER ?= 12.3
+
 .DEFAULT_GOAL := help
 
 ## toggle-prod: configure make to use the production stack
@@ -37,7 +41,8 @@ behave-translator: compose.override.yml
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
 build: compose.override.yml
-	@docker compose up -d --no-deps --build $(CONTAINER)
+	@docker compose build --build-arg PYTHON_IMAGE_VER=$(PYTHON_IMAGE_VER) --build-arg POSTGRES_IMAGE_VER=$(POSTGRES_IMAGE_VER) $(CONTAINER)
+	@docker compose up -d --no-deps $(CONTAINER)
 	@docker compose restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
@@ -138,3 +143,13 @@ tail-log: compose.override.yml
 .Phony: type-check
 type-check: compose.override.yml
 	@docker compose run --rm django mypy scram
+
+## docs-build: build the documentation
+.Phony: docs-build
+docs-build:
+	@docker compose run --rm docs mkdocs build
+
+## docs-serve: build and run a server with the documentation
+.Phony: docs-serve
+docs-serve:
+	@docker compose run --rm docs mkdocs serve -a 0.0.0.0:8888
