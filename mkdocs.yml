@@ -1,0 +1,16 @@
+site_name: Security Catch and Release Automation Manager
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - url: https://docs.djangoproject.com/en/4.2/_objects/
+              base_url: https://docs.djangoproject.com/en/4.2/
+          options:
+            show_submodules: true
+  - search
+  - section-index

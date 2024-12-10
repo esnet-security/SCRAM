@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: 'docs/_build/html'
+          path: 'site/'
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main'

@@ -16,7 +16,7 @@ class TestActiontypeHistory(TestCase):
     def test_comments(self):
         """Ensure we can go back and set a reason."""
         self.atype.name = "Nullroute"
-        self.atype._change_reason = "Use more descriptive name"
+        self.atype._change_reason = "Use more descriptive name"  # noqa SLF001
         self.atype.save()
         self.assertIsNotNone(get_change_reason_from_object(self.atype))
 
@@ -47,7 +47,7 @@ class TestEntryHistory(TestCase):
             e.route = Route.objects.create(route=route_new)
 
             change_reason = "I meant 32, not 16."
-            e._change_reason = change_reason
+            e._change_reason = change_reason  # noqa SLF001
             e.save()
 
             self.assertEqual(len(e.history.all()), 2)

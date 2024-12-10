@@ -24,8 +24,10 @@ from .models import ActionType, Entry
 channel_layer = get_channel_layer()
 
 
-def home_page(request, prefilter=Entry.objects.all()):
+def home_page(request, prefilter=None):
     """Return the home page, autocreating a user if none exists."""
+    if not prefilter:
+        prefilter = Entry.objects.all()
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
@@ -103,29 +105,27 @@ def add_entry(request):
     with transaction.atomic():
         res = add_entry_api(request)
 
-    if res.status_code == 201:
+    if res.status_code == 201:  # noqa: PLR2004
         messages.add_message(
             request,
             messages.SUCCESS,
             "Entry successfully added",
         )
-    elif res.status_code == 400:
+    elif res.status_code == 400:  # noqa: PLR2004
         errors = []
         if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
             for k, v in res.data.items():
-                for error in v:
-                    errors.append(f"'{k}' error: {str(error)}")
+                errors.extend(f"'{k}' error: {error!s}" for error in v)
         else:
-            for k, v in res.data.items():
-                errors.append(f"error: {str(v)}")
+            errors.extend(f"error: {v!s}" for v in res.data.values())
         messages.add_message(request, messages.ERROR, "<br>".join(errors))
-    elif res.status_code == 403:
+    elif res.status_code == 403:  # noqa: PLR2004
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     with transaction.atomic():
         home = home_page(request)
-    return home
+    return home  # noqa RET504
 
 
 def process_expired(request):
@@ -142,7 +142,7 @@ def process_expired(request):
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
-            }
+            },
         ),
         content_type="application/json",
     )
@@ -154,7 +154,8 @@ class EntryListView(ListView):
     model = Entry
     template_name = "route_manager/entry_list.html"
 
-    def get_context_data(self, **kwargs):
+    @staticmethod
+    def get_context_data(**kwargs):
         """Group entries by action type."""
         context = {"entries": {}}
         for at in ActionType.objects.all():
