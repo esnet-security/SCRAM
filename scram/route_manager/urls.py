@@ -1,3 +1,5 @@
+"""Register URLs known to Django, and the View that will handle each."""
+
 from django.urls import path
 
 from . import views

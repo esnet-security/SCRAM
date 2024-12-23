@@ -1,10 +1,12 @@
-"""
-Base settings to build other settings files upon.
-"""
+"""Base settings to build other settings files upon."""
+
+import logging
 import os
 from pathlib import Path
 
 import environ
+
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # scram/
@@ -97,12 +99,6 @@ AUTHENTICATION_BACKENDS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-user-model
 AUTH_USER_MODEL = "users.User"
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "route_manager:home"
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "admin:login"
-# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "admin:logout"
 
 # PASSWORDS
 # ------------------------------------------------------------------------------
@@ -192,7 +188,7 @@ TEMPLATES = [
                 "scram.route_manager.context_processors.login_logout",
             ],
         },
-    }
+    },
 ]
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#form-renderer
@@ -242,14 +238,14 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s " "%(process)d %(thread)d %(message)s"}
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"},
     },
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
-        }
+        },
     },
     "root": {"level": "INFO", "handlers": ["console"]},
 }
@@ -260,7 +256,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],
+            "hosts": [(os.environ.get("REDIS_HOST", "redis"), 6379)],
         },
     },
 }
@@ -268,6 +264,8 @@ CHANNEL_LAYERS = {
 # django-rest-framework
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
+# Swagger related tooling
+INSTALLED_APPS += ["drf_spectacular"]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
@@ -275,12 +273,70 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
 CORS_URLS_REGEX = r"^/api/.*$"
 # Your stuff...
 # ------------------------------------------------------------------------------
+# Are you using local passwords or oidc?
+AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
+
+# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+LOGIN_REDIRECT_URL = "route_manager:home"
+
+# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+# https://github.com/mozilla/mozilla-django-oidc/issues/118
+# Using `/` because named urls don't work for this package
+# https://github.com/mozilla/mozilla-django-oidc/issues/434
+LOGOUT_REDIRECT_URL = "route_manager:home"
+
+OIDC_OP_JWKS_ENDPOINT = os.environ.get(
+    "OIDC_OP_JWKS_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/certs",
+)
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get(
+    "OIDC_OP_AUTHORIZATION_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/auth",
+)
+OIDC_OP_TOKEN_ENDPOINT = os.environ.get(
+    "OIDC_OP_TOKEN_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/token",
+)
+OIDC_OP_USER_ENDPOINT = os.environ.get(
+    "OIDC_OP_USER_ENDPOINT",
+    "https://example.com/auth/realms/example/protocol/openid-connect/userinfo",
+)
+OIDC_RP_SIGN_ALGO = "RS256"
+
+logger.info("Using AUTH METHOD=%s", AUTH_METHOD)
+if AUTH_METHOD == "oidc":
+    # Extend middleware to add OIDC middleware
+    MIDDLEWARE += ["mozilla_django_oidc.middleware.SessionRefresh"]
+
+    # Extend middleware to add OIDC auth backend
+    AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]
+
+    # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+    LOGIN_URL = "oidc_authentication_init"
+
+    # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+    LOGOUT_URL = "oidc_logout"
+
+    OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET")
+
+elif AUTH_METHOD == "local":
+    # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+    LOGIN_URL = "local_auth:login"
+
+    # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+    LOGOUT_URL = "local_auth:logout"
+else:
+    msg = f"Invalid authentication method: {AUTH_METHOD}. Please choose 'local' or 'oidc'"
+    raise ValueError(msg)
+
 
 # Should we create an admin user for you
 AUTOCREATE_ADMIN = True
@@ -292,9 +348,6 @@ SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 # Take in comment to show with history changes on models
 SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
 SIMPLE_HISTORY_ENABLED = True
-
-# Are you using local passwords or oidc?
-AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local")
 
 # Users in these groups have full privileges, including Django is_superuser
 SCRAM_ADMIN_GROUPS = ["svc_scram_admin"]
@@ -310,8 +363,6 @@ SCRAM_DENIED_GROUPS = ["svc_scram_denied"]
 
 # This is the set of all the groups
 SCRAM_GROUPS = SCRAM_ADMIN_GROUPS + SCRAM_READWRITE_GROUPS + SCRAM_READONLY_GROUPS + SCRAM_DENIED_GROUPS
-
-# This is the full set of groups
 
 # How many entries to show PER Actiontype on the home page
 RECENT_LIMIT = 10

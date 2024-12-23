@@ -1,3 +1,5 @@
+"""Register URLs known to Django, and the View that will handle each."""
+
 from django.urls import path
 
 from scram.users.views import user_detail_view, user_redirect_view, user_update_view
