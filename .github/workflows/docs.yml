@@ -41,6 +41,9 @@ jobs:
       - name: "[pytest]: before"
         run: "./.ci-scripts/pytest_before.sh"
 
+      - name: Build docs
+        run: make docs-build
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
