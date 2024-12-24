@@ -1,8 +1,8 @@
 """Define the models used in the route_manager app."""
 
+import datetime
 import logging
 import uuid as uuid_lib
-from datetime import datetime
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -98,7 +98,7 @@ class Entry(models.Model):
     history = HistoricalRecords()
     when = models.DateTimeField(auto_now_add=True)
     who = models.CharField("Username", default="Unknown", max_length=30)
-    expiration = models.DateTimeField(default=datetime(9999, 12, 31, 0, 0, tzinfo=datetime.timezone.utc))
+    expiration = models.DateTimeField(default=datetime.datetime(9999, 12, 31, 0, 0, tzinfo=datetime.UTC))
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
         max_length=200,
