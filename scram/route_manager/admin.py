@@ -14,7 +14,14 @@ class ActionTypeAdmin(SimpleHistoryAdmin):
     list_display = ("name", "available")
 
 
-admin.site.register(Entry, SimpleHistoryAdmin)
+@admin.register(Entry)
+class EntryAdmin(SimpleHistoryAdmin):
+    """Configure how Entries show up in the Admin site."""
+
+    list_filter = ("is_active", "who")
+    search_fields = ["route", "comment"]
+
+
 admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
 admin.site.register(Client)
