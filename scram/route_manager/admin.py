@@ -18,7 +18,10 @@ class ActionTypeAdmin(SimpleHistoryAdmin):
 class EntryAdmin(SimpleHistoryAdmin):
     """Configure how Entries show up in the Admin site."""
 
-    list_filter = ("is_active", "who")
+    list_filter = [
+        "is_active",
+        ("who", admin.RelatedOnlyFieldListFilter),
+    ]
     search_fields = ["route", "comment"]
 
 
