@@ -29,6 +29,7 @@ services:
       - /etc/vault.d/secrets/kv_root_security.env
     deploy:
       replicas: ${POSTGRES_ENABLED:-0}
+    command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"]
 
   nginx:
     image: nginx:1.19
