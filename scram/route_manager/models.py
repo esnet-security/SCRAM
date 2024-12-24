@@ -2,11 +2,13 @@
 
 import logging
 import uuid as uuid_lib
+from datetime import datetime
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from netfields import CidrAddressField
 from simple_history.models import HistoricalRecords
 
@@ -97,7 +99,7 @@ class Entry(models.Model):
     history = HistoricalRecords()
     when = models.DateTimeField(auto_now_add=True)
     who = models.CharField("Username", default="Unknown", max_length=30)
-    expiration = models.DateTimeField(default="9999-12-31 00:00")
+    expiration = models.DateTimeField(default=datetime(9999, 12, 31, 0, 0, tzinfo=timezone.utc))
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
         max_length=200,
