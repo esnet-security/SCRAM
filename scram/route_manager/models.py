@@ -21,12 +21,12 @@ class Route(models.Model):
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
     def __str__(self):
-        """Don't display the UUID, only the route."""  # noqa: DOC201
+        """Don't display the UUID, only the route."""
         return str(self.route)
 
     @staticmethod
     def get_absolute_url():
-        """Ensure we use UUID on the API side instead."""  # noqa: DOC201
+        """Ensure we use UUID on the API side instead."""
         return reverse("")
 
 
@@ -38,7 +38,7 @@ class ActionType(models.Model):
     history = HistoricalRecords()
 
     def __str__(self):
-        """Display clearly whether the action is currently available."""  # noqa: DOC201
+        """Display clearly whether the action is currently available."""
         if not self.available:
             return f"{self.name} (Inactive)"
         return self.name
@@ -56,7 +56,7 @@ class WebSocketMessage(models.Model):
     )
 
     def __str__(self):
-        """Display clearly what the fields are used for."""  # noqa: DOC201
+        """Display clearly what the fields are used for."""
         return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
 
 
@@ -80,7 +80,7 @@ class WebSocketSequenceElement(models.Model):
     action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
 
     def __str__(self):
-        """Summarize the fields into something short and readable."""  # noqa: DOC201
+        """Summarize the fields into something short and readable."""
         return (
             f"{self.websocketmessage} as order={self.order_num} for "
             f"{self.verb} actions on actiontype={self.action_type}"
@@ -113,7 +113,7 @@ class Entry(models.Model):
         verbose_name_plural = "Entries"
 
     def __str__(self):
-        """Summarize the most important fields to something easily readable."""  # noqa: DOC201
+        """Summarize the most important fields to something easily readable."""
         desc = f"{self.route} ({self.actiontype})"
         if not self.is_active:
             desc += " (inactive)"
@@ -161,7 +161,7 @@ class IgnoreEntry(models.Model):
         verbose_name_plural = "Ignored Entries"
 
     def __str__(self):
-        """Only display the route."""  # noqa: DOC201
+        """Only display the route."""
         return str(self.route)
 
 
@@ -175,7 +175,7 @@ class Client(models.Model):
     authorized_actiontypes = models.ManyToManyField(ActionType)
 
     def __str__(self):
-        """Only display the hostname."""  # noqa: DOC201
+        """Only display the hostname."""
         return str(self.hostname)
 
 

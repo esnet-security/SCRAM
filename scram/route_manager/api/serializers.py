@@ -86,7 +86,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
 
     @staticmethod
     def create(validated_data):
-        """Implement custom logic and validates creating a new route."""  # noqa: DOC201
+        """Implement custom logic and validates creating a new route."""
         valid_route = validated_data.pop("route")
         actiontype = validated_data.pop("actiontype")
         comment = validated_data.pop("comment")
