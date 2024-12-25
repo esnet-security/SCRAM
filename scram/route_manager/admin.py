@@ -6,6 +6,31 @@ from simple_history.admin import SimpleHistoryAdmin
 from .models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketMessage, WebSocketSequenceElement
 
 
+class WhoFilter(admin.SimpleListFilter):
+    """Only display users who have added entries in the list_filter."""
+
+    title = "By Username"
+    parameter_name = "who"
+
+    # ruff: noqa: PLR6301
+    def lookups(self, request, model_admin):
+        """Return list of users who have added entries."""
+        users_with_entries = Entry.objects.values("who").distinct()
+
+        # If no users have entries, return an empty list so they don't show in filter
+        if not users_with_entries:
+            return []
+
+        # Return a list of users who have made entries
+        return [(user["who"], user["who"]) for user in users_with_entries]
+
+    def queryset(self, request, queryset):
+        """Queryset for users."""
+        if self.value():
+            return queryset.filter(who=self.value())
+        return queryset
+
+
 @admin.register(ActionType)
 class ActionTypeAdmin(SimpleHistoryAdmin):
     """Configure the ActionType and how it shows up in the Admin site."""
@@ -20,7 +45,7 @@ class EntryAdmin(SimpleHistoryAdmin):
 
     list_filter = [
         "is_active",
-        ("who", admin.RelatedOnlyFieldListFilter),
+        WhoFilter,
     ]
     search_fields = ["route", "comment"]
 
