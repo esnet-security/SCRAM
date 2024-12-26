@@ -65,13 +65,10 @@ class TestViewNumQueries(TestCase):
         4. count entries
         5. count entries
         6. get first 100 entries
-        7. release transaction
-        [ for each of the 100 elements on the first page: ]
-           n. actiontype info
-           n+1. entry info
-        [ endfor ]
+        7. query entries (a single query, with select_related)
+        8. release transaction
         """
-        with self.assertNumQueries(208):
+        with self.assertNumQueries(8):
             start = time.time()
             self.client.get(reverse("admin:route_manager_entry_changelist"))
             time_taken = time.time() - start
