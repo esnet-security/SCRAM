@@ -133,7 +133,10 @@ def process_expired(request):
     # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
     entries_start = Entry.objects.filter(is_active=True).count()
-    Entry.objects.filter(is_active=True, expiration__lt=current_time).delete()
+
+    # More efficient to call objects.filter.delete, but that doesn't call the Entry.delete() method
+    for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
+        obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
 
     return HttpResponse(
