@@ -43,6 +43,8 @@ class ActionTypeAdmin(SimpleHistoryAdmin):
 class EntryAdmin(SimpleHistoryAdmin):
     """Configure how Entries show up in the Admin site."""
 
+    list_select_related = True
+
     list_filter = [
         "is_active",
         WhoFilter,
