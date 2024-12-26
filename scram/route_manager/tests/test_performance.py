@@ -98,4 +98,3 @@ class TestViewNumQueries(TestCase):
             self.client.get(reverse("route_manager:process-expired"))
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Process expired page took longer than 1 seconds")
-    
