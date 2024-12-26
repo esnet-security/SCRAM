@@ -56,11 +56,12 @@ class TestViewNumQueries(TestCase):
             self.assertLess(time_taken, 1, "Home page took longer than 1 second")
 
     def test_admin_entry_page(self):
-        """Admin entry list page requires 207 queries.
+        """Admin entry list page requires 208 queries.
 
         1. create transaction
         2. lookup session
         3. lookup user
+        4. lookup distinct users for our WhoFilter
         4. count entries
         5. count entries
         6. get first 100 entries
@@ -70,7 +71,7 @@ class TestViewNumQueries(TestCase):
            n+1. entry info
         [ endfor ]
         """
-        with self.assertNumQueries(207):
+        with self.assertNumQueries(208):
             start = time.time()
             self.client.get(reverse("admin:route_manager_entry_changelist"))
             time_taken = time.time() - start
