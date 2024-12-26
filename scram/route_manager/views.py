@@ -27,7 +27,7 @@ channel_layer = get_channel_layer()
 def home_page(request, prefilter=None):
     """Return the home page, autocreating a user if none exists."""
     if not prefilter:
-        prefilter = Entry.objects.all()
+        prefilter = Entry.objects.all().select_related("actiontype", "route")
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True

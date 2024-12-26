@@ -23,14 +23,14 @@ class TestViewNumQueries(TestCase):
         # Query the homepage once to setup the user
         self.client.get(reverse("route_manager:home"))
 
-        self.atype = ActionType.objects.create(name="Block")
+        self.atype, _ = ActionType.objects.get_or_create(name="block")
         routes = [Route(route=self.fake.unique.ipv4_public()) for x in range(self.NUM_ENTRIES)]
         created_routes = Route.objects.bulk_create(routes)
         entries = [Entry(route=route, actiontype=self.atype) for route in created_routes]
         Entry.objects.bulk_create(entries)
 
     def test_home_page(self):
-        """Home page requires 30 queries.
+        """Home page requires 10 queries.
 
         1. create transaction
         2. lookup session
@@ -41,22 +41,17 @@ class TestViewNumQueries(TestCase):
         7. count by user
         8. first page for actiontype=1
         9. first page for actiontype=33
-        [ for each of the 10 elements on the first page: ]
-           n. actiontype info
-           n+1. entry info
-        [ endfor ]
-        # 9 + 2*10 = 29
-        30. close transaction
+        10. close transaction
 
         """
-        with self.assertNumQueries(30):
+        with self.assertNumQueries(10):
             start = time.time()
             self.client.get(reverse("route_manager:home"))
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Home page took longer than 1 second")
 
     def test_admin_entry_page(self):
-        """Admin entry list page requires 208 queries.
+        """Admin entry list page requires 8 queries.
 
         1. create transaction
         2. lookup session
