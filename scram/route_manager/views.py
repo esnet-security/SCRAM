@@ -130,12 +130,11 @@ def add_entry(request):
 
 def process_expired(request):
     """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
+    # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
-    with transaction.atomic():
-        entries_start = Entry.objects.filter(is_active=True).count()
-        for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
-            obj.delete()
-        entries_end = Entry.objects.filter(is_active=True).count()
+    entries_start = Entry.objects.filter(is_active=True).count()
+    Entry.objects.filter(is_active=True, expiration__lt=current_time).delete()
+    entries_end = Entry.objects.filter(is_active=True).count()
 
     return HttpResponse(
         json.dumps(
