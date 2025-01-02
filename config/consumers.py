@@ -1,6 +1,7 @@
 """Define logic for the WebSocket consumers."""
 
 import logging
+from datetime import UTC, datetime
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -9,6 +10,8 @@ from scram.route_manager.models import Entry, WebSocketSequenceElement
 
 logger = logging.getLogger(__name__)
 
+active_websockets = {}
+
 
 class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Translator(s)."""
@@ -16,6 +19,12 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         """Handle the initial connection with adding to the right group."""
         logger.info("Translator connected")
+        active_websockets[self] = {
+            "connected_at": datetime.now(tz=UTC),
+            "client": self.scope["client"],
+            "path": self.scope["path"],
+        }
+        logger.info("Active websockets: %s", active_websockets)
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
 
@@ -70,6 +79,12 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         """Handle the initial connection with adding to the right group."""
+        active_websockets[self] = {
+            "connected_at": datetime.now(tz=UTC),
+            "client": self.scope["client"],
+            "path": self.scope["path"],
+        }
+        logger.info("Active websockets: %s", active_websockets)
         self.actiontype = self.scope["url_route"]["kwargs"]["actiontype"]
         self.translator_group = f"translator_{self.actiontype}"
 
