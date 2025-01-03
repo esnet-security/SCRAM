@@ -256,6 +256,8 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
+            "expiry": 86400 * 7,  # expire messages after a week (default 60s)
+            "group_expiry": 86400 * 365 * 10,  # effectively disable removing from a group (default 1d)
             "hosts": [(os.environ.get("REDIS_HOST", "redis"), 6379)],
         },
     },
