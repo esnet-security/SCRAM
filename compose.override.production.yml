@@ -11,6 +11,10 @@ services:
     build:
       dockerfile: ./compose/production/django/Dockerfile
     image: scram_production_django
+    logging:
+      driver: journald
+      options:
+          tag: scram-django
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
@@ -21,6 +25,10 @@ services:
       test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
 
   postgres:
+    logging:
+      driver: journald
+      options:
+          tag: scram-postgres
     volumes:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
@@ -32,6 +40,10 @@ services:
 
   nginx:
     image: nginx:1.19
+    logging:
+      driver: journald
+      options:
+          tag: scram-nginx
     restart: on-failure:5
     depends_on:
       - django
@@ -51,10 +63,18 @@ services:
       - "80:80"
 
   redis:
+    logging:
+      driver: journald
+      options:
+          tag: scram-redis
     volumes:
       - production_redis_data:/var/lib/redis:Z
 
   gobgp:
+    logging:
+      driver: journald
+      options:
+          tag: scram-gobgp
     volumes:
       - ./gobgp_config:/config:z
     networks:
@@ -67,6 +87,10 @@ services:
       - "50051"
 
   translator:
+    logging:
+      driver: journald
+      options:
+          tag: scram-translator
     env_file:
       - ./.envs/.production/.translator
 
