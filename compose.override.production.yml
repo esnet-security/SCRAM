@@ -14,7 +14,8 @@ services:
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
-      - /etc/vault.d/secrets/kv_root_security.env
+      - path: /etc/vault.d/secrets/kv_root_security.env
+        required: false
     volumes:
       - ./staticfiles:/staticfiles
     healthcheck:
@@ -26,7 +27,8 @@ services:
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
-      - /etc/vault.d/secrets/kv_root_security.env
+      - path: /etc/vault.d/secrets/kv_root_security.env
+        required: false
     deploy:
       replicas: ${POSTGRES_ENABLED:-0}
 
@@ -42,13 +44,13 @@ services:
     environment:
       - HOSTNAME=${HOSTNAME}
     volumes:
-      - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - /etc/letsencrypt/live/${HOSTNAME}/fullchain.pem:/etc/ssl/server.crt
-      - /etc/letsencrypt/live/${HOSTNAME}/privkey.pem:/etc/ssl/server.key
+      # - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      # - /etc/letsencrypt/live/${HOSTNAME}/fullchain.pem:/etc/ssl/server.crt
+      # - /etc/letsencrypt/live/${HOSTNAME}/privkey.pem:/etc/ssl/server.key
       - ./staticfiles:/staticfiles
     ports:
-      - "443:443"
-      - "80:80"
+      - "${SCRAM_HTTPS_PORT:-443}:443"
+      - "${SCRAM_HTTP_PORT:-80}:80"
 
   redis:
     volumes:
@@ -60,8 +62,8 @@ services:
     networks:
       default: {}
       peering:
-        ipv4_address: ${SCRAM_V4_ADDRESS}
-        ipv6_address: ${SCRAM_V6_ADDRESS}
+        ipv4_address: ${SCRAM_V4_ADDRESS:-10.177.99.104}
+        ipv6_address: ${SCRAM_V6_ADDRESS:-fd74:7cbd:fe54::2}
     ports:
       - "179:179"
       - "50051"
@@ -81,11 +83,11 @@ networks:
     enable_ipv6: true
     driver: macvlan
     driver_opts:
-      parent: ${SCRAM_PEERING_IFACE}
+      parent: ${SCRAM_PEERING_IFACE:-eth0}
     ipam:
       driver: default
       config:
-        - subnet: ${SCRAM_V4_SUBNET}
-          gateway: ${SCRAM_V4_GATEWAY}
-        - subnet: ${SCRAM_V6_SUBNET}
-          gateway: ${SCRAM_V6_GATEWAY}
+        - subnet: ${SCRAM_V4_SUBNET:-10.177.99.0/24}
+          gateway: ${SCRAM_V4_GATEWAY:-10.177.99.1}
+        - subnet: ${SCRAM_V6_SUBNET:-fd74:7cbd:fe54::/48}
+          gateway: ${SCRAM_V6_GATEWAY:-fd74:7cbd:fe54::1}

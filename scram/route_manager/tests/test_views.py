@@ -39,6 +39,7 @@ class HomePageLogoutTest(TestCase):
         """After logout, we can't see anything."""
         response = self.client.get(reverse("route_manager:home"))
         response = self.client.post(reverse(settings.LOGOUT_URL), follow=True)
+        self.assertEqual(reverse(settings.LOGOUT_URL), "blah")
         self.assertEqual(response.status_code, 200)
         response = self.client.get(reverse("route_manager:home"))
 

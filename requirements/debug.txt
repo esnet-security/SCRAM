@@ -1,0 +1,9 @@
+# Tools for interactive debugging
+
+-r local.txt
+
+django-debug-toolbar==3.4.0  # https://github.com/jazzband/django-debug-toolbar
+
+debugpy
+# Pycharm might force you to be on the same version IDE as library, use caution.
+pydevd-pycharm
