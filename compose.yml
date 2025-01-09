@@ -44,7 +44,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   gobgp:
-    image: jauderho/gobgp:v2.32.0
+    image: jauderho/gobgp:v3.33.0
     networks:
       default: {}
     sysctls:
