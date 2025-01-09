@@ -18,7 +18,7 @@ RUN mkdir /app \
   && cd /app \
   && git clone -b v3.33.0 https://github.com/osrg/gobgp.git \
   && cd gobgp/api \
-  && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
+  && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --pyi_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/translator.py /app
 COPY ./translator/gobgp.py /app
