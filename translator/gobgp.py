@@ -128,14 +128,22 @@ class GoBGP:
 
     def add_path(self, ip, event_data):
         """Announce a single route."""
-        logger.info("Blocking %s", ip)
+        vrf_id = event_data.get("vrf_id")
+        logger.info("Blocking %s in VRF %s", ip, vrf_id)  # TODO: Do we want to name the None Case?
+
         try:
             path = self._build_path(ip, event_data)
 
-            self.stub.AddPath(
-                gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
-                _TIMEOUT_SECONDS,
-            )
+            if vrf_id:
+                self.stub.AddPath(
+                    gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf_id),
+                    _TIMEOUT_SECONDS,
+                )
+            else:
+                self.stub.AddPath(
+                    gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                    _TIMEOUT_SECONDS,
+                )
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
@@ -144,16 +152,26 @@ class GoBGP:
         logger.warning("Withdrawing ALL routes")
 
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
+        # TODO: Delete paths in all tables? Maybe GoBGP has a helper for this.
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
-        logger.info("Unblocking %s", ip)
+        vrf_id = event_data.get("vrf_id")
+        logger.info("Unblocking %s in VRF %s", ip, vrf_id)  # TODO: Do we want to name the None Case?
+
         try:
             path = self._build_path(ip, event_data)
-            self.stub.DeletePath(
-                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
-                _TIMEOUT_SECONDS,
-            )
+
+            if vrf_id:
+                self.stub.DeletePath(
+                    gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf_id),
+                    _TIMEOUT_SECONDS,
+                )
+            else:
+                self.stub.DeletePath(
+                    gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                    _TIMEOUT_SECONDS,
+                )
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
