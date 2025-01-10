@@ -1,13 +1,18 @@
-Compontents:
+# Components
 
 ```mermaid
 graph TD;
-    CloudSQL-->django-east;
-    CloudSQL-->django-west;
-    django-east-->translator-east;
-    translator-east-->goBGP-east;
-    goBGP-east-->rtr1;
-    django-west-->translator-west;
-    translator-west-->goBGP-west;
-    goBGP-west-->rtr2;
+    CloudSQL -- pSQL --> django-east;
+    django-east -- websocket --> translator-east;
+    translator-east -- grpc --> goBGP-east;
+    goBGP-east -- BGP --> rtr1;
+    rtr1 -- routing --> net1("Block/Unblock Action");
+    CloudSQL -- pSQL --> django-west;
+    django-west -- websocket --> translator-west;
+    translator-west -- grpc --> goBGP-west;
+    goBGP-west -- BGP --> rtr2;
+    rtr2 -- routing --> net2("Block/Unblock Action");
 ```
+
+# Local Failures
+
