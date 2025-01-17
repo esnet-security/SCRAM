@@ -2,6 +2,7 @@
 
 import ipaddress
 import json
+from datetime import timedelta
 
 import rest_framework.utils.serializer_helpers
 from channels.layers import get_channel_layer
@@ -128,8 +129,13 @@ def add_entry(request):
     return home  # noqa RET504
 
 
-def process_expired(request):
-    """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
+def process_updates(request):
+    """For entries with an expiration, set them to inactive if expired.
+
+    Grab and announce any new entries added to the shared database by other SCRAM instances.
+
+    Return some simple stats.
+    """
     # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
     entries_start = Entry.objects.filter(is_active=True).count()
@@ -138,6 +144,13 @@ def process_expired(request):
     for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
         obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
+
+    # Grab all entries from the last 2 minutes
+    cutoff_time = current_time - timedelta(minutes=2)
+    new_entries = Entry.objects.filter(expiration__gt=cutoff_time).count()
+
+    for entry in new_entries:
+        add_entry_api(entry)
 
     return HttpResponse(
         json.dumps(

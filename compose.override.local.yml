@@ -17,7 +17,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
+      test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
     ports:
       - "8000"
       - 56780:56780
