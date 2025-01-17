@@ -1,7 +1,6 @@
 """Define logic for the WebSocket consumers."""
 
 import logging
-from functools import partial
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
