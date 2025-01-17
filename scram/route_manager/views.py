@@ -2,9 +2,11 @@
 
 import ipaddress
 import json
+import logging
 from datetime import timedelta
 
 import rest_framework.utils.serializer_helpers
+from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
@@ -18,11 +20,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
+from scram.route_manager.models import WebSocketSequenceElement
+
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
 from .models import ActionType, Entry
 
 channel_layer = get_channel_layer()
+logger = logging.getLogger(__name__)
 
 
 def home_page(request, prefilter=None):
@@ -147,10 +152,22 @@ def process_updates(request):
 
     # Grab all entries from the last 2 minutes
     cutoff_time = current_time - timedelta(minutes=2)
-    new_entries = Entry.objects.filter(expiration__gt=cutoff_time).count()
+    new_entries = Entry.objects.filter(when__lt=cutoff_time)
 
+    # Resend new entries that popped up in the database
+    # TODO: Find a way to ONLY fire this on the instances that *didn't* create the entry (modify entries model?)
     for entry in new_entries:
-        add_entry_api(entry)
+        logger.info("$$$$ Found a new fancy entry: %s", entry)
+        translator_group = f"translator_{entry.actiontype}"
+        elements = list(
+            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
+        )
+        for element in elements:
+            msg = element.websocketmessage
+            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
+
+            json_to_send = {"type": msg.msg_type, "message": msg.msg_data}
+            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
 
     return HttpResponse(
         json.dumps(
