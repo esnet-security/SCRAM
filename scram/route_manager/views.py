@@ -174,6 +174,7 @@ def process_updates(request):
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
+                "remote_entries_added": new_entries.count(),
             },
         ),
         content_type="application/json",
