@@ -84,17 +84,18 @@ class TestViewNumQueries(TestCase):
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Admin entry list page took longer than 1 seconds")
 
-    def test_process_expired(self):
-        """Process expired requires 5 queries.
+    def test_process_updates(self):
+        """Process expired requires 6 queries.
 
         1. create transaction
         2. get entries_start active entry count
         3. find and delete expired entries
         4. get entries_end active entry count
-        5. release transaction
+        5. get new_entries from DB
+        6. release transaction
         """
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             start = time.time()
-            self.client.get(reverse("route_manager:process-expired"))
+            self.client.get(reverse("route_manager:process-updates"))
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Process expired page took longer than 1 seconds")

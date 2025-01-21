@@ -148,7 +148,7 @@ def wait(context, secs):
 @then("we remove expired entries")
 def remove_expired(context):
     """Call the function that removes expired entries."""
-    context.response = context.test.client.get(reverse("route_manager:process-expired"))
+    context.response = context.test.client.get(reverse("route_manager:process-updates"))
 
 
 @when("we add the ignore entry {value:S}")
