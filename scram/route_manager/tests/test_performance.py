@@ -1,5 +1,6 @@
 """Tests for performance (load time, DB queries, etc.)."""
 
+import datetime
 import time
 
 from django.test import TestCase
@@ -28,6 +29,9 @@ class TestViewNumQueries(TestCase):
         created_routes = Route.objects.bulk_create(routes)
         entries = [Entry(route=route, actiontype=self.atype) for route in created_routes]
         Entry.objects.bulk_create(entries)
+        # Manually set the when time to be old so that we don't trigger `process_updates`
+        # on all 100,000 of the test routes.
+        Entry.objects.update(when=datetime.datetime(2000, 1, 1, 0, 0, tzinfo=datetime.UTC))
 
     def test_home_page(self):
         """Home page requires 8 queries.
