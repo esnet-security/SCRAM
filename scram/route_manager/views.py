@@ -152,7 +152,7 @@ def process_updates(request):
 
     # Grab all entries from the last 2 minutes
     cutoff_time = current_time - timedelta(minutes=2)
-    new_entries = Entry.objects.filter(when__lt=cutoff_time)
+    new_entries = Entry.objects.filter(when__gt=cutoff_time)
 
     # Resend new entries that popped up in the database
     # TODO: Find a way to ONLY fire this on the instances that *didn't* create the entry (modify entries model?)
