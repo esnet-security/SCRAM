@@ -63,6 +63,8 @@ services:
   translator:
     volumes:
       - ./translator/tests/:/app/tests/
+    env_file:
+      - ./.envs/.local/.translator
     ports:
       - 56781:56781
     environment:

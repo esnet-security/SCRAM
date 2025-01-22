@@ -46,3 +46,8 @@ OIDC_OP_USER_ENDPOINT = "https://example.com/auth/realms/example/protocol/openid
 OIDC_RP_SIGN_ALGO = "RS256"
 OIDC_RP_CLIENT_ID = ""
 OIDC_RP_CLIENT_SECRET = ""
+
+SCRAM_HOSTNAME = env(
+    "SCRAM_HOSTNAME",
+    default="scram_hostname_not_set",  # TODO: Change this? Think about the implications here.
+)
