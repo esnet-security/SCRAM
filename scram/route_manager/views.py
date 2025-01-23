@@ -158,6 +158,19 @@ def process_updates(request):
     # TODO: Find a way to ONLY fire this on the instances that *didn't* create the entry (modify entries model?)
     for entry in new_entries:
         logger.info("$$$$ Found a new fancy entry: %s", entry)
+        if entry.originating_scram_instance == settings.SCRAM_HOSTNAME:
+            logger.info(
+                "fancy new entry from %s is already from this instance, silly goose!", entry.originating_scram_instance
+            )
+            continue
+        if (
+            entry.originating_scram_instance == "scram_hostname_not_set"
+        ):  # TODO: Store this string somewhere and pull it in
+            logger.warning(
+                "fancy new entry doesn't have a hostname set silly goose, so we're gonna process it. \
+                Warning, this might result in duplicate announcements which could lead to unexpected behaviour"
+            )  # TODO MAKE THIS SUCK LESS
+        logger.info("fancy new entry from %s is not from this instance, processing", entry.originating_scram_instance)
         translator_group = f"translator_{entry.actiontype}"
         elements = list(
             WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
