@@ -128,7 +128,10 @@ class GoBGP:
 
     def add_path(self, ip, event_data):
         """Announce a single route."""
-        logger.info("Blocking %s", ip)
+        logger.info("Received request to block %s", ip)
+        if self.is_blocked(ip):
+            logger.info("Not bothering to re-block %s as it is already blocked", ip)
+            return
         try:
             path = self._build_path(ip, event_data)
 
@@ -147,7 +150,10 @@ class GoBGP:
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
-        logger.info("Unblocking %s", ip)
+        logger.info("Received request to unblock %s", ip)
+        if not self.is_blocked(ip):
+            logger.info("Not bothering to unblock %s as it is not presently blocked", ip)
+            return
         try:
             path = self._build_path(ip, event_data)
             self.stub.DeletePath(
