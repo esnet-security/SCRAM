@@ -33,6 +33,8 @@ services:
       - ./.envs/.local/.postgres
     deploy:
       replicas: ${POSTGRES_ENABLED:-1}
+    ports:
+      - "5432:5432"
 
   docs:
     image: scram_local_docs
