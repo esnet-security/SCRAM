@@ -17,12 +17,14 @@ def login_logout(request):
     return {"login": login_url, "logout": logout_url}
 
 
-def active_count(request):
+def active_count(request, *args, **kwargs):
     """Grab the active count of blocks.
 
     Returns:
         dict: active count of blocks
     """
-    active_block_entries = Entry.objects.filter(is_active=True).count()
-    total_block_entries = Entry.objects.all().count()
-    return {"active_block_entries": active_block_entries, "total_block_entries": total_block_entries}
+    if "admin" not in request.META["PATH_INFO"]:
+        active_block_entries = Entry.objects.filter(is_active=True).count()
+        total_block_entries = Entry.objects.all().count()
+        return {"active_block_entries": active_block_entries, "total_block_entries": total_block_entries}
+    return {}
