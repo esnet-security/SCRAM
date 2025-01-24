@@ -38,7 +38,7 @@ def home_page(request, prefilter=None):
         queryset = prefilter.filter(actiontype=at).order_by("-pk")
         queryset_active = queryset.filter(is_active=True).order_by("-pk")
         context["entries"][at] = {
-            "objs": queryset.filter(is_active=True)[:num_entries],
+            "objs": queryset_active[:num_entries],
             "total": queryset.count(),
             "active": queryset_active.count(),
         }
