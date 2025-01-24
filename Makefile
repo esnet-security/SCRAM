@@ -166,3 +166,12 @@ copy-libs:
 	@docker compose cp translator:/app/capability_pb2.py translator/
 	@docker compose cp translator:/app/capability_pb2.pyi translator/
 	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
+	@docker compose cp translator:/app/common_pb2.py translator/
+	@docker compose cp translator:/app/common_pb2.pyi translator/
+	@docker compose cp translator:/app/common_pb2_grpc.py translator/
+	@docker compose cp translator:/app/extcom_pb2.py translator/
+	@docker compose cp translator:/app/extcom_pb2.pyi translator/
+	@docker compose cp translator:/app/extcom_pb2_grpc.py translator/
+	@docker compose cp translator:/app/nlri_pb2.py translator/
+	@docker compose cp translator:/app/nlri_pb2.pyi translator/
+	@docker compose cp translator:/app/nlri_pb2_grpc.py translator/

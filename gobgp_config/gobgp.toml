@@ -1,3 +1,55 @@
 [global.config]
-    as = 1234
-    router-id = "1.1.1.1"
+  as = 64666
+  router-id = "198.129.252.166"
+[[vrfs]]
+    [vrfs.config]
+        name = "ipt"
+        rd = "293:64666"
+        both-rt-list = ["293:293"]
+[[vrfs]]
+    [vrfs.config]
+        name = "lhcone"
+        rd = "64805:64666"
+        both-rt-list = ["64805:1"]
+[[vrfs]]
+    [vrfs.config]
+        name = "lsst"
+        rd = "64806:64666"
+        both-rt-list = ["64806:1"]
+[[vrfs]]
+    [vrfs.config]
+        name = "ejfat"
+        rd = "64807:64666"
+        both-rt-list = ["64807:1"]
+[[neighbors]]
+  [neighbors.config]
+      peer-as = 293
+      neighbor-address = "2001:400:210:66::1"
+      local-as = 64666
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv6-unicast"
+  [[neighbors.afi-safis]]
+      [neighbors.afi-safis.config]
+      afi-safi-name = "l3vpn-ipv6-unicast"
+[neighbors.ebgp-multihop.config]
+    enabled = true
+    multihop-ttl = 255
+  [neighbors.transport.config]
+    local-address = "2001:400:210:66::2"
+[[neighbors]]
+  [neighbors.config]
+      peer-as = 293
+      neighbor-address = "198.129.252.165"
+      local-as = 64666
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv4-unicast"
+  [[neighbors.afi-safis]]
+      [neighbors.afi-safis.config]
+      afi-safi-name = "l3vpn-ipv4-unicast"
+  [neighbors.ebgp-multihop.config]
+    enabled = true
+    multihop-ttl = 255
+  [neighbors.transport.config]
+    local-address = "198.129.252.166"

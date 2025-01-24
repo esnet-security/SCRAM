@@ -54,6 +54,8 @@ services:
       - "6379"
 
   gobgp:
+    build:
+      dockerfile: ./compose/local/gobgp/Dockerfile
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:

@@ -1,0 +1,54 @@
+FROM ghcr.io/jauderho/golang:1.23.5-alpine3.21@sha256:9d07aef84b1aabde0c5dddd3f6153a09551db52b840749400639398959368561 AS build
+
+WORKDIR /go/src/github.com/osrg/
+
+# ARG BUILD_VERSION
+ARG ARCHIVE_URL=https://github.com/osrg/gobgp/archive/
+
+ENV CGO_ENABLED 0
+
+RUN apk update \
+  && apk upgrade -a \
+  && apk add --no-cache ca-certificates curl gcc musl-dev \
+  && apk add git \
+  && update-ca-certificates \
+  && git clone https://github.com/Tuetuopay/gobgp.git \
+  && cd gobgp \
+  && git checkout 11d7cf1feec458867cbea8d52e594f5bcd889b04 \
+  # && curl -L "${ARCHIVE_URL}${BUILD_VERSION}.tar.gz" -o /tmp/gobgp.tar.gz \
+  # && cp -r gobgp /go/src/github.com/osrg/gobgp
+  # && tar xzf /tmp/gobgp.tar.gz --strip 1 -C /go/src/github.com/osrg/gobgp \
+  && go get -u golang.org/x/net \
+  && go mod tidy \
+  && go build -v -trimpath -ldflags="-s -w" ./cmd/gobgp/ \
+  && go build -v -trimpath -ldflags="-s -w" ./cmd/gobgpd/
+
+WORKDIR /config
+
+
+# ----------------------------------------------------------------------------
+
+
+FROM scratch
+
+LABEL org.opencontainers.image.authors="Jauder Ho <jauderho@users.noreply.github.com>"
+LABEL org.opencontainers.image.url="https://github.com/jauderho/dockerfiles"
+LABEL org.opencontainers.image.documentation="https://github.com/jauderho/dockerfiles"
+LABEL org.opencontainers.image.source="https://github.com/jauderho/dockerfiles"
+LABEL org.opencontainers.image.title="jauderho/gobgp"
+LABEL org.opencontainers.image.description="GoBGP is an open source BGP implementation"
+
+COPY --from=build /etc/passwd /etc/group /etc/
+COPY --from=build /etc/ssl/certs /etc/ssl/certs
+
+COPY --from=build /go/src/github.com/osrg/gobgp/gobgp /usr/local/bin/
+COPY --from=build /go/src/github.com/osrg/gobgp/gobgpd /usr/local/bin/
+COPY --from=build --chown=nobody:nogroup /config /config
+
+EXPOSE 179
+USER nobody
+
+#ENTRYPOINT ["/usr/local/bin/gobgpd"]
+#CMD ["-f", "/config/gobgp.toml"]
+
+CMD ["/usr/local/bin/gobgpd", "-f", "/config/gobgp.toml"]

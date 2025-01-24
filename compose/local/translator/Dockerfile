@@ -16,8 +16,10 @@ RUN pip install -r /requirements/base.txt
 
 RUN mkdir /app \
   && cd /app \
-  && git clone -b v3.33.0 https://github.com/osrg/gobgp.git \
-  && cd gobgp/api \
+  && git clone https://github.com/Tuetuopay/gobgp.git \
+  && cd gobgp \
+  && git checkout 11d7cf1feec458867cbea8d52e594f5bcd889b04 \
+  && cd api \
   && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --pyi_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/translator.py /app
