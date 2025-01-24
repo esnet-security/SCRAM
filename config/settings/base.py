@@ -186,6 +186,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "scram.utils.context_processors.settings_context",
                 "scram.route_manager.context_processors.login_logout",
+                "scram.route_manager.context_processors.active_count",
             ],
         },
     },
