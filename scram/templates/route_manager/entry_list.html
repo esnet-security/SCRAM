@@ -47,6 +47,13 @@
     {# Open connection to the websocket #}
     let socket = new WebSocket(wss_uri + "/ws/route_manager/webui_block/")
 
+    // TODO:
+    {# Send route cache refresh request message #}
+    function updatePrefixCache() {
+      let data = {"type": "wui_prefix_cache_update_req"};
+      sendMessage(socket, JSON.stringify(data))
+    }
+
     {# Send status request message #}
     function getStatus(route, pk) {
       let data = {"type": "wui_check_req", "message": {"route": route, "row": pk}};
@@ -75,6 +82,7 @@
 {% endblock %}
 
 {% block content %}
+  <script>updatePrefixCache();</script>
   <div class="row">
   {% for actiontype, entry_list in entries.items %}
     <div class="col">

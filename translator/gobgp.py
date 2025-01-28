@@ -6,6 +6,7 @@ import attribute_pb2
 import gobgp_pb2
 import gobgp_pb2_grpc
 import grpc
+import redis
 from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
 from shared import asn_is_valid
@@ -30,6 +31,9 @@ class GoBGP:
         """Configure the channel used for communication."""
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+        self.redis_connection = redis.StrictRedis.from_url(
+            "redis://redis", port=6379, db=1, decode_responses=True
+        )  # TODO figure out db number and grab this from settings
 
     @staticmethod
     def _get_family_afi(ip_version):
@@ -175,6 +179,70 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
+    def update_prefix_cache(self, vrf="base"):
+        """update_prefix_cache TODO.
+
+        _extended_summary_
+
+        Args:
+            vrf (str, optional): _description_. Defaults to "base".
+        """
+        logger.info("$$$$$$$ updating prefix cache")
+        expiration = 60
+        redis_key = f"route-table-{vrf}"
+        self.redis_connection.expire(redis_key, expiration)
+        for prefix in self.get_all_prefixes():
+            self.redis_connection.sadd(redis_key, str(prefix.destination.prefix))
+        logger.info("$$$$$$$ updating prefix cache")
+
+    def get_all_prefixes(self, vrf=None):
+        """get_all_prefixes TODO.
+
+        _extended_summary_
+
+        Args:
+            vrf (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
+        if vrf:
+            result_v4 = self.stub.ListPath(
+                gobgp_pb2.ListPathRequest(
+                    table_type=gobgp_pb2.VRF,
+                    name=vrf,
+                    family=gobgp_pb2.Family(afi=self._get_family_afi(4), safi=gobgp_pb2.Family.SAFI_UNICAST),
+                ),
+                _TIMEOUT_SECONDS,
+            )
+            result_v6 = self.stub.ListPath(
+                gobgp_pb2.ListPathRequest(
+                    table_type=gobgp_pb2.VRF,
+                    name=vrf,
+                    family=gobgp_pb2.Family(afi=self._get_family_afi(6), safi=gobgp_pb2.Family.SAFI_UNICAST),
+                ),
+                _TIMEOUT_SECONDS,
+            )
+            return list(result_v4) + list(result_v6)
+        if not vrf:
+            result_v4_vrf = self.stub.ListPath(
+                gobgp_pb2.ListPathRequest(
+                    table_type=gobgp_pb2.GLOBAL,
+                    family=gobgp_pb2.Family(afi=self._get_family_afi(4), safi=gobgp_pb2.Family.SAFI_UNICAST),
+                ),
+                _TIMEOUT_SECONDS,
+            )
+            result_v6_vrf = self.stub.ListPath(
+                gobgp_pb2.ListPathRequest(
+                    table_type=gobgp_pb2.GLOBAL,
+                    family=gobgp_pb2.Family(afi=self._get_family_afi(6), safi=gobgp_pb2.Family.SAFI_UNICAST),
+                ),
+                _TIMEOUT_SECONDS,
+            )
+            return list(result_v4_vrf) + list(result_v6_vrf)
+
+        return None
+
     def get_prefixes(self, ip):
         """Retrieve the routes that match a prefix and are announced.
 
@@ -193,6 +261,6 @@ class GoBGP:
         )
         return list(result)
 
-    def is_blocked(self, ip):
+    def is_blocked(self, ip, vrf="base"):
         """Return True if at least one route matching the prefix is being announced."""
-        return len(self.get_prefixes(ip)) > 0
+        return self.redis_connection.sismember(f"route-table-{vrf}", str(ip))

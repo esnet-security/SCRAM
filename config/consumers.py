@@ -63,6 +63,8 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     translator_remove_all = _send_event
     # Send a query to all translators if a route is announced.
     translator_check = _send_event
+    # Send a query to all translators if we need to update the announced routes cache.
+    translator_cache_update = _send_event
 
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
@@ -77,16 +79,26 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content):
         """Receive message from WebSocket."""
-        if content["type"] == "wui_check_req":
-            # Web UI asks us to check; forward to translator(s)
-            await self.channel_layer.group_send(
-                self.translator_group,
-                {
-                    "type": "translator_check",
-                    "channel": self.channel_name,
-                    "message": content["message"],
-                },
-            )
+        match content["type"]:
+            case "wui_check_req":
+                # Web UI asks us to check; forward to translator(s)
+                await self.channel_layer.group_send(
+                    self.translator_group,
+                    {
+                        "type": "translator_check",
+                        "channel": self.channel_name,
+                        "message": content["message"],
+                    },
+                )
+            case "wui_prefix_cache_update_req":
+                await self.channel_layer.group_send(
+                    self.translator_group,
+                    {
+                        "type": "translator_cache_update",
+                        "channel": self.channel_name,
+                        "message": {"route": "0.0.0.0"},  # noqa S104 TODO: Fixme
+                    },
+                )
 
     async def wui_check_resp(self, event):
         """Forward a message to the correct Websocket."""
