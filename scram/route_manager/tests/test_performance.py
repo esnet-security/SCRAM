@@ -36,15 +36,14 @@ class TestViewNumQueries(TestCase):
         2. lookup session
         3. lookup user
         4. filter available actiontypes
-        5. count entries with actiontype=1
-        6. count entries with actiontype=1 and is_active
-        7. count by user
-        8. context processor active_count active blocks
-        9. context processor active_count all blocks
-        10. first page for actiontype=1
-        11. close transaction
+        5. count entries with actiontype=1 and is_active
+        6. count by user
+        7. context processor active_count active blocks
+        8. context processor active_count all blocks
+        9. first page for actiontype=1
+        10. close transaction
         """
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(10):
             start = time.time()
             self.client.get(reverse("route_manager:home"))
             time_taken = time.time() - start
