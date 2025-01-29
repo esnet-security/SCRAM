@@ -63,8 +63,6 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     translator_remove_all = _send_event
     # Send a query to all translators if a route is announced.
     translator_check = _send_event
-    # Send a query to all translators if we need to update the announced routes cache.
-    translator_cache_update = _send_event
 
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
