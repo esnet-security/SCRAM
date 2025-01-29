@@ -180,33 +180,52 @@ class GoBGP:
             logger.warning("ASN assertion failed with error: %s", e)
 
     def update_prefix_cache(self, vrf="base"):
-        """update_prefix_cache TODO.
+        """update_prefix_cache _summary_TODO.
 
         _extended_summary_
 
         Args:
             vrf (str, optional): _description_. Defaults to "base".
-        """
-        logger.info("$$$$$$$ updating prefix cache")
-        expiration = 60
-        redis_key = f"route-table-{vrf}"
-        self.redis_connection.expire(redis_key, expiration)
-        for prefix in self.get_all_prefixes():
-            self.redis_connection.sadd(redis_key, str(prefix.destination.prefix))
-        logger.info("$$$$$$$ updating prefix cache")
 
-    def get_all_prefixes(self, vrf=None):
+        Returns:
+            _type_: _description_
+        """
+        logger.info("Updating prefix check cache")
+
+        redis_key = f"route-table-{vrf}"
+        expiration = 60
+
+        # Don't bother filling the cache if it was filled within the last 60 seconds. Is this a bad idea?
+        if (ttl := self.redis_connection.ttl(redis_key)) > 0:
+            logger.info("Prefix check cache has %ss left, not updating cache", ttl)
+            return ttl
+
+        for prefix in self.get_all_prefixes():
+            ip = str(prefix.destination.prefix)
+            logger.info("Adding prefix %s to cache %s", ip, redis_key)
+            self.redis_connection.sadd(redis_key, ip)
+
+        # Finally, let's set this key to expire so that we don't hold onto these indefinitely.
+        self.redis_connection.expire(redis_key, expiration)
+        ttl = self.redis_connection.ttl(redis_key)
+        logger.info("Finished updating prefix cache %s, set TTL to %s", redis_key, ttl)
+
+        return ttl
+
+    def get_all_prefixes(self, vrf="base"):
         """get_all_prefixes TODO.
 
         _extended_summary_
 
         Args:
-            vrf (_type_, optional): _description_. Defaults to None.
+            vrf (str, optional): _description_. Defaults to "base".
 
         Returns:
             _type_: _description_
         """
-        if vrf:
+        # VRFs require special consideration when talking to GoBGP.
+        if vrf != "base":
+            logger.info("Getting all prefixes from GoBGP for VRF %s", vrf)
             result_v4 = self.stub.ListPath(
                 gobgp_pb2.ListPathRequest(
                     table_type=gobgp_pb2.VRF,
@@ -223,43 +242,33 @@ class GoBGP:
                 ),
                 _TIMEOUT_SECONDS,
             )
-            return list(result_v4) + list(result_v6)
-        if not vrf:
-            result_v4_vrf = self.stub.ListPath(
-                gobgp_pb2.ListPathRequest(
-                    table_type=gobgp_pb2.GLOBAL,
-                    family=gobgp_pb2.Family(afi=self._get_family_afi(4), safi=gobgp_pb2.Family.SAFI_UNICAST),
-                ),
-                _TIMEOUT_SECONDS,
-            )
-            result_v6_vrf = self.stub.ListPath(
-                gobgp_pb2.ListPathRequest(
-                    table_type=gobgp_pb2.GLOBAL,
-                    family=gobgp_pb2.Family(afi=self._get_family_afi(6), safi=gobgp_pb2.Family.SAFI_UNICAST),
-                ),
-                _TIMEOUT_SECONDS,
-            )
-            return list(result_v4_vrf) + list(result_v6_vrf)
 
-        return None
+            results = list(result_v4) + list(result_v6)
+            logger.info("Found %s prefixes in vrf %s", len(results), vrf)
 
-    def get_prefixes(self, ip):
-        """Retrieve the routes that match a prefix and are announced.
+            return results
 
-        Returns:
-            list: The routes that overlap with the prefix and are currently announced.
-        """
-        prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
-        family_afi = self._get_family_afi(ip.ip.version)
-        result = self.stub.ListPath(
+        # The non-VRF route table (base) needs to be handled this way with GoBGP.
+        logger.info("Getting all prefixes from GoBGP for base routing instance")
+        result_v4_vrf = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
                 table_type=gobgp_pb2.GLOBAL,
-                prefixes=prefixes,
-                family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                family=gobgp_pb2.Family(afi=self._get_family_afi(4), safi=gobgp_pb2.Family.SAFI_UNICAST),
             ),
             _TIMEOUT_SECONDS,
         )
-        return list(result)
+        result_v6_vrf = self.stub.ListPath(
+            gobgp_pb2.ListPathRequest(
+                table_type=gobgp_pb2.GLOBAL,
+                family=gobgp_pb2.Family(afi=self._get_family_afi(6), safi=gobgp_pb2.Family.SAFI_UNICAST),
+            ),
+            _TIMEOUT_SECONDS,
+        )
+
+        results = list(result_v4_vrf) + list(result_v6_vrf)
+        logger.info("Found %s prefixes in base routing instance", len(results))
+
+        return results
 
     def is_blocked(self, ip, vrf="base"):
         """Return True if at least one route matching the prefix is being announced."""

@@ -18,7 +18,6 @@ KNOWN_MESSAGES = {
     "translator_remove",
     "translator_remove_all",
     "translator_check",
-    "translator_cache_update",
 }
 
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
@@ -73,7 +72,7 @@ hostname = os.environ.get("SCRAM_HOSTNAME", "scram_hostname_not_set")
 url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/translator_block/")
 
 
-async def process(message, websocket, g):  # noqa C901 TODO: make less complex
+async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
     event_type = json_message.get("type")
@@ -87,7 +86,7 @@ async def process(message, websocket, g):  # noqa C901 TODO: make less complex
         try:
             ip = ipaddress.ip_interface(event_data["route"])
         except:  # noqa E722
-            logger.exception("Error parsing message: %s", message)
+            logger.exception("Error parsing ip: %s", event_data["route"])
             return
 
         match event_type:
@@ -96,17 +95,15 @@ async def process(message, websocket, g):  # noqa C901 TODO: make less complex
             case "translator_remove":
                 g.del_path(ip, event_data)
             case "translator_check":
+                logger.info("Processing `translator_check` message")
+                # We have to make sure that the cache has been filled properly first.
+                cache_ttl = g.update_prefix_cache()
+                # Once the cache has been checked and filled, we can assemble and send the message.
                 json_message["type"] = "translator_check_resp"
-                json_message["message"]["is_blocked"] = g.is_blocked(
-                    ip
-                )  # TODO: Have this method wait until cache is nonzero or not too old or both?
+                json_message["message"]["is_blocked"] = g.is_blocked(ip)
+                json_message["message"]["last_seen"] = cache_ttl
                 json_message["message"]["translator_name"] = hostname
-                await websocket.send(json.dumps(json_message))
-            case "translator_cache_update":
-                json_message["type"] = "translator_cache_update_resp"
-                g.update_prefix_cache()
-                json_message["message"]["done_updating"] = True
-                json_message["message"]["translator_name"] = hostname
+                logger.debug("Sending message: %s", json_message)
                 await websocket.send(json.dumps(json_message))
 
 

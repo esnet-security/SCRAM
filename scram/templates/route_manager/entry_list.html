@@ -47,13 +47,6 @@
     {# Open connection to the websocket #}
     let socket = new WebSocket(wss_uri + "/ws/route_manager/webui_block/")
 
-    // TODO:
-    {# Send route cache refresh request message #}
-    function updatePrefixCache() {
-      let data = {"type": "wui_prefix_cache_update_req"};
-      sendMessage(socket, JSON.stringify(data))
-    }
-
     {# Send status request message #}
     function getStatus(route, pk) {
       let data = {"type": "wui_check_req", "message": {"route": route, "row": pk}};
@@ -71,18 +64,17 @@
       elem.classList.remove('fa-question-circle');
       if ( resp_data.is_blocked ) {
           elem.classList.add('fa-bullhorn', 'text-success');
-          elem.setAttribute('title', "Currently being announced by " + resp_data.translator_name);
+          elem.setAttribute('title', "Prefix has been announced in the last " + resp_data.last_seen + "s by " + resp_data.translator_name);
       }
       else {
           elem.classList.add('fa-bug', 'text-warning');
-          elem.setAttribute('title', "Currently NOT being announced by " + resp_data.translator_name);
+          elem.setAttribute('title', "Prefix has NOT been announced in the last " + resp_data.last_seen + "s by " + resp_data.translator_name);
       }
     }
     </script>
 {% endblock %}
 
 {% block content %}
-  <script>updatePrefixCache();</script>
   <div class="row">
   {% for actiontype, entry_list in entries.items %}
     <div class="col">

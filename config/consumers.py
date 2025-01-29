@@ -79,26 +79,16 @@ class WebUIConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content):
         """Receive message from WebSocket."""
-        match content["type"]:
-            case "wui_check_req":
-                # Web UI asks us to check; forward to translator(s)
-                await self.channel_layer.group_send(
-                    self.translator_group,
-                    {
-                        "type": "translator_check",
-                        "channel": self.channel_name,
-                        "message": content["message"],
-                    },
-                )
-            case "wui_prefix_cache_update_req":
-                await self.channel_layer.group_send(
-                    self.translator_group,
-                    {
-                        "type": "translator_cache_update",
-                        "channel": self.channel_name,
-                        "message": {"route": "0.0.0.0"},  # noqa S104 TODO: Fixme
-                    },
-                )
+        if content["type"] == "wui_check_req":
+            # Web UI asks us to check; forward to translator(s)
+            await self.channel_layer.group_send(
+                self.translator_group,
+                {
+                    "type": "translator_check",
+                    "channel": self.channel_name,
+                    "message": content["message"],
+                },
+            )
 
     async def wui_check_resp(self, event):
         """Forward a message to the correct Websocket."""
