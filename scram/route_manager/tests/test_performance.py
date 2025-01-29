@@ -26,7 +26,7 @@ class TestViewNumQueries(TestCase):
         self.atype, _ = ActionType.objects.get_or_create(name="block")
         routes = [Route(route=self.fake.unique.ipv4_public()) for x in range(self.NUM_ENTRIES)]
         created_routes = Route.objects.bulk_create(routes)
-        entries = [Entry(route=route, actiontype=self.atype) for route in created_routes]
+        entries = [Entry(route=route, actiontype=self.atype, is_active=True) for route in created_routes]
         Entry.objects.bulk_create(entries)
 
     def test_home_page(self):
