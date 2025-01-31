@@ -1,6 +1,8 @@
 """A translator interface for GoBGP (https://github.com/osrg/gobgp)."""
 
 import logging
+from enum import Enum
+from ipaddress import IPv4Interface, IPv6Interface, ip_network
 
 import attribute_pb2
 import gobgp_pb2
@@ -12,6 +14,7 @@ from google.protobuf.any_pb2 import Any
 from shared import asn_is_valid
 
 _TIMEOUT_SECONDS = 1000
+PREFIX_CACHE_TIMEOUT_SECONDS = 60
 DEFAULT_ASN = 65400
 DEFAULT_COMMUNITY = 666
 DEFAULT_V4_NEXTHOP = "192.0.2.199"
@@ -19,6 +22,14 @@ DEFAULT_V6_NEXTHOP = "100::1"
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
 IPV6 = 6
+
+
+class CacheFillMethod(Enum):
+    """The approach we want to use when updating our redis cache."""
+
+    LAZY = 1
+    EAGER = 2
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -132,15 +143,15 @@ class GoBGP:
 
     def add_path(self, ip, event_data):
         """Announce a single route."""
-        vrf_id = event_data.get("vrf_id")
-        logger.info("Blocking %s in VRF %s", ip, vrf_id)  # TODO: Do we want to name the None Case?
+        vrf = event_data.get("vrf_id", "base")
+        logger.info("Blocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
 
         try:
             path = self._build_path(ip, event_data)
 
-            if vrf_id:
+            if vrf != "base":
                 self.stub.AddPath(
-                    gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf_id),
+                    gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf),
                     _TIMEOUT_SECONDS,
                 )
             else:
@@ -151,24 +162,28 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
-    def del_all_paths(self):
+        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)
+
+    def del_all_paths(self, vrf="base"):
         """Remove all routes from being announced."""
         logger.warning("Withdrawing ALL routes")
 
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
         # TODO: Delete paths in all tables? Maybe GoBGP has a helper for this.
 
+        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)  # TODO: Fix VRF
+
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
-        vrf_id = event_data.get("vrf_id")
-        logger.info("Unblocking %s in VRF %s", ip, vrf_id)  # TODO: Do we want to name the None Case?
+        vrf = event_data.get("vrf_id", "base")
+        logger.info("Unblocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
 
         try:
             path = self._build_path(ip, event_data)
 
-            if vrf_id:
+            if vrf != "base":
                 self.stub.DeletePath(
-                    gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf_id),
+                    gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.VRF, path=path, vrf_id=vrf),
                     _TIMEOUT_SECONDS,
                 )
             else:
@@ -179,36 +194,68 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
-    def update_prefix_cache(self, vrf="base"):
-        """update_prefix_cache _summary_TODO.
+        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)
 
-        _extended_summary_
+    def get_cache_ttl(self, cache_key: str) -> int:
+        """get_cache_ttl gets the current TTL value for the provided cache key.
 
         Args:
-            vrf (str, optional): _description_. Defaults to "base".
+            cache_key (str): The redis key you want to check TTL on.
 
         Returns:
-            _type_: _description_
+            ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1
+                means that the key exists but has no associated expiration time.
         """
-        logger.info("Updating prefix check cache")
+        logger.info("Checking cache TTL for cache %s", cache_key)
+        ttl = self.redis_connection.ttl(cache_key)
+        logger.info("Found cache TTL for cache %s. Cache is valid for %s more seconds", cache_key, ttl)
+        return ttl
 
+    def update_prefix_cache(self, vrf="base", cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
+        """update_prefix_cache ensures that the redis prefix cache is up to date.
+
+        This method takes a VRF and an optional directive to how we should fill the prefix cache. The prefix
+        cache is formatted as a redis key per VRF that we store the currently blocked routes in. This is cached
+        for the default cache time so that we don't have to query GoBGP for the full route table for every single
+        route that we need to see the block status for. This is necessary, unfortunately, because GoBGP doesn't
+        let you see if a single route is in its route table for VRFs, so we have to grab the full table, which is
+        potentially expensive in large deployments, and hold on to it for the TTL.
+
+        In SCRAM, this data is used to display to a user if the route is blocked in the `/entries/` page.
+
+        Args:
+            vrf (str, optional): The VRF we're updating. Defaults to "base".
+            cache_fill_method (CacheFillMethod, optional): The cache fill approach we want to use. Defaults to
+                CacheFillMethod.LAZY which only updates the cache if the TTL is expired. CacheFillMethod.EAGER
+                can be used to require that the entire cache is updated.
+
+        Returns:
+            ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1
+                means that the key exists but has no associated expiration time.
+        """
+        # TODO: Write tests to cover this
         redis_key = f"route-table-{vrf}"
-        expiration = 60
 
-        # Don't bother filling the cache if it was filled within the last 60 seconds. Is this a bad idea?
-        if (ttl := self.redis_connection.ttl(redis_key)) > 0:
-            logger.info("Prefix check cache has %ss left, not updating cache", ttl)
-            return ttl
+        match cache_fill_method:
+            case CacheFillMethod.LAZY:
+                logger.info("Lazily updating prefix check cache %s", redis_key)
+                # Don't bother filling the cache if it was filled within the last 60 seconds. Is this a bad idea?
+                if (ttl := self.get_cache_ttl(redis_key)) > 0:
+                    logger.info("Prefix check on cache %s has %ss left, not updating cache", redis_key, ttl)
+                    return ttl
+            case CacheFillMethod.EAGER:
+                logger.info("Updating the cache %s ✨with feeling✨", redis_key)
 
+        # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
         for prefix in self.get_all_prefixes():
             ip = str(prefix.destination.prefix)
             logger.info("Adding prefix %s to cache %s", ip, redis_key)
             self.redis_connection.sadd(redis_key, ip)
 
         # Finally, let's set this key to expire so that we don't hold onto these indefinitely.
-        self.redis_connection.expire(redis_key, expiration)
+        self.redis_connection.expire(redis_key, PREFIX_CACHE_TIMEOUT_SECONDS)
         ttl = self.redis_connection.ttl(redis_key)
-        logger.info("Finished updating prefix cache %s, set TTL to %s", redis_key, ttl)
+        logger.info("Finished updating prefix cache %s, TTL is currently %ss", redis_key, ttl)
 
         return ttl
 
@@ -223,6 +270,7 @@ class GoBGP:
         Returns:
             _type_: _description_
         """
+        # TODO: Write tests to cover this
         # VRFs require special consideration when talking to GoBGP.
         if vrf != "base":
             logger.info("Getting all prefixes from GoBGP for VRF %s", vrf)
@@ -270,6 +318,27 @@ class GoBGP:
 
         return results
 
-    def is_blocked(self, ip, vrf="base"):
+    def is_blocked(self, ip: IPv6Interface | IPv4Interface, vrf: str = "base") -> bool:
         """Return True if at least one route matching the prefix is being announced."""
-        return self.redis_connection.sismember(f"route-table-{vrf}", str(ip))
+        logger.info("Checking to see if IP %s in VRF %s is blocked", ip, vrf)
+
+        # TODO: Write tests to cover this
+        # First let's make sure our redis cache is filled for this VRF:
+        self.update_prefix_cache(vrf=vrf)
+
+        # Next, simply ask Redis if it is in the cache. This is nice and fast!
+        if self.redis_connection.sismember(f"route-table-{vrf}", str(ip)):
+            logger.info("Found exact match prefix blocking IP %s in VRF %s", ip, vrf)
+            return True
+
+        # Then, In the more complicated case of the given IP only being blocked by a covering prefix
+        # NOTE: Today, we don't ever query for these things in the frontend, but we might in the future.
+        redis_cache_values = self.redis_connection.smembers(f"route-table-{vrf}")
+        if any(ip in ip_network(prefix) for prefix in redis_cache_values):
+            logger.info("Found covering prefix blocking IP %s in VRF %s", ip, vrf)
+            return True
+
+        # Finally, report back that we didn't find a block covering this IP.
+        logger.info("Did not find any prefixes blocking IP %s in VRF %s", ip, vrf)
+        logger.debug(redis_cache_values)
+        return False

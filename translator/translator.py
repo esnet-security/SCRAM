@@ -75,36 +75,44 @@ url = os.environ.get("SCRAM_EVENTS_URL", "ws://django:8000/ws/route_manager/tran
 async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
+    logger.info("Processing message %s", json_message)
     event_type = json_message.get("type")
     event_data = json_message.get("message")
     if event_type not in KNOWN_MESSAGES:
         logger.error("Unknown event type received: %s", event_type)
     # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
+        # TODO: Needs to handle VRFs
+        logger.info("Processing `translator_remove_all` message")
         g.del_all_paths()
+        logger.info("Done processing `translator_remove_all` message")
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])
+            vrf = json_message["message"]["vrf"]
         except:  # noqa E722
             logger.exception("Error parsing ip: %s", event_data["route"])
             return
 
-        match event_type:
+        match event_type:  # TODO VRFs for all of this potentially.
             case "translator_add":
+                logger.info("Processing `translator_add` message")
                 g.add_path(ip, event_data)
+                logger.info("Done processing `translator_add` message")
             case "translator_remove":
+                logger.info("Processing `translator_remove` message")
                 g.del_path(ip, event_data)
+                logger.info("Done processing `translator_remove` message")
             case "translator_check":
                 logger.info("Processing `translator_check` message")
-                # We have to make sure that the cache has been filled properly first.
-                cache_ttl = g.update_prefix_cache()
-                # Once the cache has been checked and filled, we can assemble and send the message.
                 json_message["type"] = "translator_check_resp"
-                json_message["message"]["is_blocked"] = g.is_blocked(ip)
-                json_message["message"]["last_seen"] = cache_ttl
+                json_message["message"]["is_blocked"] = g.is_blocked(ip, vrf)
+                json_message["message"]["last_seen"] = g.get_cache_ttl(f"route-table-{vrf}")
                 json_message["message"]["translator_name"] = hostname
-                logger.debug("Sending message: %s", json_message)
+                logger.debug("Sending `translator_check_resp` message: %s", json_message)
                 await websocket.send(json.dumps(json_message))
+                logger.debug("Done sending `translator_check_resp` message: %s", json_message)
+                logger.info("Done processing `translator_check` message")
 
 
 async def main():
