@@ -17,7 +17,7 @@ def login_logout(request):
     return {"login": login_url, "logout": logout_url}
 
 
-def active_count(request, *args, **kwargs):
+def active_count(request):
     """Grab the active count of blocks.
 
     Returns:
