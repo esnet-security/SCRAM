@@ -78,13 +78,15 @@ async def process(message, websocket, g):
     logger.info("Processing message %s", json_message)
     event_type = json_message.get("type")
     event_data = json_message.get("message")
+    vrf = json_message["message"].get("vrf", "base")
+
     if event_type not in KNOWN_MESSAGES:
         logger.error("Unknown event type received: %s", event_type)
     # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         # TODO: Needs to handle VRFs
         logger.info("Processing `translator_remove_all` message")
-        g.del_all_paths()
+        g.del_all_paths(vrf)
         logger.info("Done processing `translator_remove_all` message")
     else:
         try:
@@ -93,16 +95,14 @@ async def process(message, websocket, g):
             logger.exception("Error parsing ip: %s in message: %s", event_data.get("route"), message)
             return
 
-        vrf = json_message["message"].get("vrf", "base")
-
         match event_type:  # TODO VRFs for all of this potentially.
             case "translator_add":
                 logger.info("Processing `translator_add` message")
-                g.add_path(ip, event_data)
+                g.add_path(ip, vrf, event_data)
                 logger.info("Done processing `translator_add` message")
             case "translator_remove":
                 logger.info("Processing `translator_remove` message")
-                g.del_path(ip, event_data)
+                g.del_path(ip, vrf, event_data)
                 logger.info("Done processing `translator_remove` message")
             case "translator_check":
                 logger.info("Processing `translator_check` message")

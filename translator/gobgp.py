@@ -143,9 +143,8 @@ class GoBGP:
             family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
         )
 
-    def add_path(self, ip, event_data):
+    def add_path(self, ip, vrf, event_data):
         """Announce a single route."""
-        vrf = event_data.get("vrf_id", "base")
         logger.info("Blocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
 
         try:
@@ -164,23 +163,26 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
-        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)
+        self.update_prefix_cache(vrf, CacheFillMethod.EAGER)
 
-    def del_all_paths(self, vrf="base"):
-        """Remove all routes from being announced."""
+    def del_all_paths(self, vrf):
+        """Remove all routes from being announced from a given VRF."""
         logger.warning("Withdrawing ALL routes for VRF %s", vrf)
 
-        self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
-        # TODO: Delete paths in all tables? Maybe GoBGP has a helper for this.
+        if vrf == "base":
+            self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
+        if vrf != "base":
+            self.stub.DeletePath(
+                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.VRF, vrf_id=vrf), _TIMEOUT_SECONDS
+            )  # TODO: Test
 
         # Invalidate the cache entirely
-        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EXPIRE)  # TODO: Fix VRF
+        self.update_prefix_cache(vrf, CacheFillMethod.EXPIRE)  # TODO: Fix VRF
 
         logger.warning("Done withdrawing ALL routes for VRF %s", vrf)
 
-    def del_path(self, ip, event_data):
+    def del_path(self, ip, vrf, event_data):
         """Remove a single route from being announced."""
-        vrf = event_data.get("vrf_id", "base")
         logger.info("Unblocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
 
         try:
@@ -199,7 +201,7 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
-        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)
+        self.update_prefix_cache(vrf, CacheFillMethod.EAGER)
 
     def get_cache_ttl(self, cache_key: str) -> int:
         """get_cache_ttl gets the current TTL value for the provided cache key.
@@ -216,7 +218,7 @@ class GoBGP:
         logger.info("Found cache TTL for cache %s. Cache is valid for %s more seconds", cache_key, ttl)
         return ttl
 
-    def update_prefix_cache(self, vrf="base", cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
+    def update_prefix_cache(self, vrf, cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
         """update_prefix_cache ensures that the redis prefix cache is up to date.
 
         This method takes a VRF and an optional directive to how we should fill the prefix cache. The prefix
@@ -261,7 +263,7 @@ class GoBGP:
             # We delete the entire cache since we're already refilling it from scratch. This gets rid of stale entries.
             redis_transaction.delete(redis_key)
             # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
-            for prefix in self.get_all_prefixes():
+            for prefix in self.get_all_prefixes(vrf):
                 ip = str(prefix.destination.prefix)
                 logger.info("Adding prefix %s to cache %s", ip, redis_key)
                 redis_transaction.sadd(redis_key, ip)
@@ -275,7 +277,7 @@ class GoBGP:
 
         return ttl
 
-    def get_all_prefixes(self, vrf="base"):
+    def get_all_prefixes(self, vrf):
         """get_all_prefixes TODO.
 
         _extended_summary_
@@ -334,13 +336,13 @@ class GoBGP:
 
         return results
 
-    def is_blocked(self, ip: IPv6Interface | IPv4Interface, vrf: str = "base") -> bool:
+    def is_blocked(self, ip: IPv6Interface | IPv4Interface, vrf: str) -> bool:
         """Return True if at least one route matching the prefix is being announced."""
         logger.info("Checking to see if IP %s in VRF %s is blocked", ip, vrf)
 
         # TODO: Write tests to cover this
         # First let's make sure our redis cache is filled for this VRF:
-        self.update_prefix_cache(vrf=vrf)
+        self.update_prefix_cache(vrf, CacheFillMethod.LAZY)
 
         # Next, simply ask Redis if it is in the cache. This is nice and fast!
         if self.redis_connection.sismember(f"route-table-{vrf}", str(ip)):

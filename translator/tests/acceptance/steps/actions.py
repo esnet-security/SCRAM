@@ -9,13 +9,15 @@ from behave.log_capture import capture
 
 logging.basicConfig(level=logging.DEBUG)
 
+vrf = "base"
+
 
 @when("we add {route} with {asn} and {community} to the block list")
 def add_block(context, route, asn, community):
     """Block a single IP."""
     ip = ipaddress.ip_interface(route)
     event_data = {"asn": int(asn), "community": int(community)}
-    context.gobgp.add_path(ip, event_data)
+    context.gobgp.add_path(ip, vrf, event_data)
 
 
 @then("we delete {route} with {asn} and {community} from the block list")
@@ -23,7 +25,7 @@ def del_block(context, route, asn, community):
     """Remove a single IP."""
     ip = ipaddress.ip_interface(route)
     event_data = {"asn": int(asn), "community": int(community)}
-    context.gobgp.del_path(ip, event_data)
+    context.gobgp.del_path(ip, vrf, event_data)
 
 
 def get_block_status(context, ip):
@@ -37,7 +39,7 @@ def get_block_status(context, ip):
 
     ip_obj = ipaddress.ip_interface(ip)
 
-    return context.gobgp.is_blocked(ip_obj)
+    return context.gobgp.is_blocked(ip_obj, vrf)
 
 
 @capture
