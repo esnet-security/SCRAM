@@ -12,3 +12,6 @@ Feature: Tests run correctly
 
   Scenario: No leftover v6 blocks in test-vrf VRF
     Then ::/0 in test-vrf is unblocked
+
+
+# TODO: Figure out why this always passes, even with leftover prefixes :D

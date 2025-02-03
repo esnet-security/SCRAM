@@ -12,7 +12,7 @@ import grpc
 import redis
 from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
-from shared import asn_is_valid
+from shared import asn_is_valid, strip_distinguished_prefix
 
 _TIMEOUT_SECONDS = 1000
 PREFIX_CACHE_TIMEOUT_SECONDS = 60
@@ -264,7 +264,10 @@ class GoBGP:
             redis_transaction.delete(redis_key)
             # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
             for prefix in self.get_all_prefixes(vrf):
-                ip = str(prefix.destination.prefix)
+                if vrf != "base":
+                    ip = str(strip_distinguished_prefix(prefix.destination.prefix))
+                else:
+                    ip = str(prefix.destination.prefix)
                 logger.info("Adding prefix %s to cache %s", ip, redis_key)
                 redis_transaction.sadd(redis_key, ip)
             # Next, let's set this key to expire so that we don't hold onto these indefinitely.

@@ -1,8 +1,13 @@
 """Provide a location for code that we want to share between all translators."""
 
+import logging
+from ipaddress import IPv4Interface, IPv6Interface, ip_interface
+
 from exceptions import ASNError
 
 MAX_ASN_VAL = 2**32 - 1
+
+logger = logging.getLogger(__name__)
 
 
 def asn_is_valid(asn: int) -> bool:
@@ -27,3 +32,24 @@ def asn_is_valid(asn: int) -> bool:
         raise ASNError(msg)
 
     return True
+
+
+def strip_distinguished_prefix(prefix: str) -> IPv4Interface | IPv6Interface:
+    """strip_distinguished_prefix Takes a prefix marked with an RD and strips it to just the prefix.
+
+    _extended_summary_
+
+    Args:
+        prefix (str): A prefix that has a route distinguisher attached, for example, the prefixes
+            "293:64666:192.0.2.0/24", or "293:64666:2001:db88::1/128". These examples would be stripped down
+            to `192.0.2.0/24` and `2001:db88::1/128`.
+
+    Returns:
+        IPv4Interface | IPv6Interface: The formatted IP address object without the RD.
+    """
+    # Split on only the first two colons and keep only the last value in the resulting list.
+    stripped_prefix = prefix.split(":", 2)[-1]
+    try:
+        return ip_interface(stripped_prefix)
+    except ValueError as e:
+        logger.exception("Could not properly parse prefix: %s ,received error: %s", prefix, e.message)
