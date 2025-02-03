@@ -3,6 +3,7 @@
 import logging
 from enum import Enum
 from ipaddress import IPv4Interface, IPv6Interface, ip_network
+from typing import Annotated
 
 import attribute_pb2
 import gobgp_pb2
@@ -27,8 +28,9 @@ IPV6 = 6
 class CacheFillMethod(Enum):
     """The approach we want to use when updating our redis cache."""
 
-    LAZY = 1
-    EAGER = 2
+    LAZY: Annotated[int, "Wait until the cache is expired to update it"] = 1
+    EAGER: Annotated[int, "Request all prefixes from GoBGP and put them into the cache"] = 2
+    EXPIRE: Annotated[int, "Force expire the given redis cache."] = 3
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -166,12 +168,15 @@ class GoBGP:
 
     def del_all_paths(self, vrf="base"):
         """Remove all routes from being announced."""
-        logger.warning("Withdrawing ALL routes")
+        logger.warning("Withdrawing ALL routes for VRF %s", vrf)
 
         self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
         # TODO: Delete paths in all tables? Maybe GoBGP has a helper for this.
 
-        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EAGER)  # TODO: Fix VRF
+        # Invalidate the cache entirely
+        self.update_prefix_cache(vrf=vrf, cache_fill_method=CacheFillMethod.EXPIRE)  # TODO: Fix VRF
+
+        logger.warning("Done withdrawing ALL routes for VRF %s", vrf)
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
@@ -227,7 +232,8 @@ class GoBGP:
             vrf (str, optional): The VRF we're updating. Defaults to "base".
             cache_fill_method (CacheFillMethod, optional): The cache fill approach we want to use. Defaults to
                 CacheFillMethod.LAZY which only updates the cache if the TTL is expired. CacheFillMethod.EAGER
-                can be used to require that the entire cache is updated.
+                can be used to require that the entire cache is updated, and CacheFillMethod.EXPIRE will empty
+                the cache completely.
 
         Returns:
             ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1
@@ -243,18 +249,28 @@ class GoBGP:
                 if (ttl := self.get_cache_ttl(redis_key)) > 0:
                     logger.info("Prefix check on cache %s has %ss left, not updating cache", redis_key, ttl)
                     return ttl
+            case CacheFillMethod.EXPIRE:
+                self.redis_connection.expire(redis_key, 0)
             case CacheFillMethod.EAGER:
                 logger.info("Updating the cache %s ✨with feeling✨", redis_key)
 
-        # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
-        for prefix in self.get_all_prefixes():
-            ip = str(prefix.destination.prefix)
-            logger.info("Adding prefix %s to cache %s", ip, redis_key)
-            self.redis_connection.sadd(redis_key, ip)
+        # Now that we're in the scenario where we need to walk the whole route table, let's open a transaction and do
+        # the redis portions of this all at once.
+        with self.redis_connection.pipeline(transaction=True) as redis_transaction:
+            logger.debug("Entering Redis Transaction")
+            # We delete the entire cache since we're already refilling it from scratch. This gets rid of stale entries.
+            redis_transaction.delete(redis_key)
+            # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
+            for prefix in self.get_all_prefixes():
+                ip = str(prefix.destination.prefix)
+                logger.info("Adding prefix %s to cache %s", ip, redis_key)
+                redis_transaction.sadd(redis_key, ip)
+            # Next, let's set this key to expire so that we don't hold onto these indefinitely.
+            redis_transaction.expire(redis_key, PREFIX_CACHE_TIMEOUT_SECONDS)
+            transaction_result = redis_transaction.execute()
+            logger.debug("Redis transaction completed with result: %s", transaction_result)
 
-        # Finally, let's set this key to expire so that we don't hold onto these indefinitely.
-        self.redis_connection.expire(redis_key, PREFIX_CACHE_TIMEOUT_SECONDS)
-        ttl = self.redis_connection.ttl(redis_key)
+        ttl = self.get_cache_ttl(redis_key)
         logger.info("Finished updating prefix cache %s, TTL is currently %ss", redis_key, ttl)
 
         return ttl

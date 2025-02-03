@@ -89,10 +89,11 @@ async def process(message, websocket, g):
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])
-            vrf = json_message["message"]["vrf"]
         except:  # noqa E722
-            logger.exception("Error parsing ip: %s", event_data["route"])
+            logger.exception("Error parsing ip: %s in message: %s", event_data.get("route"), message)
             return
+
+        vrf = json_message["message"].get("vrf", "base")
 
         match event_type:  # TODO VRFs for all of this potentially.
             case "translator_add":
