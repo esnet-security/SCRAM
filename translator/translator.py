@@ -89,7 +89,7 @@ class ParsedMessage(NamedTuple):
     Attributes:
         json_message (dict): The JSON representation of the original message.
         event_type (str): The type of event (e.g., "translator_add").
-        event_data (dict): The all of the other data for the event.
+        event_data (dict): The event_data websocket message originally sent.
         vrf (str): The VRF value the message applies to.
         ip (IPv4Interface | IPv6Interface | None): The parsed IP address, or None if invalid or missing.
     """

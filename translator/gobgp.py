@@ -228,7 +228,7 @@ class GoBGP:
         # TODO: Write Tests to cover this
         return ttl
 
-    def update_prefix_cache(self, vrf, cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
+    def update_prefix_cache(self, vrf: str, cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
         """update_prefix_cache ensures that the redis prefix cache is up to date.
 
         This method takes a VRF and an optional directive to how we should fill the prefix cache. The prefix
