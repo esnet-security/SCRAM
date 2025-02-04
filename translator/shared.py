@@ -20,7 +20,7 @@ def asn_is_valid(asn: int) -> bool:
         ASNError: If the ASN is not between 0 and 4294967295 or is not an integer.
 
     Returns:
-        bool: _description_
+        bool: True if the ASN is valid, False if it's Invalid.
 
     """
     if not isinstance(asn, int):
@@ -35,14 +35,14 @@ def asn_is_valid(asn: int) -> bool:
 
 
 def strip_distinguished_prefix(prefix: str) -> IPv4Interface | IPv6Interface:
-    """strip_distinguished_prefix Takes a prefix marked with an RD and strips it to just the prefix.
+    """strip_distinguished_prefix Takes a prefix marked with a route distinguisher (RD) and spits out just the prefix.
 
-    _extended_summary_
+    An example of this can be shown with the prefixes "293:64666:192.0.2.0/24", or "293:64666:2001:db88::1/128", this
+    function would strip down to to `192.0.2.0/24` and `2001:db88::1/128` respectively.
 
     Args:
-        prefix (str): A prefix that has a route distinguisher attached, for example, the prefixes
-            "293:64666:192.0.2.0/24", or "293:64666:2001:db88::1/128". These examples would be stripped down
-            to `192.0.2.0/24` and `2001:db88::1/128`.
+        prefix (str): A prefix that has a route distinguisher prefixing the prefix, i.e. "293:64666:192.0.2.0/24", or
+            "293:64666:2001:db88::1/128",
 
     Returns:
         IPv4Interface | IPv6Interface: The formatted IP address object without the RD.

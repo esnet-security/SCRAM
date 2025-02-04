@@ -2,7 +2,7 @@
 
 import logging
 from enum import Enum
-from ipaddress import IPv4Interface, IPv6Interface, ip_network
+from ipaddress import IPv4Interface, IPv6Interface, ip_interface, ip_network
 from typing import Annotated
 
 import attribute_pb2
@@ -13,6 +13,8 @@ import redis
 from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
 from shared import asn_is_valid, strip_distinguished_prefix
+
+REDIS_DB_INDEX = 1
 
 _TIMEOUT_SECONDS = 1000
 PREFIX_CACHE_TIMEOUT_SECONDS = 60
@@ -45,8 +47,8 @@ class GoBGP:
         channel = grpc.insecure_channel(url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
         self.redis_connection = redis.StrictRedis.from_url(
-            "redis://redis", port=6379, db=1, decode_responses=True
-        )  # TODO figure out db number and grab this from settings
+            "redis://redis", port=6379, db=REDIS_DB_INDEX, decode_responses=True
+        )
 
     @staticmethod
     def _get_family_afi(ip_version):
@@ -143,9 +145,15 @@ class GoBGP:
             family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
         )
 
-    def add_path(self, ip, vrf, event_data):
-        """Announce a single route."""
-        logger.info("Blocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
+    def add_path(self, ip: IPv4Interface | IPv6Interface, vrf: str, event_data: dict) -> None:
+        """add_path adds a path to GoBGP to be acted upon.
+
+        Args:
+            ip (IPv4Interface | IPv6Interface): The IP address object to act on
+            vrf (str): The VRF we're acting on this IP in.
+            event_data (dict): The event_data websocket message originally sent.
+        """
+        logger.info("Blocking %s in VRF %s", ip, vrf)
 
         try:
             path = self._build_path(ip, event_data)
@@ -163,27 +171,39 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
+        # Since we know a path was just added, let's go ahead and fill the cache preemptively of someone needing it.
         self.update_prefix_cache(vrf, CacheFillMethod.EAGER)
 
-    def del_all_paths(self, vrf):
-        """Remove all routes from being announced from a given VRF."""
+    def del_all_paths(self, vrf: str) -> None:
+        """del_all_paths deletes all paths from the given VRF.
+
+        Args:
+            vrf (str): The VRF we want to clear out entirely.
+        """
         logger.warning("Withdrawing ALL routes for VRF %s", vrf)
 
-        if vrf == "base":
-            self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
         if vrf != "base":
             self.stub.DeletePath(
                 gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.VRF, vrf_id=vrf), _TIMEOUT_SECONDS
-            )  # TODO: Test
+            )  # TODO: Write Tests to Cover This
+        else:
+            self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
 
-        # Invalidate the cache entirely
-        self.update_prefix_cache(vrf, CacheFillMethod.EXPIRE)  # TODO: Fix VRF
+        # Invalidate this VRF's prefix cache entirely since we know we just deleted everything from this VRF.
+        self.update_prefix_cache(vrf, CacheFillMethod.EXPIRE)
 
         logger.warning("Done withdrawing ALL routes for VRF %s", vrf)
 
-    def del_path(self, ip, vrf, event_data):
-        """Remove a single route from being announced."""
-        logger.info("Unblocking %s in VRF %s", ip, vrf)  # TODO: Do we want to name the None Case?
+    def del_path(self, ip: IPv6Interface | IPv4Interface, vrf: str, event_data: dict) -> None:
+        """del_path removes a single route in a VRF from being announced/acted upon.
+
+        Args:
+            ip (IPv6Interface | IPv4Interface): The IP address object we no longer want to act on
+            vrf (str): The VRF we're removing this IP from.
+            event_data (dict): The event_data websocket message originally sent.
+        """
+        logger.info("Unblocking %s in VRF %s", ip, vrf)
+        # TODO Write tests to cover this
 
         try:
             path = self._build_path(ip, event_data)
@@ -201,13 +221,14 @@ class GoBGP:
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
 
+        # Update this VRF's prefix cache since we know we just changed the state in this VRF.
         self.update_prefix_cache(vrf, CacheFillMethod.EAGER)
 
     def get_cache_ttl(self, cache_key: str) -> int:
         """get_cache_ttl gets the current TTL value for the provided cache key.
 
         Args:
-            cache_key (str): The redis key you want to check TTL on.
+            cache_key (str): The redis key you want to check TTL on, for example `route-table-base`
 
         Returns:
             ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1
@@ -216,6 +237,7 @@ class GoBGP:
         logger.info("Checking cache TTL for cache %s", cache_key)
         ttl = self.redis_connection.ttl(cache_key)
         logger.info("Found cache TTL for cache %s. Cache is valid for %s more seconds", cache_key, ttl)
+        # TODO: Write Tests to cover this
         return ttl
 
     def update_prefix_cache(self, vrf, cache_fill_method: CacheFillMethod = CacheFillMethod.LAZY) -> int:
@@ -223,23 +245,24 @@ class GoBGP:
 
         This method takes a VRF and an optional directive to how we should fill the prefix cache. The prefix
         cache is formatted as a redis key per VRF that we store the currently blocked routes in. This is cached
-        for the default cache time so that we don't have to query GoBGP for the full route table for every single
-        route that we need to see the block status for. This is necessary, unfortunately, because GoBGP doesn't
-        let you see if a single route is in its route table for VRFs, so we have to grab the full table, which is
-        potentially expensive in large deployments, and hold on to it for the TTL.
+        for the default value in PREFIX_CACHE_TIMEOUT_SECONDS so that we don't have to query GoBGP for the full
+        route table for every single route that we need to see the block status for. This is necessary, unfortunately,
+        because GoBGP doesn't let you see if a single route is in its route table for VRFs, so we have to grab the full
+        table (which is potentially expensive in large deployments) and hold on to it for the specified TTL.
 
-        In SCRAM, this data is used to display to a user if the route is blocked in the `/entries/` page.
+        In SCRAM, this data is used to display to a user if the route is blocked in the `/entries/` page via the
+        `translator_check` websocket message.
 
         Args:
-            vrf (str, optional): The VRF we're updating. Defaults to "base".
+            vrf (str, optional): The VRF we're updating.
             cache_fill_method (CacheFillMethod, optional): The cache fill approach we want to use. Defaults to
                 CacheFillMethod.LAZY which only updates the cache if the TTL is expired. CacheFillMethod.EAGER
                 can be used to require that the entire cache is updated, and CacheFillMethod.EXPIRE will empty
                 the cache completely.
 
         Returns:
-            ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1
-                means that the key exists but has no associated expiration time.
+            ttl(int): The remaining TTL that the cache is valid for. -2 means the key doesn't exist, and -1 means that
+            the key exists but has no associated expiration time. This value gets displayed by the web frontend.
         """
         # TODO: Write tests to cover this
         redis_key = f"route-table-{vrf}"
@@ -247,49 +270,51 @@ class GoBGP:
         match cache_fill_method:
             case CacheFillMethod.LAZY:
                 logger.info("Lazily updating prefix check cache %s", redis_key)
-                # Don't bother filling the cache if it was filled within the last 60 seconds. Is this a bad idea?
                 if (ttl := self.get_cache_ttl(redis_key)) > 0:
                     logger.info("Prefix check on cache %s has %ss left, not updating cache", redis_key, ttl)
-                    return ttl
-            case CacheFillMethod.EXPIRE:
-                self.redis_connection.expire(redis_key, 0)
-            case CacheFillMethod.EAGER:
-                logger.info("Updating the cache %s ✨with feeling✨", redis_key)
 
-        # Now that we're in the scenario where we need to walk the whole route table, let's open a transaction and do
-        # the redis portions of this all at once.
+                    return ttl
+
+            case CacheFillMethod.EXPIRE:
+                logger.info("Expiring prefix check cache %s", redis_key)
+                self.redis_connection.expire(redis_key, 0)
+                ttl = self.get_cache_ttl(redis_key)
+                logger.info("Finished expiring prefix cache %s, TTL is currently %ss", redis_key, ttl)
+
+                return ttl
+
+        # Since we've gotten here, this means that either the TTL has expired or we want to explicitly reset the cache.
+        # Because this puts us in the scenario where we need to walk the whole route table, let's open a transaction
+        # and do the redis portions of this all in one transaction so we don't accidentally invalidate the cache and
+        # not refill it.
+        logger.info("Updating cache %s ✨with feeling✨", redis_key)
         with self.redis_connection.pipeline(transaction=True) as redis_transaction:
             logger.debug("Entering Redis Transaction")
-            # We delete the entire cache since we're already refilling it from scratch. This gets rid of stale entries.
+            # We delete the entire cache since we're already repopulating it. This gets rid of stale entries.
             redis_transaction.delete(redis_key)
-            # Regardless of a lazy or eager approach, if the cache is already expired, we need to fill it:
+            # Put all of the prefixes in GoBGP into the prefix cache:
             for prefix in self.get_all_prefixes(vrf):
-                if vrf != "base":
-                    ip = str(strip_distinguished_prefix(prefix.destination.prefix))
-                else:
-                    ip = str(prefix.destination.prefix)
-                logger.info("Adding prefix %s to cache %s", ip, redis_key)
-                redis_transaction.sadd(redis_key, ip)
+                logger.info("Adding prefix %s to cache %s", prefix, redis_key)
+                redis_transaction.sadd(redis_key, str(prefix))
             # Next, let's set this key to expire so that we don't hold onto these indefinitely.
             redis_transaction.expire(redis_key, PREFIX_CACHE_TIMEOUT_SECONDS)
             transaction_result = redis_transaction.execute()
             logger.debug("Redis transaction completed with result: %s", transaction_result)
 
+        # Finally, let's see what the TTL is after all of that and return that so it can be used by other components.
         ttl = self.get_cache_ttl(redis_key)
         logger.info("Finished updating prefix cache %s, TTL is currently %ss", redis_key, ttl)
 
         return ttl
 
-    def get_all_prefixes(self, vrf):
-        """get_all_prefixes TODO.
-
-        _extended_summary_
+    def get_all_prefixes(self, vrf: str) -> list[IPv4Interface | IPv6Interface]:
+        """get_all_prefixes Talks to GoBGP and grabs every prefix in the given route table.
 
         Args:
-            vrf (str, optional): _description_. Defaults to "base".
+            vrf (str): The VRF we want to get all of the prefixes from.
 
         Returns:
-            _type_: _description_
+            list[IPv4Interface | IPv6Interface]: The list of IP/prefix masks in GoBGP.
         """
         # TODO: Write tests to cover this
         # VRFs require special consideration when talking to GoBGP.
@@ -314,8 +339,7 @@ class GoBGP:
 
             results = list(result_v4) + list(result_v6)
             logger.info("Found %s prefixes in vrf %s", len(results), vrf)
-
-            return results
+            return [ip_interface(strip_distinguished_prefix(result.destination.prefix)) for result in results]
 
         # The non-VRF route table (base) needs to be handled this way with GoBGP.
         logger.info("Getting all prefixes from GoBGP for base routing instance")
@@ -337,10 +361,21 @@ class GoBGP:
         results = list(result_v4_vrf) + list(result_v6_vrf)
         logger.info("Found %s prefixes in base routing instance", len(results))
 
-        return results
+        return [ip_interface(result.destination.prefix) for result in results]
 
     def is_blocked(self, ip: IPv6Interface | IPv4Interface, vrf: str) -> bool:
-        """Return True if at least one route matching the prefix is being announced."""
+        """is_blocked determines if a route matching or containing the prefix is being announced in the given VRF.
+
+        For example, if the route table contains 192.0.2.0/32 and 192.0.2.0/24 and you call this function for the IP
+        objects 192.0.2.0/32, 192.0.2.204/32, etc. then it will return True.
+
+        Args:
+            ip (IPv6Interface | IPv4Interface): _description_
+            vrf (str): The VRF you're looking for a matching prefix in.
+
+        Returns:
+            bool: True if matching prefix is present, False if not present.
+        """
         logger.info("Checking to see if IP %s in VRF %s is blocked", ip, vrf)
 
         # TODO: Write tests to cover this
