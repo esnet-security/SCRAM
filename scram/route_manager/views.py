@@ -35,10 +35,10 @@ def home_page(request, prefilter=None):
         readwrite = False
     context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
-        queryset = prefilter.filter(actiontype=at).order_by("-pk")
+        queryset_active = prefilter.filter(actiontype=at, is_active=True)
         context["entries"][at] = {
-            "objs": queryset[:num_entries],
-            "total": queryset.count(),
+            "objs": queryset_active[:num_entries],
+            "active": queryset_active.count(),
         }
 
     if settings.AUTOCREATE_ADMIN:
