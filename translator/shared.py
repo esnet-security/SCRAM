@@ -1,13 +1,23 @@
 """Provide a location for code that we want to share between all translators."""
 
 import logging
+from enum import Enum
 from ipaddress import IPv4Interface, IPv6Interface, ip_interface
+from typing import Annotated
 
 from exceptions import ASNError
 
 MAX_ASN_VAL = 2**32 - 1
 
 logger = logging.getLogger(__name__)
+
+
+class CacheFillMethod(Enum):
+    """The approach we want to use when updating our redis cache."""
+
+    LAZY: Annotated[int, "Wait until the cache is expired to update it"] = 1
+    EAGER: Annotated[int, "Request all prefixes from GoBGP and put them into the cache"] = 2
+    EXPIRE: Annotated[int, "Force expire the given redis cache."] = 3
 
 
 def asn_is_valid(asn: int) -> bool:

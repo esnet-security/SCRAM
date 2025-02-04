@@ -1,9 +1,7 @@
 """A translator interface for GoBGP (https://github.com/osrg/gobgp)."""
 
 import logging
-from enum import Enum
 from ipaddress import IPv4Interface, IPv6Interface, ip_interface, ip_network
-from typing import Annotated
 
 import attribute_pb2
 import gobgp_pb2
@@ -12,9 +10,7 @@ import grpc
 import redis
 from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
-from shared import asn_is_valid, strip_distinguished_prefix
-
-REDIS_DB_INDEX = 1
+from shared import CacheFillMethod, asn_is_valid, strip_distinguished_prefix
 
 _TIMEOUT_SECONDS = 1000
 PREFIX_CACHE_TIMEOUT_SECONDS = 60
@@ -27,14 +23,6 @@ MAX_SMALL_COMM = 2**16
 IPV6 = 6
 
 
-class CacheFillMethod(Enum):
-    """The approach we want to use when updating our redis cache."""
-
-    LAZY: Annotated[int, "Wait until the cache is expired to update it"] = 1
-    EAGER: Annotated[int, "Request all prefixes from GoBGP and put them into the cache"] = 2
-    EXPIRE: Annotated[int, "Force expire the given redis cache."] = 3
-
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -42,12 +30,12 @@ logger = logging.getLogger(__name__)
 class GoBGP:
     """Represents a GoBGP instance."""
 
-    def __init__(self, url):
+    def __init__(self, gobgp_url: str, redis_url: str, redis_port: int, redis_db_index: int) -> None:
         """Configure the channel used for communication."""
-        channel = grpc.insecure_channel(url)
+        channel = grpc.insecure_channel(gobgp_url)
         self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
         self.redis_connection = redis.StrictRedis.from_url(
-            "redis://redis", port=6379, db=REDIS_DB_INDEX, decode_responses=True
+            redis_url, port=redis_port, db=redis_db_index, decode_responses=True
         )
 
     @staticmethod
