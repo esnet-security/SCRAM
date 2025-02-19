@@ -17,6 +17,7 @@ data_file = "coverage.coverage"
 
 [tool.coverage.report]
 exclude_also = [
+    "if cfg.debugger:",
     "if debug:",
     "if self.debug:",
     "if settings.DEBUG",
