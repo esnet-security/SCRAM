@@ -1,8 +1,23 @@
 """Provide a location for code that we want to share between all translators."""
 
+import logging
+from enum import Enum
+from ipaddress import IPv4Interface, IPv6Interface, ip_interface
+from typing import Annotated
+
 from exceptions import ASNError
 
 MAX_ASN_VAL = 2**32 - 1
+
+logger = logging.getLogger(__name__)
+
+
+class CacheFillMethod(Enum):
+    """The approach we want to use when updating our redis cache."""
+
+    LAZY: Annotated[int, "Wait until the cache is expired to update it"] = 1
+    EAGER: Annotated[int, "Request all prefixes from GoBGP and put them into the cache"] = 2
+    EXPIRE: Annotated[int, "Force expire the given redis cache."] = 3
 
 
 def asn_is_valid(asn: int) -> bool:
@@ -15,7 +30,7 @@ def asn_is_valid(asn: int) -> bool:
         ASNError: If the ASN is not between 0 and 4294967295 or is not an integer.
 
     Returns:
-        bool: _description_
+        bool: True if the ASN is valid, False if it's Invalid.
 
     """
     if not isinstance(asn, int):
@@ -27,3 +42,24 @@ def asn_is_valid(asn: int) -> bool:
         raise ASNError(msg)
 
     return True
+
+
+def strip_distinguished_prefix(prefix: str) -> IPv4Interface | IPv6Interface:
+    """strip_distinguished_prefix Takes a prefix marked with a route distinguisher (RD) and spits out just the prefix.
+
+    An example of this can be shown with the prefixes "293:64666:192.0.2.0/24", or "293:64666:2001:db88::1/128", this
+    function would strip down to to `192.0.2.0/24` and `2001:db88::1/128` respectively.
+
+    Args:
+        prefix (str): A prefix that has a route distinguisher prefixing the prefix, i.e. "293:64666:192.0.2.0/24", or
+            "293:64666:2001:db88::1/128",
+
+    Returns:
+        IPv4Interface | IPv6Interface: The formatted IP address object without the RD.
+    """
+    # Split on only the first two colons and keep only the last value in the resulting list.
+    stripped_prefix = prefix.split(":", 2)[-1]
+    try:
+        return ip_interface(stripped_prefix)
+    except ValueError as e:
+        logger.exception("Could not properly parse prefix: %s ,received error: %s", prefix, e.message)

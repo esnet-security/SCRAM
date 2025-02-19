@@ -1,3 +1,8 @@
 [global.config]
     as = 1234
     router-id = "1.1.1.1"
+[[vrfs]]
+    [vrfs.config]
+        name = "test-vrf"
+        rd = "123:64666"
+        both-rt-list = ["123:123"]
