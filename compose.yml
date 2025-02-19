@@ -19,6 +19,8 @@ services:
       timeout: 30s
       start_period: 30s
       retries: 5
+    deploy:
+      replicas: ${DJANGO_REPLICAS:-1}
 
   postgres:
     build:
@@ -44,13 +46,15 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   gobgp:
-    image: jauderho/gobgp:v2.32.0
+    image: jauderho/gobgp:v3.33.0
     networks:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     healthcheck:
       test: ["CMD", "gobgp", "global"]
+    deploy:
+      replicas: ${GOBGP_REPLICAS:-1}
 
   translator:
     build:
@@ -65,3 +69,5 @@ services:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
+    deploy:
+      replicas: ${TRANSLATOR_REPLICAS:-1}

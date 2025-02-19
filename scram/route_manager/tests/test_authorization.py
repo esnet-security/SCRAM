@@ -95,7 +95,7 @@ class AuthzTest(TestCase):
                     "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
                 },
             )
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 302)
 
     def test_unauthorized_detail_view(self):
         """Ensure that unauthorized users can't view the blocked IPs."""
@@ -124,7 +124,7 @@ class AuthzTest(TestCase):
 
         self.client.force_login(test_user)
         response = self.client.post(reverse("route_manager:add"), {"route": "192.0.2.4/32", "actiontype": "block"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         test_user.groups.set([])
 

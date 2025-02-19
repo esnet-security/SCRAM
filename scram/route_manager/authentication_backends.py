@@ -38,12 +38,12 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         user.save()
 
     def create_user(self, claims):
-        """Wrap the superclass's user creation."""  # noqa: DOC201
+        """Wrap the superclass's user creation."""
         user = super().create_user(claims)
         return self.update_user(user, claims)
 
     def update_user(self, user, claims):
-        """Determine the user name from the claims and update said user's groups."""  # noqa: DOC201
+        """Determine the user name from the claims and update said user's groups."""
         user.name = claims.get("given_name", "") + " " + claims.get("family_name", "")
         user.username = claims.get("preferred_username", "")
         if claims.get("groups", False):

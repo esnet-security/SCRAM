@@ -27,7 +27,7 @@ channel_layer = get_channel_layer()
 def home_page(request, prefilter=None):
     """Return the home page, autocreating a user if none exists."""
     if not prefilter:
-        prefilter = Entry.objects.all()
+        prefilter = Entry.objects.all().select_related("actiontype", "route")
     num_entries = settings.RECENT_LIMIT
     if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
         readwrite = True
@@ -35,10 +35,10 @@ def home_page(request, prefilter=None):
         readwrite = False
     context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
-        queryset = prefilter.filter(actiontype=at).order_by("-pk")
+        queryset_active = prefilter.filter(actiontype=at, is_active=True)
         context["entries"][at] = {
-            "objs": queryset[:num_entries],
-            "total": queryset.count(),
+            "objs": queryset_active[:num_entries],
+            "active": queryset_active.count(),
         }
 
     if settings.AUTOCREATE_ADMIN:
@@ -124,18 +124,20 @@ def add_entry(request):
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     with transaction.atomic():
-        home = home_page(request)
-    return home  # noqa RET504
+        home_page(request)
+    return redirect("route_manager:home")
 
 
 def process_expired(request):
     """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
+    # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
-    with transaction.atomic():
-        entries_start = Entry.objects.filter(is_active=True).count()
-        for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
-            obj.delete()
-        entries_end = Entry.objects.filter(is_active=True).count()
+    entries_start = Entry.objects.filter(is_active=True).count()
+
+    # More efficient to call objects.filter.delete, but that doesn't call the Entry.delete() method
+    for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
+        obj.delete()
+    entries_end = Entry.objects.filter(is_active=True).count()
 
     return HttpResponse(
         json.dumps(

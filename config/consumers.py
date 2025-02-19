@@ -1,7 +1,6 @@
 """Define logic for the WebSocket consumers."""
 
 import logging
-from functools import partial
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -36,7 +35,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
 
         for route in routes:
             for element in elements:
-                msg = await sync_to_async(partial(element.websocketmessage))
+                msg = await sync_to_async(lambda e: e.websocketmessage)(element)
                 msg.msg_data[msg.msg_data_route_field] = str(route)
                 await self.send_json({"type": msg.msg_type, "message": msg.msg_data})
 

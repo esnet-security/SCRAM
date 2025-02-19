@@ -99,6 +99,9 @@ max-complexity = 7 # our current code adheres to this without too much effort
 "test.py" = [
     "S105", # hardcoded password as argument
 ]
+"scram/route_manager/**" = [
+    "DOC201", # documenting return values
+]
 "scram/users/**" = [
     "DOC201", # documenting return values
     "FBT001", # minimal issue; don't need to mess with in the User app
