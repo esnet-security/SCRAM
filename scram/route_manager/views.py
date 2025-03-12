@@ -141,19 +141,19 @@ def process_updates(request):
 
     Return some simple stats.
     """
-    logger.info("Executing process_updates")
+    logger.debug("Executing process_updates")
     # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
     entries_start = Entry.objects.filter(is_active=True).count()
 
-    logger.info("Looking for expired entries")
+    logger.debug("Looking for expired entries")
     # More efficient to call objects.filter.delete, but that doesn't call the Entry.delete() method
     for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
         logger.info("Found expired entry: %s. Deleting now", obj)
         obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
 
-    logger.info("Looking for new entries from other SCRAM instances")
+    logger.debug("Looking for new entries from other SCRAM instances")
     # Grab all entries from the last 2 minutes that originated from a different SCRAM instance.
     cutoff_time = current_time - timedelta(minutes=2)
     new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
@@ -161,7 +161,6 @@ def process_updates(request):
     )
 
     # Resend new entries that popped up in the database
-    # TODO: Find a way to ONLY fire this on the instances that *didn't* create the entry (modify entries model?)
     for entry in new_entries:
         logger.info("Processing new entry: %s", entry)
         translator_group = f"translator_{entry.actiontype}"

@@ -84,5 +84,5 @@ LOGOUT_URL = "admin:logout"
 
 SCRAM_HOSTNAME = env(
     "SCRAM_HOSTNAME",
-    default="scram_hostname_not_set",  # TODO: Change this? Think about the implications here.
+    default="scram_hostname_not_set",
 )
