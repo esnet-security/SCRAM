@@ -17,7 +17,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:8000/process_expired/"]
+      test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
     ports:
       - "8000"
       - 56780:56780
@@ -33,6 +33,8 @@ services:
       - ./.envs/.local/.postgres
     deploy:
       replicas: ${POSTGRES_ENABLED:-1}
+    ports:
+      - "5432:5432"
 
   docs:
     image: scram_local_docs
@@ -63,6 +65,8 @@ services:
   translator:
     volumes:
       - ./translator/tests/:/app/tests/
+    env_file:
+      - ./.envs/.local/.translator
     ports:
       - 56781:56781
     environment:

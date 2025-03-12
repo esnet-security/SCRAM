@@ -22,7 +22,7 @@ services:
     volumes:
       - ./staticfiles:/staticfiles
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:5000/process_expired/"]
+      test: ["CMD", "curl", "-f", "http://django:5000/process_updates/"]
 
   postgres:
     logging:

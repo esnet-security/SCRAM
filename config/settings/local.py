@@ -80,3 +80,9 @@ if AUTH_METHOD == "oidc":
 LOGIN_URL = "admin:login"
 # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
 LOGOUT_URL = "admin:logout"
+
+
+SCRAM_HOSTNAME = env(
+    "SCRAM_HOSTNAME",
+    default="scram_hostname_not_set",  # TODO: Change this? Think about the implications here.
+)

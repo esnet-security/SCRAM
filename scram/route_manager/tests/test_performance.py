@@ -1,5 +1,6 @@
 """Tests for performance (load time, DB queries, etc.)."""
 
+import datetime
 import time
 
 from django.test import TestCase
@@ -28,6 +29,9 @@ class TestViewNumQueries(TestCase):
         created_routes = Route.objects.bulk_create(routes)
         entries = [Entry(route=route, actiontype=self.atype, is_active=True) for route in created_routes]
         Entry.objects.bulk_create(entries)
+        # Manually set the when time to be old so that we don't trigger `process_updates`
+        # on all 100,000 of the test routes.
+        Entry.objects.update(when=datetime.datetime(2000, 1, 1, 0, 0, tzinfo=datetime.UTC))
 
     def test_home_page(self):
         """Home page requires 11 queries.
@@ -86,17 +90,18 @@ class TestViewNumQueries(TestCase):
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Admin entry list page took longer than 1 seconds")
 
-    def test_process_expired(self):
-        """Process expired requires 5 queries.
+    def test_process_updates(self):
+        """Process expired requires 6 queries.
 
         1. create transaction
         2. get entries_start active entry count
         3. find and delete expired entries
         4. get entries_end active entry count
-        5. release transaction
+        5. get new_entries from DB
+        6. release transaction
         """
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             start = time.time()
-            self.client.get(reverse("route_manager:process-expired"))
+            self.client.get(reverse("route_manager:process-updates"))
             time_taken = time.time() - start
             self.assertLess(time_taken, 1, "Process expired page took longer than 1 seconds")
