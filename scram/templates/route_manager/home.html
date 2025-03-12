@@ -35,7 +35,7 @@
       <div class="col">
         {% if actiontype.available %}
         <h2 class="text-center mt-2">{{ actiontype.name }}
-          <span class="badge badge-secondary badge-pill">{{ entry_list.total }}</span>
+          <span class="badge badge-secondary badge-pill">{{ entry_list.active }}</span>
         </h2>
           {% for entry in entry_list.objs %}
             {% if actiontype.name|lower == entry.actiontype|lower %}
