@@ -148,7 +148,7 @@ def parse_message(message: str) -> ParsedMessage:
         logger.error("Unknown event type received: %s", event_type)
         raise MessageError
     if event_type != "translator_remove_all" and not ip:
-        logger.exception(
+        logger.error(
             "IP address wasn't provided in message. "
             "This is required by all message types except `translator_remove_all`. Message was: %s",
             message,
