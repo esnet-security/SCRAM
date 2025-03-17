@@ -133,7 +133,6 @@ class GoBGP:
             family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
         )
 
-      
     def add_path(self, ip: IPv4Interface | IPv6Interface, vrf: str, event_data: dict) -> None:
         """add_path adds a path to GoBGP to be acted upon.
 
