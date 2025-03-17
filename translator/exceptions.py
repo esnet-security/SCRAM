@@ -3,3 +3,7 @@
 
 class ASNError(TypeError):
     """ASNError provides an error class to use when there is an issue with an Autonomous System Number."""
+
+
+class MessageError(TypeError):
+    """MessageError provides an error class to use when there is an issue with parsing a websocket message."""

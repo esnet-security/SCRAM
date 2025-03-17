@@ -64,11 +64,11 @@
       elem.classList.remove('fa-question-circle');
       if ( resp_data.is_blocked ) {
           elem.classList.add('fa-bullhorn', 'text-success');
-          elem.setAttribute('title', "Currently being announced by " + resp_data.translator_name);
+          elem.setAttribute('title', "Prefix has been announced in the last " + resp_data.last_seen + "s by " + resp_data.translator_name);
       }
       else {
           elem.classList.add('fa-bug', 'text-warning');
-          elem.setAttribute('title', "Currently NOT being announced by " + resp_data.translator_name);
+          elem.setAttribute('title', "Prefix has NOT been announced in the last " + resp_data.last_seen + "s by " + resp_data.translator_name);
       }
     }
     </script>
