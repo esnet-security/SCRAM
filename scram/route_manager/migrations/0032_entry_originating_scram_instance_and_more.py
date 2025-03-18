@@ -13,14 +13,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="entry",
             name="originating_scram_instance",
-            field=models.CharField(default="somesortadefault", max_length=255),
+            field=models.CharField(default="originating_scram_instance_default", max_length=255),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="historicalentry",
             name="originating_scram_instance",
             field=models.CharField(
-                default="somesortadefaulthistorical", max_length=255
+                default="originating_scram_instance_defaulthistorical", max_length=255
             ),
             preserve_default=False,
         ),
