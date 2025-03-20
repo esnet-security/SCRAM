@@ -41,7 +41,7 @@ def home_page(request, prefilter=None):
         readwrite = False
     context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
-        queryset_active = prefilter.filter(actiontype=at, is_active=True)
+        queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by("-pk")
         context["entries"][at] = {
             "objs": queryset_active[:num_entries],
             "active": queryset_active.count(),
