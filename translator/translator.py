@@ -11,6 +11,7 @@ from os import getenv
 
 import websockets
 from gobgp import GoBGP
+from grpc import RpcError
 
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
 
@@ -104,16 +105,25 @@ async def process(message, websocket, g):
             await websocket.send(json.dumps(json_message))
 
 
-async def main():
-    """Connect to the websocket and start listening for messages."""
+async def websocket_loop():
+    """Connect to the websocket and start listening for messages for Gobgp."""
     g = GoBGP("gobgp:50051")
     async for websocket in websockets.connect(url):
         try:
             async for message in websocket:
                 await process(message, websocket, g)
-
         except websockets.ConnectionClosed:
             continue
+
+
+async def main():
+    """Connect to the websocket and start listening for messages."""
+    while True:
+        try:
+            await websocket_loop()
+        except RpcError as e:
+            logger.warning("Encountered an error connecting to gobgp, retrying in 10s, error is: %s", e)
+            await asyncio.sleep(10)
 
 
 if __name__ == "__main__":
