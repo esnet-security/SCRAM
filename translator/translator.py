@@ -7,10 +7,14 @@ import ipaddress
 import json
 import logging
 import os
+from os import getenv
 
 import websockets
 from gobgp import GoBGP
 
+LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
+
+logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 KNOWN_MESSAGES = {

@@ -19,7 +19,6 @@ MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
 IPV6 = 6
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
