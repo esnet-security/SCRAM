@@ -159,6 +159,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         entry.who = who
         entry.is_active = True
         entry.comment = comment
+        entry.originating_scram_instance = settings.SCRAM_HOSTNAME
         logger.info("Created entry: %s", entry)
         entry.save()
 
