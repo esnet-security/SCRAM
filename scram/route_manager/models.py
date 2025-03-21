@@ -6,7 +6,6 @@ import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
@@ -99,7 +98,7 @@ class Entry(models.Model):
     history = HistoricalRecords()
     when = models.DateTimeField(auto_now_add=True)
     who = models.CharField("Username", default="Unknown", max_length=30)
-    originating_scram_instance = models.CharField(default=settings.SCRAM_HOSTNAME, max_length=255)
+    originating_scram_instance = models.CharField(default="scram_hostname_not_set", max_length=255)
     expiration = models.DateTimeField(default=datetime.datetime(9999, 12, 31, 0, 0, tzinfo=datetime.UTC))
     expiration_reason = models.CharField(
         help_text="Optional reason for the expiration",
