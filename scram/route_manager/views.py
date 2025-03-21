@@ -2,8 +2,11 @@
 
 import ipaddress
 import json
+import logging
+from datetime import timedelta
 
 import rest_framework.utils.serializer_helpers
+from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
@@ -17,11 +20,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
+from scram.route_manager.models import WebSocketSequenceElement
+
 from ..route_manager.api.views import EntryViewSet
 from ..users.models import User
 from .models import ActionType, Entry
 
 channel_layer = get_channel_layer()
+logger = logging.getLogger(__name__)
 
 
 def home_page(request, prefilter=None):
@@ -35,7 +41,7 @@ def home_page(request, prefilter=None):
         readwrite = False
     context = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
-        queryset_active = prefilter.filter(actiontype=at, is_active=True)
+        queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by("-pk")
         context["entries"][at] = {
             "objs": queryset_active[:num_entries],
             "active": queryset_active.count(),
@@ -128,22 +134,52 @@ def add_entry(request):
     return redirect("route_manager:home")
 
 
-def process_expired(request):
-    """For entries with an expiration, set them to inactive if expired. Return some simple stats."""
+def process_updates(request):
+    """For entries with an expiration, set them to inactive if expired.
+
+    Grab and announce any new entries added to the shared database by other SCRAM instances.
+
+    Return some simple stats.
+    """
+    logger.debug("Executing process_updates")
     # This operation should be atomic, but we set ATOMIC_REQUESTS=True
     current_time = timezone.now()
     entries_start = Entry.objects.filter(is_active=True).count()
 
+    logger.debug("Looking for expired entries")
     # More efficient to call objects.filter.delete, but that doesn't call the Entry.delete() method
     for obj in Entry.objects.filter(is_active=True, expiration__lt=current_time):
+        logger.info("Found expired entry: %s. Deleting now", obj)
         obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
+
+    logger.debug("Looking for new entries from other SCRAM instances")
+    # Grab all entries from the last 2 minutes that originated from a different SCRAM instance.
+    cutoff_time = current_time - timedelta(minutes=2)
+    new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
+        originating_scram_instance=settings.SCRAM_HOSTNAME
+    )
+
+    # Resend new entries that popped up in the database
+    for entry in new_entries:
+        logger.info("Processing new entry: %s", entry)
+        translator_group = f"translator_{entry.actiontype}"
+        elements = list(
+            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
+        )
+        for element in elements:
+            msg = element.websocketmessage
+            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
+
+            json_to_send = {"type": msg.msg_type, "message": msg.msg_data}
+            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
 
     return HttpResponse(
         json.dumps(
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
+                "remote_entries_added": new_entries.count(),
             },
         ),
         content_type="application/json",

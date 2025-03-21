@@ -10,23 +10,23 @@ from behave.log_capture import capture
 logging.basicConfig(level=logging.DEBUG)
 
 
-@when("we add {route} with {asn}, {vrf}, and {community} to the block list")
-def add_block(context, route, vrf, asn, community):
+@when("we add {route} with {asn} and {community} to the block list")
+def add_block(context, route, asn, community):
     """Block a single IP."""
     ip = ipaddress.ip_interface(route)
     event_data = {"asn": int(asn), "community": int(community)}
-    context.gobgp.add_path(ip, vrf, event_data)
+    context.gobgp.add_path(ip, event_data)
 
 
-@then("we delete {route} with {asn}, {vrf}, and {community} from the block list")
-def del_block(context, route, vrf, asn, community):
+@then("we delete {route} with {asn} and {community} from the block list")
+def del_block(context, route, asn, community):
     """Remove a single IP."""
     ip = ipaddress.ip_interface(route)
     event_data = {"asn": int(asn), "community": int(community)}
-    context.gobgp.del_path(ip, vrf, event_data)
+    context.gobgp.del_path(ip, event_data)
 
 
-def get_block_status(context, ip, vrf):
+def get_block_status(context, ip):
     """Check if the IP is currently blocked.
 
     Returns:
@@ -37,24 +37,24 @@ def get_block_status(context, ip, vrf):
 
     ip_obj = ipaddress.ip_interface(ip)
 
-    return context.gobgp.is_blocked(ip_obj, vrf)
+    return any(ip_obj in ipaddress.ip_network(path.destination.prefix) for path in context.gobgp.get_prefixes(ip_obj))
 
 
 @capture
-@when("{route}, {vrf}, and {community} with invalid {asn} is sent")
-def asn_validation_fails(context, route, vrf, asn, community):
+@when("{route} and {community} with invalid {asn} is sent")
+def asn_validation_fails(context, route, asn, community):
     """Ensure the ASN was invalid."""
-    add_block(context, route, vrf, asn, community)
+    add_block(context, route, asn, community)
     assert context.log_capture.find_event("ASN assertion failed")
 
 
-@then("{ip} in {vrf} is blocked")
-def check_block(context, ip, vrf):
+@then("{ip} is blocked")
+def check_block(context, ip):
     """Ensure that the IP is currently blocked."""
-    assert get_block_status(context, ip, vrf)
+    assert get_block_status(context, ip)
 
 
-@then("{ip} in {vrf} is unblocked")
-def check_unblock(context, ip, vrf):
+@then("{ip} is unblocked")
+def check_unblock(context, ip):
     """Ensure that the IP is currently unblocked."""
-    assert not get_block_status(context, ip, vrf)
+    assert not get_block_status(context, ip)
