@@ -4,6 +4,7 @@ import ipaddress
 import json
 import logging
 from datetime import timedelta
+from itertools import chain
 
 import rest_framework.utils.serializer_helpers
 from asgiref.sync import async_to_sync
@@ -159,9 +160,12 @@ def process_updates(request):
     new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
         originating_scram_instance=settings.SCRAM_HOSTNAME
     )
+    recently_touched_entries = Entry.objects.filter(entry_history__history_date__gt=cutoff_time)
+
+    entries_to_process = list(chain(new_entries, recently_touched_entries))
 
     # Resend new entries that popped up in the database
-    for entry in new_entries:
+    for entry in entries_to_process:
         logger.info("Processing new entry: %s", entry)
         translator_group = f"translator_{entry.actiontype}"
         elements = list(
@@ -180,6 +184,7 @@ def process_updates(request):
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
                 "remote_entries_added": new_entries.count(),
+                "recently_touched_entries": recently_touched_entries.count(),
             },
         ),
         content_type="application/json",
