@@ -95,7 +95,7 @@ class Entry(models.Model):
     comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
     # TODO: fix name if this works
-    history = HistoricalRecords(related_name="entry_history")
+    history = HistoricalRecords()
     when = models.DateTimeField(auto_now_add=True)
     who = models.CharField("Username", default="Unknown", max_length=30)
     originating_scram_instance = models.CharField(default="scram_hostname_not_set", max_length=255)

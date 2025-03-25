@@ -160,11 +160,25 @@ def process_updates(request):
     new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
         originating_scram_instance=settings.SCRAM_HOSTNAME
     )
-    recently_touched_entries = Entry.objects.filter(entry_history__history_date__gt=cutoff_time)
 
+    # Grab all of the the HistoricalEntry objects (from the Entry model) that were created
+    # (i.e. an Entry object was modified) since the cutoff time
+    recently_touched_histories = Entry.history.filter(history_date__gt=cutoff_time)
+
+    # Grab a set of all of the Entry IDs from the modified histories since there can be multiple history entries
+    # per Entry object.
+    recently_touched_entries_id = {history.id for history in recently_touched_histories}
+
+    # Get all of the Entry objects from the database that were recently touched now that we have the modified
+    # Entry object IDs.
+    recently_touched_entries = [Entry.objects.get(id=entry_id) for entry_id in recently_touched_entries_id]
+
+    # Combine the new entries from other hosts with any objects touched (this is now redundant, since to add an entry
+    # on another host, you have to modify it...) TODO: Remove new_entries entirely?
     entries_to_process = list(chain(new_entries, recently_touched_entries))
 
     # Resend new entries that popped up in the database
+    # TODO: Make this thingy a function that we can call from everywhere?
     for entry in entries_to_process:
         logger.info("Processing new entry: %s", entry)
         translator_group = f"translator_{entry.actiontype}"
@@ -184,7 +198,9 @@ def process_updates(request):
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
                 "remote_entries_added": new_entries.count(),
-                "recently_touched_entries": recently_touched_entries.count(),
+                "recently_touched_entries": len(recently_touched_entries),
+                "list_of_recently_touched_entries": str(recently_touched_entries),  # TODO: REMOVE MEEEEE
+                "entries_reprocessed": len(entries_to_process),
             },
         ),
         content_type="application/json",
