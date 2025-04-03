@@ -191,15 +191,33 @@ class EntryListView(ListView):
 
     model = Entry
     template_name = "route_manager/entry_list.html"
+    context_object_name = "object_list"
+    paginate_by = 100
 
-    @staticmethod
-    def get_context_data(**kwargs):
-        """Group entries by action type."""
-        context = {"entries": {}}
+    def get_queryset():
+        """Return all entries."""
+        return Entry.objects.all().order_by("-pk")
+
+    def get_context_data(self, **kwargs):
+        """Add action type grouping to context."""
+        context = super().get_context_data(**kwargs)
+
+        entries_by_type = {}
         for at in ActionType.objects.all():
             queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
-            context["entries"][at] = {
-                "objs": queryset,
+            entries_by_type[at] = {
                 "total": queryset.count(),
             }
+
+        # Add the current page's objects to each action type
+        current_page_entries = context["object_list"]
+        for entry in current_page_entries:
+            at = entry.actiontype
+            if at not in entries_by_type:
+                entries_by_type[at] = {"total": 1}
+            if "objs" not in entries_by_type[at]:
+                entries_by_type[at]["objs"] = []
+            entries_by_type[at]["objs"].append(entry)
+
+        context["entries"] = entries_by_type
         return context
