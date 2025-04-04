@@ -82,3 +82,9 @@ If you want two or more instances of SCRAM to share data between themselves we h
 Honestly, step 3 is kind of gross and we realize this. We are probably looking at a task runner or something to handle
 this moving forward, but we needed to get this fixed in the meantime. Status can be tracked with
 [Github Issue 125](https://github.com/esnet-security/SCRAM/issues/125) 
+
+#### Entries Page
+We intentionally chose to only list the active entries. Our thinking is that the home page shows the most recent additions.
+Then, if you went to the entries page, it would be overwhelmingly huge to show all the historical entries including the 
+ones that timed out/were deactivated. If you wanted to know about a specific entry even if it were not currently active
+(to see the history of it say), you would likely be using the search anyway.

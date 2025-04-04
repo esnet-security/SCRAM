@@ -264,6 +264,10 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Pagination
+# -------------------------------------------------------------------------------
+PAGINATION_SIZE = 100
+
 # django-rest-framework
 # -------------------------------------------------------------------------------
 # django-rest-framework - https://www.django-rest-framework.org/api-guide/settings/
@@ -277,6 +281,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": PAGINATION_SIZE,
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
