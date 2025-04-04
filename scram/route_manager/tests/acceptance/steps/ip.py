@@ -13,7 +13,7 @@ def check_route(context, route, model):
     ip_target = ipaddress.ip_address(route)
 
     ip_found = False
-    for obj in objs.json():
+    for obj in objs.json()["results"]:
         net = ipaddress.ip_network(obj["route"])
         if ip_target in net:
             ip_found = True
