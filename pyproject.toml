@@ -81,8 +81,10 @@ ignore = [
     "DOC501", # add possible exceptions to the docstring (TODO)
     "ISC001", # handled by the formatter
     "RUF012", # need more widespread typing
-    "SIM102", # Use a single `if` statement instead of nested `if` statements
-    "SIM108", # Use ternary operator instead of `if`-`else`-block
+    "SIM102", # use a single `if` statement instead of nested `if` statements
+    "SIM108", # use ternary operator instead of `if`-`else`-block
+    "PERF401", # list comprehensions are harder to read in our opinion and not worth the performance gain
+    "PERF403", # dict comprehensions are harder to read in our opinion and not worth the performance gain
 ]
 
 [tool.ruff.lint.mccabe]
