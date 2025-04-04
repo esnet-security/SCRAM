@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -192,32 +193,43 @@ class EntryListView(ListView):
     model = Entry
     template_name = "route_manager/entry_list.html"
     context_object_name = "object_list"
-    paginate_by = 100
-
-    def get_queryset():
-        """Return all entries."""
-        return Entry.objects.all().order_by("-pk")
+    paginate_by = settings.PAGINATION_SIZE
 
     def get_context_data(self, **kwargs):
-        """Add action type grouping to context."""
+        """Add action type grouping to context with separate paginators."""
         context = super().get_context_data(**kwargs)
 
+        current_page_params = {}
+        for key, value in self.request.GET.items():
+            if key.startswith("page_"):
+                current_page_params[key] = value
+
         entries_by_type = {}
-        for at in ActionType.objects.all():
+
+        # Get all available action types
+        for at in ActionType.objects.filter(available=True):
+            # Get all entries for this action type
             queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
+
+            # Create a paginator for this action type
+            paginator = Paginator(queryset, settings.PAGINATION_SIZE)
+
+            # Get page number from request with a unique parameter name per type
+            page_param = f"page_{at.name.lower()}"
+            page_number = self.request.GET.get(page_param, 1)
+
+            try:
+                page_obj = paginator.page(page_number)
+            except (PageNotAnInteger, EmptyPage):
+                page_obj = paginator.page(1)
+
             entries_by_type[at] = {
                 "total": queryset.count(),
+                "objs": page_obj,
+                "page_param": page_param,
+                "page_number": page_number,
+                "current_page_params": current_page_params.copy(),
             }
-
-        # Add the current page's objects to each action type
-        current_page_entries = context["object_list"]
-        for entry in current_page_entries:
-            at = entry.actiontype
-            if at not in entries_by_type:
-                entries_by_type[at] = {"total": 1}
-            if "objs" not in entries_by_type[at]:
-                entries_by_type[at]["objs"] = []
-            entries_by_type[at]["objs"].append(entry)
 
         context["entries"] = entries_by_type
         return context
