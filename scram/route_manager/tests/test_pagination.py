@@ -134,7 +134,7 @@ class TestEntriesListView:
         """Test handling multiple pagination parameters simultaneously."""
         type1, type2, _ = action_types
 
-        url = reverse("route_manager:entry-list.")
+        url = reverse("route_manager:entry-list")
 
         # Multiple page parameters
         response = logged_in_client.get(f"{url}?page_type1=2&page_type2=1")
