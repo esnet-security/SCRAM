@@ -208,7 +208,6 @@ class EntryListView(ListView):
 
         # Get all available action types
         for at in ActionType.objects.filter(available=True):
-            # Get all entries for this action type
             queryset = Entry.objects.filter(actiontype=at, is_active=True).order_by("-pk")
 
             # Create a paginator for this action type
