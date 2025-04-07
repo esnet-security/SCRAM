@@ -7,6 +7,8 @@ from django.urls import reverse
 
 from scram.route_manager.models import ActionType, Entry, Route
 
+TEST_PAGINATION_SIZE = 5
+
 
 @pytest.fixture
 def action_types():
@@ -30,11 +32,10 @@ def logged_in_client(client, django_user_model):
 def entries(action_types):
     """Fixture to create test entries for different action types."""
     atype1, atype2, atype3 = action_types
-    test_pagination_size = 5
 
     # Action type1 entries
     entries_type1 = []
-    for i in range(test_pagination_size + 3):
+    for i in range(TEST_PAGINATION_SIZE + 3):
         unique_route, _ = Route.objects.get_or_create(route=f"192.0.2.{100 + i}")
         entries_type1.append(Entry.objects.create(route=unique_route, actiontype=atype1, is_active=True))
 
@@ -55,7 +56,7 @@ def entries(action_types):
     unavailable_route, _ = Route.objects.get_or_create(route="192.0.2.60")
     Entry.objects.get_or_create(route=unavailable_route, actiontype=atype3, is_active=True)
 
-    return {"type1": entries_type1, "type2": entries_type2, "test_pagination_size": test_pagination_size}
+    return {"type1": entries_type1, "type2": entries_type2}
 
 
 @pytest.mark.django_db
@@ -116,19 +117,18 @@ class TestEntriesListView:
         # Second page should have 3 since we initially created entries based on pagination size + 3
         assert len(page2_context[atype1]["objs"]) == 3
 
-    @override_settings(PAGINATION_SIZE=5)
+    @override_settings(PAGINATION_SIZE=TEST_PAGINATION_SIZE)
     def test_invalid_page_handling(self, logged_in_client, action_types, entries):
         """Test handling of invalid page numbers."""
         type1, _, _ = action_types
 
         url = reverse("route_manager:entry-list")
 
-        # Invalid page number
         response = logged_in_client.get(f"{url}?page_type1=999")
         entries_context = response.context["entries"]
 
         # Should default to page 1
-        assert len(entries_context[type1]["objs"]) == settings.PAGINATION_SIZE
+        assert entries_context[type1]["objs"].number == 1
 
     def test_multiple_page_parameters(self, logged_in_client, action_types, entries):
         """Test handling multiple pagination parameters simultaneously."""
