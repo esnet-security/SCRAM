@@ -4,6 +4,8 @@ import pytest
 from django.conf import settings
 from django.test import override_settings
 from django.urls import reverse
+from faker import Faker
+from faker.providers import internet
 
 from scram.route_manager.models import ActionType, Entry, Route
 
@@ -31,30 +33,32 @@ def logged_in_client(client, django_user_model):
 @pytest.fixture
 def entries(action_types):
     """Fixture to create test entries for different action types."""
+    fake = Faker()
+    fake.add_provider(internet)
+
     atype1, atype2, atype3 = action_types
 
     # Action type1 entries
-    entries_type1 = []
-    for i in range(TEST_PAGINATION_SIZE + 3):
-        unique_route, _ = Route.objects.get_or_create(route=f"192.0.2.{100 + i}")
-        entries_type1.append(Entry.objects.create(route=unique_route, actiontype=atype1, is_active=True))
+    created_routes = Route.objects.bulk_create([
+        Route(route=fake.unique.ipv4_public()) for x in range(TEST_PAGINATION_SIZE + 3)
+    ])
+    entries_type1 = Entry.objects.bulk_create([
+        Entry(route=route, actiontype=atype1, is_active=True) for route in created_routes
+    ])
 
-    # Type2 entries
-    entries_type2 = []
-    for i in range(3):
-        # Get or create a unique route for each entry
-        unique_route, _ = Route.objects.get_or_create(route=f"192.0.2.{200 + i}")
-        entries_type2.append(Entry.objects.create(route=unique_route, actiontype=atype2, is_active=True))
+    # Action type2 entries
+    created_routes = Route.objects.bulk_create([Route(route=fake.unique.ipv4_public()) for x in range(3)])
+    entries_type2 = Entry.objects.bulk_create([
+        Entry(route=route, actiontype=atype2, is_active=True) for route in created_routes
+    ])
 
-    # Some inactive entries
-    inactive_route1, _ = Route.objects.get_or_create(route="192.0.2.50")
-    inactive_route2, _ = Route.objects.get_or_create(route="192.0.2.51")
-    Entry.objects.get_or_create(route=inactive_route1, actiontype=atype1, is_active=False)
-    Entry.objects.get_or_create(route=inactive_route2, actiontype=atype2, is_active=False)
+    # Inactive entries
+    created_routes = Route.objects.bulk_create([Route(route=fake.unique.ipv4_public()) for x in range(3)])
+    Entry.objects.bulk_create([Entry(route=route, actiontype=atype1, is_active=False) for route in created_routes])
 
     # Entries for unavailable action type
-    unavailable_route, _ = Route.objects.get_or_create(route="192.0.2.60")
-    Entry.objects.get_or_create(route=unavailable_route, actiontype=atype3, is_active=True)
+    created_routes = Route.objects.bulk_create([Route(route=fake.unique.ipv4_public()) for x in range(3)])
+    Entry.objects.bulk_create([Entry(route=route, actiontype=atype3, is_active=False) for route in created_routes])
 
     return {"type1": entries_type1, "type2": entries_type2}
 
@@ -80,16 +84,15 @@ class TestEntriesListView:
 
     def test_filtering_entries_by_action_type(self, logged_in_client, action_types, entries):
         """Test that only entries with available action types are included."""
-        type1, type2, _ = action_types
+        atype1, atype2, _ = action_types
 
         url = reverse("route_manager:entry-list")
         response = logged_in_client.get(url)
 
         entries_context = response.context["entries"]
 
-        # Check only active entries
-        assert entries_context[type1]["total"] == len(entries["type1"])
-        assert entries_context[type2]["total"] == len(entries["type2"])
+        assert entries_context[atype1]["total"] == len(entries["type1"])
+        assert entries_context[atype2]["total"] == len(entries["type2"])
 
     @override_settings(PAGINATION_SIZE=5)
     def test_pagination(self, logged_in_client, action_types, entries):
