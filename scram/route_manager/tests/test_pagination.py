@@ -27,7 +27,7 @@ class TestEntriesListView(TestCase):
         self.atype2 = ActionType.objects.create(name="Type2", available=True)
         self.atype3 = ActionType.objects.create(name="Type3", available=False)
 
-        # Action type1 entries
+        # Create enough entries to test pagination
         created_routes = Route.objects.bulk_create([
             Route(route=self.fake.unique.ipv4_public()) for x in range(self.TEST_PAGINATION_SIZE + 3)
         ])
@@ -35,19 +35,19 @@ class TestEntriesListView(TestCase):
             Entry(route=route, actiontype=self.atype1, is_active=True) for route in created_routes
         ])
 
-        # Action type2 entries
+        # Create a second type of entries to test filtering per actiontype
         created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
         entries_type2 = Entry.objects.bulk_create([
             Entry(route=route, actiontype=self.atype2, is_active=True) for route in created_routes
         ])
 
-        # Inactive entries
+        # Create inactive entries to test filtering by available actiontypes
         created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
         Entry.objects.bulk_create([
             Entry(route=route, actiontype=self.atype1, is_active=False) for route in created_routes
         ])
 
-        # Entries for unavailable action type
+        # Create entries for an invalid actiontype to test that
         created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
         Entry.objects.bulk_create([
             Entry(route=route, actiontype=self.atype3, is_active=False) for route in created_routes
@@ -74,7 +74,7 @@ class TestEntriesListView(TestCase):
         assert self.atype3 not in entries_context
 
     def test_filtering_entries_by_action_type(self):
-        """Test that only entries with available action types are included."""
+        """Test that our paginated output has entries for all available actiontypes in our paginated output."""
         self.client.login(username="testuser", password="testpass123")
 
         url = reverse("route_manager:entry-list")
@@ -87,7 +87,7 @@ class TestEntriesListView(TestCase):
 
     @override_settings(PAGINATION_SIZE=5)
     def test_pagination(self):
-        """Test pagination for different action types."""
+        """Test pagination when there's multiple action types."""
         self.client.login(username="testuser", password="testpass123")
 
         url = reverse("route_manager:entry-list")
@@ -95,20 +95,19 @@ class TestEntriesListView(TestCase):
         response = self.client.get(url)
         entries_context = response.context["entries"]
 
-        # First page should have PAGINATION_SIZE items
+        # First page should have PAGINATION_SIZE entries for actiontype with more entries than pagination size
         assert len(entries_context[self.atype1]["objs"]) == settings.PAGINATION_SIZE
         assert entries_context[self.atype1]["page_param"] == "page_type1"
         assert str(entries_context[self.atype1]["page_number"]) == "1"
 
-        # Small atype should have all items
+        # First page should include all entries for actiontype with less entries than pagination size
         assert len(entries_context[self.atype2]["objs"]) == len(self.entries["type2"])
 
-        # Second page
+        # Second page should have the rest of the entries for actiontype with more entries than pagination size
         page2_response = self.client.get(f"{url}?page_type1=2")
         page2_context = page2_response.context["entries"]
 
         assert str(page2_context[self.atype1]["page_number"]) == "2"
-        # Second page should have 3 since we initially created entries based on pagination size + 3
         assert len(page2_context[self.atype1]["objs"]) == 3
 
     @override_settings(PAGINATION_SIZE=TEST_PAGINATION_SIZE)
@@ -125,7 +124,7 @@ class TestEntriesListView(TestCase):
         assert entries_context[self.atype1]["objs"].number == 1
 
     def test_multiple_page_parameters(self):
-        """Test handling multiple pagination parameters simultaneously."""
+        """Test that we can have separate pages when we have more than one actiontype."""
         self.client.login(username="testuser", password="testpass123")
 
         url = reverse("route_manager:entry-list")
@@ -136,7 +135,5 @@ class TestEntriesListView(TestCase):
         # Each type should have its own page number
         assert str(entries_context[self.atype1]["page_number"]) == "2"
         assert str(entries_context[self.atype2]["page_number"]) == "1"
-
-        # Check current_page_params contains both parameters
         assert "page_type1" in entries_context[self.atype1]["current_page_params"]
         assert "page_type2" in entries_context[self.atype1]["current_page_params"]
