@@ -97,6 +97,7 @@ max-complexity = 7 # our current code adheres to this without too much effort
     "PLR6301", # could be a static method
     "S101", # use of assert
     "S106", # hardcoded password
+    "PLR2004" # magic value used in comparison
 ]
 "test.py" = [
     "S105", # hardcoded password as argument
