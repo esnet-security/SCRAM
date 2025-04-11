@@ -79,9 +79,14 @@ def search_entries(request):
     try:
         addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
     except ValueError:
-        # leading space was breaking ipaddress module
-        str_addr = str(request.POST.get("cidr")).strip()
-        addr = ipaddress.ip_network(str_addr, strict=False)
+        try:
+            # leading space was breaking ipaddress module
+            str_addr = str(request.POST.get("cidr")).strip()
+            addr = ipaddress.ip_network(str_addr, strict=False)
+        except ValueError:
+            messages.add_message(request, messages.ERROR, "Search query was blank")
+            return redirect("route_manager:home")
+
     # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
         request,
