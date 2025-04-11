@@ -12,7 +12,8 @@ RUN apt-get update \
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./translator/requirements /requirements
-RUN pip install -r /requirements/base.txt
+RUN pip install uv
+RUN uv pip install --system -r /requirements/base.txt
 
 RUN mkdir /app \
   && cd /app \

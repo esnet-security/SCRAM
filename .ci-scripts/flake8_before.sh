@@ -2,4 +2,4 @@
 
 set -e
 
-pip install -q flake8
+uv pip install --system -q flake8

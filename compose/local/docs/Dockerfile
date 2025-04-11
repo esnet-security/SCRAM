@@ -25,7 +25,8 @@ RUN apt-get update \
 
 # Only re-run the pip install if these files have changed
 COPY requirements/base.txt requirements/local.txt requirements/production.txt /app/requirements/
-RUN pip install -r /app/requirements/local.txt -r /app/requirements/production.txt
+RUN pip install uv
+RUN uv pip install --system -r /app/requirements/local.txt -r /app/requirements/production.txt
 
 COPY . /app/
 
