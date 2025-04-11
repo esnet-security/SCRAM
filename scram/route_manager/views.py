@@ -76,7 +76,12 @@ def search_entries(request):
     # Using ipaddress because we needed to turn off strict mode
     # (which netfields uses by default with seemingly no toggle)
     # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
-    addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    try:
+        addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    except ValueError:
+        # leading space was breaking ipaddress module
+        str_addr = str(request.POST.get("cidr")).strip()
+        addr = ipaddress.ip_network(str_addr, strict=False)
     # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
         request,
