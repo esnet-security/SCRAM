@@ -1,12 +1,9 @@
 """Define steps used for IP-related logic by the Behave tests."""
 
 import ipaddress
-import logging
 
 from behave import then, when
 from django.urls import reverse
-
-logger = logging.getLogger(__name__)
 
 
 @then("{route} is contained in our list of {model}s")
@@ -28,8 +25,12 @@ def check_route(context, route, model):
 @when("we query for {ip}")
 def check_ip(context, ip):
     """Find an Entry for the specified IP."""
-    search_url = reverse("route_manager:search")
-    context.response = context.test.client.post(search_url, {"cidr": ip}, format="multipart", follow=True)
+    try:
+        context.response = context.test.client.get(reverse("api:v1:entry-detail", args=[ip]))
+        context.queryException = None
+    except ValueError as e:
+        context.response = None
+        context.queryException = e
 
 
 @then("we get a ValueError")
