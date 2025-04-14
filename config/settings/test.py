@@ -1,5 +1,7 @@
 """With these settings, tests run faster."""
 
+from django.core.management.utils import get_random_secret_key
+
 from .base import *  # noqa
 from .base import env
 
@@ -8,7 +10,7 @@ from .base import env
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
-    default="qotrPVH3oE4bohX1nhiG7wlWu9BW3ZHEMGWP4ejTx4nWsKpRmECBQtiSVMFyFLLv",
+    default=get_random_secret_key(),
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
