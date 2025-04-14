@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -73,13 +73,13 @@ def home_page(request, prefilter=None):
 
 def search_entries(request):
     """Wrap the home page with a specified CIDR to restrict Entries to."""
-    # Using ipaddress because we needed to turn off strict mode
-    # (which netfields uses by default with seemingly no toggle)
-    # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
     if request.method != "POST":
         return redirect("route_manager:home")
 
     try:
+        # Using ipaddress because we needed to turn off strict mode
+        # (which netfields uses by default with seemingly no toggle)
+        # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
         addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
     except ValueError:
         try:
@@ -89,7 +89,8 @@ def search_entries(request):
         except ValueError:
             messages.add_message(request, messages.ERROR, "Search query was not a valid CIDR address")
 
-            return redirect("route_manager:home")
+            # Send a 400, but show the home page instead of an error page
+            return HttpResponseBadRequest(render(request, "route_manager/home.html"))
 
     # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
