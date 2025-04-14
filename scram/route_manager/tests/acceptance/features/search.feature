@@ -1,7 +1,7 @@
 Feature: Test our search bar
   We need to make sure search works as expected
 
-  Scenario Outline: Searching for a valid CIDR works even with prepending white space
+  Scenario Outline: Searching for a valid CIDR works
     Given a client with block authorization
     When we're logged in
     And we add the entry <ip>
@@ -13,7 +13,7 @@ Feature: Test our search bar
     | 192.0.2.168        |
     | 2001:DB8:9508::1   |
 
-  Scenario Outline: Searching for an invalid CIDR redirects to the home page and sends a 400
+  Scenario Outline: Searching for an invalid CIDR sends a 400
     Given a client with block authorization
     When we're logged in
     And we search for <ip>
