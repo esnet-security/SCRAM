@@ -52,7 +52,7 @@ Feature: we can query the list of entries for a specific entry
       | 192.0.2.0/24  |
       | 2001:DB8::/48 |
 
-  Scenario Outline: we cant search malformed IPs and get redirected to the home page
+  Scenario Outline: we get the proper error when querying an invalid cidr
     Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>

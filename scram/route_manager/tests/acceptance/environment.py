@@ -1,5 +1,6 @@
 """Setup the environment for tests."""
 
+from django.test import Client
 from rest_framework.test import APIClient
 
 from scram.users.tests.factories import UserFactory
@@ -12,3 +13,4 @@ def django_ready(context):
 
     # Default to using the API client.
     context.test.client = APIClient()
+    context.test.web_client = Client()
