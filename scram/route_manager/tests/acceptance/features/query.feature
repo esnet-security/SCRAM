@@ -37,7 +37,8 @@ Feature: we can query the list of entries for a specific entry
       | 2001:DB8:950C::/48   | 2001:DB8:950C::1/128 |
       | 2001:DB8:950D::/48   | 2001:DB8:950D::1/64  |
 
-  Scenario Outline: we cant query larger than our prefixmin
+  # This is to make sure the code path for deactivating an entry works correctly
+  Scenario Outline: we cant query larger than our prefix min
     Given a client with block authorization
     When we're logged in
     And the CIDR prefix limits are 24 and 48
@@ -46,19 +47,17 @@ Feature: we can query the list of entries for a specific entry
     And we query for <ip>
     Then we get a 400 status code
 
-
     Examples: IPs
       | ip            |
       | 192.0.2.0/24  |
       | 2001:DB8::/48 |
 
-  Scenario Outline: we cant enter malformed IPs
+  Scenario Outline: we get the proper error when querying an invalid cidr
     Given a client with block authorization
     When we're logged in
     And  we add the entry <ip>
     And  we query for <ip>
     Then we get a ValueError
-
 
     Examples: IPs
       | ip              |
