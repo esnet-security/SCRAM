@@ -1,3 +1,7 @@
+"""Use these settings for local development."""
+
+from django.core.management.utils import get_random_secret_key
+
 from .base import *  # noqa
 from .base import AUTH_METHOD, REST_FRAMEWORK, env
 
@@ -8,7 +12,7 @@ DEBUG = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
-    default="BmZnn8FeNFdaeCod8ky6eBNpTiwO45NzlFyA6kk1xo0g4Mc263gAyscHFCMCeJAi",
+    default=get_random_secret_key(),
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["*"]
