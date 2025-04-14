@@ -13,7 +13,7 @@ Feature: Test our search bar
     | 192.0.2.168        |
     | 2001:DB8:9508::1   |
 
-  Scenario Outline: Searching for an invalid CIDR sends a 400
+  Scenario Outline: Searching for an invalid CIDR returns a Bad Request error
     Given a client with block authorization
     When we're logged in
     And we search for <ip>
