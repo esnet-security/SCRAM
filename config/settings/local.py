@@ -1,3 +1,7 @@
+"""Use these settings for local development."""
+
+from django.core.management.utils import get_random_secret_key
+
 from .base import *  # noqa
 from .base import AUTH_METHOD, REST_FRAMEWORK, env
 
@@ -8,7 +12,7 @@ DEBUG = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
-    default="BmZnn8FeNFdaeCod8ky6eBNpTiwO45NzlFyA6kk1xo0g4Mc263gAyscHFCMCeJAi",
+    default=get_random_secret_key(),
 )
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["*"]
@@ -55,6 +59,8 @@ if env("USE_DOCKER", default="no") == "yes":
     import socket
 
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    # This comes from the cookiecutter and while we don't like it, it's not worth the effort to fix yet
+    # ruff: noqa: RUF005
     INTERNAL_IPS += [".".join(ip.split(".")[:-1] + ["1"]) for ip in ips]
 
 # django-extensions

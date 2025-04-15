@@ -9,7 +9,12 @@ from channels.layers import get_channel_layer
 from django import conf
 from django.urls import reverse
 
-from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
+from scram.route_manager.models import (
+    ActionType,
+    Client,
+    WebSocketMessage,
+    WebSocketSequenceElement,
+)
 
 
 @given("a {name} actiontype is defined")
@@ -54,6 +59,7 @@ def create_unauthed_client(context, name):
 def login(context):
     """Login."""
     context.test.client.login(username="user", password="password")
+    context.test.web_client.login(username="user", password="password")
 
 
 @when("the CIDR prefix limits are {v4_minprefix:d} and {v6_minprefix:d}")
@@ -185,7 +191,7 @@ def update_object(context, model, value_from, value_to):
 def count_objects(context, model, num):
     """Count the number of objects of an arbitrary model."""
     objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
-    context.test.assertEqual(len(objs.json()), num)
+    context.test.assertEqual(len(objs.json()["results"]), num)
 
 
 model_to_field_mapping = {"entry": "route"}
@@ -197,7 +203,7 @@ def check_object(context, value, model):
     objs = context.test.client.get(reverse(f"api:v1:{model.lower()}-list"))
 
     found = False
-    for obj in objs.json():
+    for obj in objs.json()["results"]:
         # For some models, we need to look at a different field.
         model = model_to_field_mapping.get(model.lower(), model.lower())
         if obj[model].lower() == value.lower():

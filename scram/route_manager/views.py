@@ -14,8 +14,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -73,10 +74,25 @@ def home_page(request, prefilter=None):
 
 def search_entries(request):
     """Wrap the home page with a specified CIDR to restrict Entries to."""
-    # Using ipaddress because we needed to turn off strict mode
-    # (which netfields uses by default with seemingly no toggle)
-    # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
-    addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    if request.method != "POST":
+        return redirect("route_manager:home")
+
+    try:
+        # Using ipaddress because we needed to turn off strict mode
+        # (which netfields uses by default with seemingly no toggle)
+        # This caused searches with host bits set to 500 which is bad UX see: 68854ee1ad4789a62863083d521bddbc96ab7025
+        addr = ipaddress.ip_network(request.POST.get("cidr"), strict=False)
+    except ValueError:
+        try:
+            # leading space was breaking ipaddress module
+            str_addr = str(request.POST.get("cidr")).strip()
+            addr = ipaddress.ip_network(str_addr, strict=False)
+        except ValueError:
+            messages.add_message(request, messages.ERROR, "Search query was not a valid CIDR address")
+
+            # Send a 400, but show the home page instead of an error page
+            return HttpResponseBadRequest(render(request, "route_manager/home.html"))
+
     # We call home_page because search is just a more specific case of the same view and template to return.
     return home_page(
         request,
@@ -212,15 +228,43 @@ class EntryListView(ListView):
 
     model = Entry
     template_name = "route_manager/entry_list.html"
+    context_object_name = "object_list"
+    paginate_by = settings.PAGINATION_SIZE
 
-    @staticmethod
-    def get_context_data(**kwargs):
-        """Group entries by action type."""
-        context = {"entries": {}}
-        for at in ActionType.objects.all():
-            queryset = Entry.objects.filter(actiontype=at).order_by("-pk")
-            context["entries"][at] = {
-                "objs": queryset,
+    def get_context_data(self, **kwargs):
+        """Add action type grouping to context with separate paginators."""
+        context = super().get_context_data(**kwargs)
+
+        current_page_params = {}
+        for key, value in self.request.GET.items():
+            if key.startswith("page_"):
+                current_page_params[key] = value
+
+        entries_by_type = {}
+
+        # Get all available action types
+        for at in ActionType.objects.filter(available=True):
+            queryset = Entry.objects.filter(actiontype=at, is_active=True).order_by("-pk")
+
+            # Create a paginator for this action type
+            paginator = Paginator(queryset, settings.PAGINATION_SIZE)
+
+            # Get page number from request with a unique parameter name per type
+            page_param = f"page_{at.name.lower()}"
+            page_number = self.request.GET.get(page_param, 1)
+
+            try:
+                page_obj = paginator.page(page_number)
+            except (PageNotAnInteger, EmptyPage):
+                page_obj = paginator.page(1)
+
+            entries_by_type[at] = {
                 "total": queryset.count(),
+                "objs": page_obj,
+                "page_param": page_param,
+                "page_number": page_number,
+                "current_page_params": current_page_params.copy(),
             }
+
+        context["entries"] = entries_by_type
         return context

@@ -13,7 +13,7 @@ def check_route(context, route, model):
     ip_target = ipaddress.ip_address(route)
 
     ip_found = False
-    for obj in objs.json():
+    for obj in objs.json()["results"]:
         net = ipaddress.ip_network(obj["route"])
         if ip_target in net:
             ip_found = True
@@ -48,3 +48,12 @@ def check_comment(context, value, comment):
     except ValueError as e:
         context.response = None
         context.queryException = e
+
+
+@when("we search for {ip}")
+def search_ip(context, ip):
+    """Search our main search bar for an IP."""
+    client = context.test.web_client
+    search_url = reverse("route_manager:search")
+
+    context.response = client.post(search_url, data={"cidr": ip})
