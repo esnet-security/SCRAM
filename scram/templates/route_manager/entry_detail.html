@@ -16,11 +16,14 @@
           <td class="text-center">{{ entry.actiontype.name }}</td>
           <td>{{ entry.expiration }}</td>
           <td class="text-center">{{ entry.is_active }}</td>
+          {% if entry.is_active %}
           <td>
-            <form class="form-inline" action="{% url 'route_manager:delete' entry.id %}" method="POST">
-            {% csrf_token %}
-            <button class="btn btn-danger btn-sm" type="submit">Deactivate Entry</button>
-            </form></td>
+              <form class="form-inline" action="{% url 'route_manager:delete' entry.id %}" method="POST">
+              {% csrf_token %}
+              <button class="btn btn-danger btn-sm" type="submit">Deactivate Entry</button>
+              </form>
+          </td>
+          {% endif %}
         </tr>
       </table>
     </div>
