@@ -339,9 +339,10 @@ if AUTH_METHOD == "oidc":
 elif AUTH_METHOD == "local":
     # Points to 'route_manager:home'
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-    LOGIN_REDIRECT_URL = "route_manager:home"
+    LOGIN_REDIRECT_URL = "local_auth:login"
 
-    LOGOUT_REDIRECT_URL = "route_manager:home"
+    LOGOUT_REDIRECT_URL = "local_auth:logout"
+
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "local_auth:login"
 
