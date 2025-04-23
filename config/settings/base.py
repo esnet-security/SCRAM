@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import environ
+from django.conf.global_settings import LOGIN_REDIRECT_URL
 
 logger = logging.getLogger(__name__)
 
@@ -292,14 +293,17 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "route_manager:home"
-
-# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
-# https://github.com/mozilla/mozilla-django-oidc/issues/118
-# Using `/` because named urls don't work for this package
-# https://github.com/mozilla/mozilla-django-oidc/issues/434
-LOGOUT_REDIRECT_URL = "route_manager:home"
+if AUTH_METHOD == "oidc":
+    # Using `/` because named urls don't work for this package
+    # https://github.com/mozilla/mozilla-django-oidc/issues/434
+    LOGIN_REDIRECT_URL = "/"
+    # Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+    # https://github.com/mozilla/mozilla-django-oidc/issues/118
+    LOGOUT_REDIRECT_URL = "/"
+else:
+    # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+    LOGIN_REDIRECT_URL = "route_manager:home"
+    LOGOUT_REDIRECT_URL = "route_manager:home"
 
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
