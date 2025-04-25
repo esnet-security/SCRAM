@@ -1,5 +1,8 @@
-FROM python:3.8-slim-buster
+ARG PYTHON_IMAGE_VER=3.12
 
+FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
+
+ENV PIP_ROOT_USER_ACTION ignore
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
@@ -16,7 +19,8 @@ RUN apt-get update \
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements /requirements
-RUN pip install -r /requirements/local.txt
+RUN pip install uv
+RUN uv pip install --system -r /requirements/local.txt
 
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint

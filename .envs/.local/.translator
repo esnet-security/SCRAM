@@ -1,4 +1,6 @@
 # Translator
 # ------------------------------------------------------------------------------
-TRANSLATOR_HOSTNAME=localhost
-TRANSLATOR_URL="ws://django:8000/ws/route_manager/translator_block/"
+TRANSLATOR_HOSTNAME = localhost
+TRANSLATOR_URL = "ws://django:8000/ws/route_manager/translator_block/"
+SCRAM_HOSTNAME = "localhost"
+LOG_LEVEL = "DEBUG"

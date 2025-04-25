@@ -69,3 +69,22 @@ In order to do so, you update the JSON dictionary inside the Web Socket Message 
 is that you must include a "route" key in that dictionary with a string value of any kind. If you decide to change the 
 key in the JSON payload whose value will contain the route being acted on field, you must change the route key in the 
 dictionary to match that field.
+
+#### Syncing
+If you want two or more instances of SCRAM to share data between themselves we have a few ways of making sure that happens.
+
+1. By depending on postgres, we can use a shared postgres instance to make sure both SCRAM instances have the same data
+2. When a translator connects, it asks its local Django instance for all routes it already knows about in the DB and 
+   announces those.
+3. For normal syncing where both translators have been connected, we are currently using process_updates (since it runs 
+   regularly) to grab new data out of the database that comes from other connected instances and reannounces those locally.
+
+Honestly, step 3 is kind of gross and we realize this. We are probably looking at a task runner or something to handle
+this moving forward, but we needed to get this fixed in the meantime. Status can be tracked with
+[Github Issue 125](https://github.com/esnet-security/SCRAM/issues/125) 
+
+#### Entries Page
+We intentionally chose to only list the active entries. Our thinking is that the home page shows the most recent additions.
+Then, if you went to the entries page, it would be overwhelmingly huge to show all the historical entries including the 
+ones that timed out/were deactivated. If you wanted to know about a specific entry even if it were not currently active
+(to see the history of it say), you would likely be using the search anyway.

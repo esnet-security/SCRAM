@@ -12,13 +12,14 @@ RUN apt-get update \
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./translator/requirements /requirements
-RUN pip install -r /requirements/base.txt
+RUN pip install uv
+RUN uv pip install --system -r /requirements/base.txt
 
 RUN mkdir /app \
   && cd /app \
-  && git clone -b v2.32.0 https://github.com/osrg/gobgp.git \
+  && git clone -b v3.33.0 https://github.com/osrg/gobgp.git \
   && cd gobgp/api \
-  && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --grpc_python_out=/app/ *.proto
+  && python3 -m grpc_tools.protoc -I./ --python_out=/app/ --pyi_out=/app/ --grpc_python_out=/app/ *.proto
 
 COPY ./translator/translator.py /app
 COPY ./translator/gobgp.py /app

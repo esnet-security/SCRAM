@@ -1,28 +1,19 @@
-SCRAM
-=====
+# SCRAM
 
 Security Catch and Release Automation Manager
 
-.. image:: https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter
-     :target: https://github.com/pydanny/cookiecutter-django/
-     :alt: Built with Cookiecutter Django
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-     :target: https://github.com/ambv/black
-     :alt: Black code style
+[<img src="https://coveralls.io/repos/github/esnet-security/SCRAM/badge.svg">](<https://coveralls.io/github/esnet-security/SCRAM>)
+[<img src="https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter">](<https://github.com/pydanny/cookiecutter-django/>)
+[<img src="https://img.shields.io/badge/code%20style-ruff-41B5BE.svg">](<https://docs.astral.sh/ruff/>)
 
-
-:License: BSD
-
-====
-
-Overview
-====
+## Overview
 
 SCRAM is a web based service to assist in automation of security data. There is a web interface as well as a REST API available.
+
 The idea is to create actiontypes which allow you to take actions on the IPs/cidr networks you provide.
 
-Components
-====
+## Components
+
 SCRAM utilizes ``docker compose`` to run the following stack in production:
 
 - nginx (as a webserver and static asset server)
@@ -35,8 +26,7 @@ SCRAM utilizes ``docker compose`` to run the following stack in production:
 A predefined actiontype of "block" exists which utilizes bgp nullrouting to effectivley block any traffic you want to apply.
 You can add any other actiontypes via the admin page of the web interface dynamically, but keep in mind translator support would need to be added as well.
 
-Installation
-====
+## Installation
 
 To get a basic implementation up and running locally:
 
@@ -48,6 +38,9 @@ To get a basic implementation up and running locally:
 - Create ``$scram_home/.envs/.production/.postgres`` a template exists in the docs/templates directory
     - Make sure to set the right credentials
     - By default this template assumes you have a service defined in docker compose file called postgres. If you use another postgres server, make sure to update that setting as well
+- Create a ``.env`` file with the necessary environment variables:
+    - [comment]: # This chooses if you want to use oidc or local accounts. This can be local or oidc only. Default: `local`
+    - scram_auth_method: "local"
 - ``make build``
 - ``make toggle-prod``
     - This will turn off debug mode in django and start using nginx to reverse proxy for the app
@@ -56,8 +49,7 @@ To get a basic implementation up and running locally:
 - ``make django-open``
 
 
-*** Copyright Notice ***
-====
+## Copyright Notice
 
 Security Catch and Release Automation Manager (SCRAM) Copyright (c) 2022,
 The Regents of the University of California, through Lawrence Berkeley

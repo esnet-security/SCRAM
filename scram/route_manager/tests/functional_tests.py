@@ -1,9 +1,10 @@
+"""Use the Django web client to perform end-to-end, WebUI-based testing."""
+
 import unittest
 
 
 class HomePageTest(unittest.TestCase):
-
-    pass
+    """Ensure the home page works."""
 
 
 if __name__ == "__main__":
