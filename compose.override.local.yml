@@ -15,15 +15,39 @@ services:
       - /tmp/profile_data:/tmp/profile_data
     env_file:
       - ./.envs/.local/.django
+      - ./.envs/.local/.django-primary
       - ./.envs/.local/.postgres
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
     ports:
       - "8000"
       - 56780:56780
     environment:
       # This can be set to either `debugpy` or `pycharm-pydevd` currently.
       - DEBUG=${DEBUG:-}
+
+  django-secondary:
+    platform: linux/amd64
+    build:
+      dockerfile: ./compose/local/django/Dockerfile
+    image: scram_local_django
+    volumes:
+      - $CI_PROJECT_DIR:/app:z
+      - /tmp/profile_data:/tmp/profile_data
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.django-secondary
+      - ./.envs/.local/.postgres
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
+    ports:
+      - "8000"
+      - 56781:56780
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG:-}
+    deploy:
+      replicas: 1
 
   postgres:
     volumes:
@@ -54,24 +78,53 @@ services:
   redis:
     ports:
       - "6379"
+    deploy:
+      replicas: 2
 
-  gobgp:
+  gobgp-primary:
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:
       - "179"
       - "50051"
+    deploy:
+      replicas: 1
+
+
+  gobgp-secondary:
+    volumes:
+      - $CI_PROJECT_DIR/gobgp_config:/config:z
+    ports:
+      - "179"
+      - "50051"
+    deploy:
+      replicas: 1
 
   translator:
     volumes:
       - ./translator/tests/:/app/tests/
     env_file:
       - ./.envs/.local/.translator
+      - ./.envs/.local/.translator-primary
     ports:
-      - 56781:56781
+      - 56782:56781
     environment:
       # This can be set to either `debugpy` or `pycharm-pydevd` currently.
       - DEBUG=${DEBUG:-}
+
+  translator-secondary:
+    volumes:
+      - ./translator/tests/:/app/tests/
+    env_file:
+      - ./.envs/.local/.translator
+      - ./.envs/.local/.translator-secondary
+    ports:
+      - 56783:56781
+    environment:
+      # This can be set to either `debugpy` or `pycharm-pydevd` currently.
+      - DEBUG=${DEBUG:-}
+    deploy:
+      replicas: 1
 
 networks:
   default:

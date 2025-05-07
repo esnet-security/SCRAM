@@ -14,6 +14,9 @@ from gobgp import GoBGP
 from grpc import RpcError
 
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
+GOBGP_HOST = getenv("GOBGP_HOST", "gobgp")
+GOBGP_PORT = getenv("GOBGP_PORT", "50051")
+GOBGP_URL = GOBGP_HOST + ":" + GOBGP_PORT
 
 logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
@@ -107,7 +110,8 @@ async def process(message, websocket, g):
 
 async def websocket_loop():
     """Connect to the websocket and start listening for messages for Gobgp."""
-    g = GoBGP("gobgp:50051")
+    logger.info("connecting to gobgp at %s", GOBGP_URL)
+    g = GoBGP(GOBGP_URL)
     async for websocket in websockets.connect(url):
         try:
             async for message in websocket:
