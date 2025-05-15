@@ -1,10 +1,10 @@
 """Define the Views that will handle the HTTP requests."""
 
+import datetime
 import ipaddress
 import json
 import logging
 from datetime import timedelta
-from itertools import chain
 
 import rest_framework.utils.serializer_helpers
 from asgiref.sync import async_to_sync
@@ -151,6 +151,81 @@ def add_entry(request):
     return redirect("route_manager:home")
 
 
+def get_entries_to_process(cutoff_time: datetime) -> list[Entry]:
+    """get_entries_to_process returns a list of entries that have recently been changed by a different server.
+
+    _extended_summary_
+
+    Returns:
+        list[Entry]: The list of entry objects that have been modified by a different server.
+    """
+    logger.debug("Looking for new entries from other SCRAM instances")
+
+    # Grab all of the the HistoricalEntry objects (from the Entry model) that were created
+    # (i.e. an Entry object was modified) since the cutoff time
+    # Does this re-process expired entries? (i.e. do the entries we just "deleted" have a new history entry? TODO: Test
+    logger.debug("Grabbing entry history models")
+    recently_touched_histories = Entry.history.filter(history_date__gt=cutoff_time)
+
+    # Grab a set of all of the Entry IDs from the modified histories since there can be multiple history entries
+    # per Entry object.
+    recently_touched_entries_id = {history.id for history in recently_touched_histories}
+    logger.debug("Found the following recently touched entry IDs: %s", recently_touched_entries_id)
+
+    # Get all of the Entry objects from the database that were recently touched now that we have the modified
+    # Entry object IDs.
+    recently_touched_entries = [Entry.objects.get(id=entry_id) for entry_id in recently_touched_entries_id]
+    logger.debug("Found the following recently touched entries: %s", recently_touched_entries)
+
+    # Next, we want to filter the entries that were recently touched, to the ones from a different SCRAM instance.
+    entries_to_process = []
+    for entry in recently_touched_entries:
+        if entry.originating_scram_instance != settings.SCRAM_HOSTNAME:
+            entries_to_process.append(entry)
+            logger.debug("Adding entry %s to processing list", entry)
+        else:
+            logger.debug("Entry %s was not added to processing list", entry)
+
+    return entries_to_process
+
+
+def reprocess_entries(entries_to_process: list[Entry]) -> None:
+    """reprocess_entries takes a list of entries and adds them to the correct translator websocket group.
+
+    Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
+    whether that is to block or unblock them. This is used by `process_updates()`.
+
+    Args:
+        entries_to_process (list[Entry]): the list of entry DB objects that we want to reprocess.
+    """
+    # Resend new entries that popped up in the database
+    # TODO: Make this thingy a function that we can call from everywhere?
+
+    # I think we have to override the message type defaults to add?
+    logger.info("Executing reprocess_entries with %d entries", len(entries_to_process))
+    logger.debug("List of entries to process: %s", entries_to_process)
+
+    for entry in entries_to_process:
+        logger.info("Processing new entry: %s", entry)
+
+        if entry.is_active:
+            message_type = "translator_add"
+        if not entry.is_active:
+            message_type = "translator_remove"
+
+        translator_group = f"translator_{entry.actiontype}"
+        elements = list(
+            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
+        )
+
+        for element in elements:
+            msg = element.websocketmessage
+            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
+
+            json_to_send = {"type": message_type, "message": msg.msg_data}
+            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
+
+
 def process_updates(request):
     """For entries with an expiration, set them to inactive if expired.
 
@@ -170,52 +245,18 @@ def process_updates(request):
         obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
 
-    logger.debug("Looking for new entries from other SCRAM instances")
-    # Grab all entries from the last 2 minutes that originated from a different SCRAM instance.
+    # Grab all of the other entries that need processing and... process them!
     cutoff_time = current_time - timedelta(minutes=2)
-    new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
-        originating_scram_instance=settings.SCRAM_HOSTNAME
-    )
-
-    # Grab all of the the HistoricalEntry objects (from the Entry model) that were created
-    # (i.e. an Entry object was modified) since the cutoff time
-    recently_touched_histories = Entry.history.filter(history_date__gt=cutoff_time)
-
-    # Grab a set of all of the Entry IDs from the modified histories since there can be multiple history entries
-    # per Entry object.
-    recently_touched_entries_id = {history.id for history in recently_touched_histories}
-
-    # Get all of the Entry objects from the database that were recently touched now that we have the modified
-    # Entry object IDs.
-    recently_touched_entries = [Entry.objects.get(id=entry_id) for entry_id in recently_touched_entries_id]
-
-    # Combine the new entries from other hosts with any objects touched (this is now redundant, since to add an entry
-    # on another host, you have to modify it...) TODO: Remove new_entries entirely?
-    entries_to_process = list(chain(new_entries, recently_touched_entries))
-
-    # Resend new entries that popped up in the database
-    # TODO: Make this thingy a function that we can call from everywhere?
-    for entry in entries_to_process:
-        logger.info("Processing new entry: %s", entry)
-        translator_group = f"translator_{entry.actiontype}"
-        elements = list(
-            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
-        )
-        for element in elements:
-            msg = element.websocketmessage
-            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
-
-            json_to_send = {"type": msg.msg_type, "message": msg.msg_data}
-            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
+    if entries_to_process := get_entries_to_process(cutoff_time=cutoff_time):
+        reprocess_entries(entries_to_process)
+    else:
+        logger.info("No new entries to process")
 
     return HttpResponse(
         json.dumps(
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
-                "remote_entries_added": new_entries.count(),
-                "recently_touched_entries": len(recently_touched_entries),
-                "list_of_recently_touched_entries": str(recently_touched_entries),  # TODO: REMOVE MEEEEE
                 "entries_reprocessed": len(entries_to_process),
             },
         ),
