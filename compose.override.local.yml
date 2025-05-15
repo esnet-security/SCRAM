@@ -81,7 +81,7 @@ services:
     deploy:
       replicas: 2
 
-  gobgp-primary:
+  gobgp:
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
     ports:

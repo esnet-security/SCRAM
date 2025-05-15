@@ -1,7 +1,6 @@
 # Translator
 # ------------------------------------------------------------------------------
-TRANSLATOR_HOSTNAME = localhost
-TRANSLATOR_URL = "ws://django-secondary:8000/ws/route_manager/translator_block/"
+SCRAM_EVENTS_URL = "ws://django-secondary:8000/ws/route_manager/translator_block/"
 GOBGP_HOST = "scram-gobgp-secondary-1"
 GOBGP_PORT = 50051
 SCRAM_HOSTNAME = "django-secondary"

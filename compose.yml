@@ -78,7 +78,7 @@ services:
     deploy:
       replicas: ${REDIS_REPLICAS:-1}
 
-  gobgp-primary:
+  gobgp:
     image: jauderho/gobgp:v3.33.0
     networks:
       default: {}
@@ -107,7 +107,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      gobgp-primary:
+      gobgp:
         condition: service_healthy
       django:
         condition: service_healthy
