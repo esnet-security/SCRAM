@@ -24,7 +24,7 @@ from django.views.generic import DetailView, ListView
 from scram.route_manager.models import WebSocketSequenceElement
 
 from ..route_manager.api.views import EntryViewSet
-from ..shared.code import make_random_password
+from ..shared.shared_code import make_random_password
 from ..users.models import User
 from .models import ActionType, Entry
 
