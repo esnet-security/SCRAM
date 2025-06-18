@@ -1,0 +1,3 @@
+REDIS_URL=redis://scram-redis-2:6379/0
+REDIS_HOST=scram-redis-2
+SCRAM_HOSTNAME="django-secondary"
