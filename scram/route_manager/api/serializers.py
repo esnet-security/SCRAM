@@ -6,7 +6,6 @@ from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
-from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
@@ -96,7 +95,6 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         entry_instance, _ = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
 
         logger.debug("Created entry with comment: %s", comment)
-        update_change_reason(entry_instance, comment)
 
         return entry_instance
 

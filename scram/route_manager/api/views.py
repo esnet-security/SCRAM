@@ -14,6 +14,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
@@ -162,6 +163,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         entry.originating_scram_instance = settings.SCRAM_HOSTNAME
         logger.info("Created entry: %s", entry)
         entry.save()
+        update_change_reason(entry, comment)
 
     @staticmethod
     def find_entries(arg, active_filter=None):
