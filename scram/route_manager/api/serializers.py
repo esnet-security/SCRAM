@@ -72,7 +72,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         """Maps to the Entry model, and specifies the fields exposed by the API."""
 
         model = Entry
-        fields = ["route", "actiontype", "url", "comment", "who"]
+        fields = ["route", "actiontype", "url", "comment", "who", "expiration", "originating_scram_instance"]
 
     @staticmethod
     def get_comment(obj):
@@ -82,21 +82,6 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             string: The change reason that modified the Entry.
         """
         return obj.get_change_reason()
-
-    @staticmethod
-    def create(validated_data):
-        """Implement custom logic and validates creating a new route."""
-        valid_route = validated_data.pop("route")
-        actiontype = validated_data.pop("actiontype")
-        comment = validated_data.pop("comment")
-
-        route_instance, _ = Route.objects.get_or_create(route=valid_route)
-        actiontype_instance = ActionType.objects.get(name=actiontype)
-        entry_instance, _ = Entry.objects.get_or_create(route=route_instance, actiontype=actiontype_instance)
-
-        logger.debug("Created entry with comment: %s", comment)
-
-        return entry_instance
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):

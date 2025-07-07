@@ -16,7 +16,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Client, Entry, IgnoreEntry, WebSocketSequenceElement
+from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
 from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
 
@@ -117,6 +117,10 @@ class EntryViewSet(viewsets.ModelViewSet):
         """Create a new Entry, causing that route to receive the actiontype (i.e. block)."""
         actiontype = serializer.validated_data["actiontype"]
         route = serializer.validated_data["route"]
+
+        route_instance, _ = Route.objects.get_or_create(route=route)
+        actiontype_instance = ActionType.objects.get(name=actiontype)
+
         if self.request.user.username:
             # This is set if our request comes through the WUI path
             who = self.request.user.username
@@ -137,7 +141,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             raise PrefixTooLarge
 
         self.check_client_authorization(actiontype)
-        self.check_ignore_list(route)
+        self.check_ignore_list(route_instance)
 
         elements = WebSocketSequenceElement.objects.filter(action_type__name=actiontype).order_by("order_num")
         if not elements:
@@ -145,24 +149,25 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         for element in elements:
             msg = element.websocketmessage
-            msg.msg_data[msg.msg_data_route_field] = str(route)
+            msg.msg_data[msg.msg_data_route_field] = str(route_instance)
             # Must match a channel name defined in asgi.py
             async_to_sync(channel_layer.group_send)(
                 f"translator_{actiontype}",
                 {"type": msg.msg_type, "message": msg.msg_data},
             )
 
-        serializer.save()
+        logger.info("Created entry %s for route %s", actiontype, route)
 
-        entry = Entry.objects.get(route__route=route, actiontype__name=actiontype)
-        if expiration:
-            entry.expiration = expiration
-        entry.who = who
-        entry.is_active = True
-        entry.comment = comment
-        entry.originating_scram_instance = settings.SCRAM_HOSTNAME
-        logger.info("Created entry: %s", entry)
-        entry.save()
+        serializer.save(
+            route=route_instance,
+            actiontype=actiontype_instance,
+            who=who,
+            is_active=True,
+            comment=comment,
+            originating_scram_instance=settings.SCRAM_HOSTNAME,
+            expiration=expiration if expiration else None
+        )
+        entry = serializer.instance
         update_change_reason(entry, comment)
 
     @staticmethod
