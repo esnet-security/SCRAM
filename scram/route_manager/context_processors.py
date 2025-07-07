@@ -1,7 +1,7 @@
 """Define custom functions that take a request and add to the context before template rendering."""
 
 from django.conf import settings
-from django.urls import redirect
+from django.shortcuts import redirect
 
 from scram.route_manager.models import Entry
 
