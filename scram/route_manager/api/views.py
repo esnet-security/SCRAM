@@ -121,12 +121,13 @@ class EntryViewSet(viewsets.ModelViewSet):
         route_instance, _ = Route.objects.get_or_create(route=route)
         actiontype_instance = ActionType.objects.get(name=actiontype)
 
-        if self.request.user.username:
-            # This is set if our request comes through the WUI path
-            who = self.request.user.username
-        else:
+        if serializer.validated_data.get("who"):
             # This is set if we pass the "who" through the json data in an API call (like from Zeek)
             who = serializer.validated_data["who"]
+        else:
+            # This is set if our request comes through the WUI path
+            who = self.request.user.username
+
         comment = serializer.validated_data["comment"]
         tmp_exp = self.request.data.get("expiration", "")
 
@@ -165,7 +166,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             is_active=True,
             comment=comment,
             originating_scram_instance=settings.SCRAM_HOSTNAME,
-            expiration=expiration if expiration else None
         )
         entry = serializer.instance
         update_change_reason(entry, comment)

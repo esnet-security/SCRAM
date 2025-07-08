@@ -67,12 +67,13 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     else:
         who = serializers.CharField()
     comment = serializers.CharField()
+    originating_scram_instance = serializers.CharField(default="scram_hostname_not_set", read_only=True)
+    is_active = serializers.BooleanField(default=True, read_only=True)
 
     class Meta:
         """Maps to the Entry model, and specifies the fields exposed by the API."""
-
         model = Entry
-        fields = ["route", "actiontype", "url", "comment", "who", "expiration", "originating_scram_instance"]
+        fields = ["route", "actiontype", "url", "comment", "who", "expiration", "originating_scram_instance", "is_active"]
 
     @staticmethod
     def get_comment(obj):
