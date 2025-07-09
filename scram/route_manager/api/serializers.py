@@ -88,7 +88,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         """Create or update an Entry, handling duplicates gracefully."""
         route_data = validated_data.pop('route')
         actiontype_name = validated_data.pop('actiontype')
-        comment = validated_data.pop('comment')
+        comment = validated_data.get('comment', '')
 
         route_instance, _ = Route.objects.get_or_create(route=route_data)
         actiontype_instance = ActionType.objects.get(name=actiontype_name)
