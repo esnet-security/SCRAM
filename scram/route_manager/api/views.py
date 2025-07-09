@@ -76,7 +76,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
-    http_method_names = ["get", "post", "head", "delete"]
+    http_method_names = ["get", "post", "put", "patch", "head", "delete"]
 
     def get_permissions(self):
         """Override the permissions classes for POST method since we want to accept Entry creates from any client.
@@ -136,7 +136,6 @@ class EntryViewSet(viewsets.ModelViewSet):
         except ValueError:
             logger.warning("Could not parse expiration DateTime string: %s", tmp_exp)
 
-        # Make sure we put in an acceptable sized prefix
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
         if route.prefixlen < min_prefix:
             raise PrefixTooLarge
@@ -157,8 +156,6 @@ class EntryViewSet(viewsets.ModelViewSet):
                 {"type": msg.msg_type, "message": msg.msg_data},
             )
 
-        logger.info("Created entry %s for route %s", actiontype, route)
-
         serializer.save(
             route=route_instance,
             actiontype=actiontype_instance,
@@ -169,6 +166,35 @@ class EntryViewSet(viewsets.ModelViewSet):
         )
         entry = serializer.instance
         update_change_reason(entry, comment)
+        logger.info("Created entry %s for route %s", actiontype, route)
+
+    def perform_update(self, serializer):
+        """Update an existing Entry."""
+        comment = serializer.validated_data.get("comment", "")
+        # Determine who is making this request
+        if serializer.validated_data.get("who"):
+            requesting_who = serializer.validated_data["who"]
+        else:
+            requesting_who = self.request.user.username
+
+        if serializer.instance.who != requesting_who:
+            raise PermissionDenied("You can only update your own entries")
+
+        serializer.save(who=serializer.instance.who, originating_scram_instance=settings.SCRAM_HOSTNAME)
+
+        entry = serializer.instance
+        update_change_reason(entry, comment)
+        logger.info("Updated entry %s", entry)
+
+    def get_object(self):
+        """Override get_object to use our custom find_entries logic."""
+        pk = self.kwargs.get('pk')
+        entries = self.find_entries(pk, active_filter=True)
+
+        if entries.count() != 1:
+            raise Http404
+
+        return entries.first()
 
     @staticmethod
     def find_entries(arg, active_filter=None):
@@ -197,11 +223,8 @@ class EntryViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, pk=None, **kwargs):
         """Retrieve a single route."""
-        entries = self.find_entries(pk, active_filter=True)
-        # TODO: What happens if we get multiple? Is that ok? I think yes, and return them all?
-        if entries.count() != 1:
-            raise Http404
-        serializer = EntrySerializer(entries, many=True, context={"request": request})
+        entry = self.get_object()
+        serializer = EntrySerializer(entry, context={"request": request})
         return Response(serializer.data)
 
     def destroy(self, request, pk=None, *args, **kwargs):
