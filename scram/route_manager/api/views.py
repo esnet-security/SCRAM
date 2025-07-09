@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import Http404
-from django.utils.dateparse import parse_datetime
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -129,12 +128,6 @@ class EntryViewSet(viewsets.ModelViewSet):
             who = self.request.user.username
 
         comment = serializer.validated_data["comment"]
-        tmp_exp = self.request.data.get("expiration", "")
-
-        try:
-            expiration = parse_datetime(tmp_exp)
-        except ValueError:
-            logger.warning("Could not parse expiration DateTime string: %s", tmp_exp)
 
         min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
         if route.prefixlen < min_prefix:
@@ -178,7 +171,8 @@ class EntryViewSet(viewsets.ModelViewSet):
             requesting_who = self.request.user.username
 
         if serializer.instance.who != requesting_who:
-            raise PermissionDenied("You can only update your own entries")
+            msg = "You can only update your own entries"
+            raise PermissionDenied(msg)
 
         serializer.save(who=serializer.instance.who, originating_scram_instance=settings.SCRAM_HOSTNAME)
 
@@ -188,7 +182,7 @@ class EntryViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         """Override get_object to use our custom find_entries logic."""
-        pk = self.kwargs.get('pk')
+        pk = self.kwargs.get("pk")
         entries = self.find_entries(pk, active_filter=True)
 
         if entries.count() != 1:

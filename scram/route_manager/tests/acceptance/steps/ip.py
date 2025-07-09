@@ -50,25 +50,23 @@ def check_comment(context, value, comment):
         context.response = None
         context.queryException = e
 
+
 @then("we update the entry {value:S} with comment {comment}")
 def update_entry_comment(context, value, comment):
     """Update the entry with a new comment."""
-    data = {
-        "comment": comment,
-        "who": context.client.hostname
-    }
+    data = {"comment": comment, "who": context.client.hostname}
 
     context.response = context.test.client.put(
-        reverse("api:v1:entry-detail", args=[value]),
-        data=json.dumps(data),
-        content_type="application/json"
+        reverse("api:v1:entry-detail", args=[value]), data=json.dumps(data), content_type="application/json"
     )
+
 
 @then("the entry {value:S} comment is {comment}")
 def check_entry_comment_not_equal(context, value, comment):
     """Verify the comment was updated."""
     objs = context.test.client.get(reverse("api:v1:entry-detail", args=[value]))
     context.test.assertEqual(objs.json()["comment"], comment)
+
 
 @when("we search for {ip}")
 def search_ip(context, ip):

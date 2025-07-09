@@ -8,7 +8,6 @@ from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 from simple_history.utils import update_change_reason
 
-
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
 logger = logging.getLogger(__name__)
@@ -73,30 +72,41 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     is_active = serializers.BooleanField(default=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
+        """Make sure we do not allow changing these fields in our put/patch calls."""
         super().__init__(*args, **kwargs)
         if self.instance is not None:
-            self.fields['route'].read_only = True
-            self.fields['actiontype'].read_only = True
-            self.fields['who'].read_only = True
+            self.fields["route"].read_only = True
+            self.fields["actiontype"].read_only = True
+            self.fields["who"].read_only = True
 
     class Meta:
-        """Maps to the Entry model, and specifies the fields exposed by the API."""
-        model = Entry
-        fields = ["route", "actiontype", "url", "comment", "who", "expiration", "originating_scram_instance", "is_active"]
+        """Map to the Entry model, and specify the fields exposed by the API."""
 
+        model = Entry
+        fields = [
+            "route",
+            "actiontype",
+            "url",
+            "comment",
+            "who",
+            "expiration",
+            "originating_scram_instance",
+            "is_active",
+        ]
+
+    # This needs to be an instance method since thats expected by DRF
+    # ruff: noqa: PLR6301
     def create(self, validated_data):
         """Create or update an Entry, handling duplicates gracefully."""
-        route_data = validated_data.pop('route')
-        actiontype_name = validated_data.pop('actiontype')
-        comment = validated_data.get('comment', '')
+        route_data = validated_data.pop("route")
+        actiontype_name = validated_data.pop("actiontype")
+        comment = validated_data.get("comment", "")
 
         route_instance, _ = Route.objects.get_or_create(route=route_data)
         actiontype_instance = ActionType.objects.get(name=actiontype_name)
 
         entry, created = Entry.objects.get_or_create(
-            route=route_instance,
-            actiontype=actiontype_instance,
-            defaults=validated_data
+            route=route_instance, actiontype=actiontype_instance, defaults=validated_data
         )
 
         if not created:
