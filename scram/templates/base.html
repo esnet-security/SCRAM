@@ -70,7 +70,36 @@
     {% block modal %}{% endblock modal %}
 
     {% block inline_javascript %}
-    {# Script tags with only code, no src (defer by default) #}
+      <script>
+        // Auto-dismiss django messages
+        document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            let timeout = 4000;
+
+            // Set different timeouts based on alert type
+            if (alert.classList.contains('alert-success')) {
+                timeout = 3000;
+            } else if (alert.classList.contains('alert-warning') ||
+                       alert.classList.contains('alert-danger') ||
+                       alert.classList.contains('alert-error')) {
+                timeout = 5000;
+            }
+
+            setTimeout(function() {
+                alert.style.transition = 'opacity 0.5s ease-out';
+                alert.style.opacity = '0';
+
+                // Remove from DOM after fade completes
+                setTimeout(function() {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 500);
+            }, timeout);
+        });
+    });
+  </script>
     {% endblock inline_javascript %}
   </body>
 </html>
