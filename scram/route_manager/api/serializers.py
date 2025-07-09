@@ -6,6 +6,8 @@ from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
+from simple_history.utils import update_change_reason
+
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route
 
@@ -70,19 +72,40 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     originating_scram_instance = serializers.CharField(default="scram_hostname_not_set", read_only=True)
     is_active = serializers.BooleanField(default=True, read_only=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance is not None:
+            self.fields['route'].read_only = True
+            self.fields['actiontype'].read_only = True
+            self.fields['who'].read_only = True
+
     class Meta:
         """Maps to the Entry model, and specifies the fields exposed by the API."""
         model = Entry
         fields = ["route", "actiontype", "url", "comment", "who", "expiration", "originating_scram_instance", "is_active"]
 
-    @staticmethod
-    def get_comment(obj):
-        """Provide a nicer name for change reason.
+    def create(self, validated_data):
+        """Create or update an Entry, handling duplicates gracefully."""
+        route_data = validated_data.pop('route')
+        actiontype_name = validated_data.pop('actiontype')
+        comment = validated_data.pop('comment')
 
-        Returns:
-            string: The change reason that modified the Entry.
-        """
-        return obj.get_change_reason()
+        route_instance, _ = Route.objects.get_or_create(route=route_data)
+        actiontype_instance = ActionType.objects.get(name=actiontype_name)
+
+        entry, created = Entry.objects.get_or_create(
+            route=route_instance,
+            actiontype=actiontype_instance,
+            defaults=validated_data
+        )
+
+        if not created:
+            for key, value in validated_data.items():
+                setattr(entry, key, value)
+            entry.save()
+            update_change_reason(entry, comment)
+
+        return entry
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
