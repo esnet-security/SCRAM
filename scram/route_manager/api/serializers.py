@@ -102,11 +102,8 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         actiontype_name = validated_data.pop("actiontype")
         comment = validated_data.get("comment", "")
 
-        route_instance, _ = Route.objects.get_or_create(route=route_data)
-        actiontype_instance = ActionType.objects.get(name=actiontype_name)
-
         entry, created = Entry.objects.get_or_create(
-            route=route_instance, actiontype=actiontype_instance, defaults=validated_data
+            route=route_data, actiontype=actiontype_name, defaults=validated_data
         )
 
         if not created:
