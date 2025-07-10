@@ -143,8 +143,6 @@ def add_entry(request):
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
-    with transaction.atomic():
-        home_page(request)
     return redirect("route_manager:home")
 
 
