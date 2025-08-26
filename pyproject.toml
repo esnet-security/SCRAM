@@ -137,3 +137,6 @@ ignore_errors = true
 
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
+
+[tool.uv]
+prerelease = "if-necessary-or-explicit"
