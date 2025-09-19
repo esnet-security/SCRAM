@@ -13,18 +13,8 @@ def login_logout(request):
     Returns:
        dict: login and logout URLs
     """
-    if ":" in settings.LOGIN_URL:
-        print(f"WTFFFFFFFFFFFFFFFFFFFFFFF: {settings.LOGIN_URL}")
-        login_url = reverse(settings.LOGIN_URL)
-        logout_url = reverse(settings.LOGOUT_URL)
-    else:
-        login_url = redirect(settings.LOGIN_URL)
-        logout_url = redirect(settings.LOGOUT_URL)
-
-    print(f"REDIREC OUT: {settings.LOGOUT_REDIRECT_URL}")
-    print(f"REDIRECT IN: {settings.LOGIN_REDIRECT_URL}")
-    print(f"LOGOUT_URL: {logout_url}")
-    print(f"LOGIN_URL: {login_url}")
+    login_url = reverse(settings.LOGIN_URL)
+    logout_url = reverse(settings.LOGOUT_URL)
 
     return {"login": login_url, "logout": logout_url}
 
