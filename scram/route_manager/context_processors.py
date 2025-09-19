@@ -2,7 +2,6 @@
 
 from django.conf import settings
 from django.urls import reverse
-from django.shortcuts import redirect
 
 from scram.route_manager.models import Entry
 
