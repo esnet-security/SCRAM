@@ -319,6 +319,12 @@ if AUTH_METHOD == "oidc":
     # Extend middleware to add OIDC auth backend
     AUTHENTICATION_BACKENDS += ["scram.route_manager.authentication_backends.ESnetAuthBackend"]
 
+    # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
+    LOGIN_URL = "oidc_authentication_init"
+
+    # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
+    LOGOUT_URL = "oidc_logout"
+
     # Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
     # https://github.com/mozilla/mozilla-django-oidc/issues/118
     LOGIN_REDIRECT_URL = "/"
@@ -327,21 +333,14 @@ if AUTH_METHOD == "oidc":
     # https://github.com/mozilla/mozilla-django-oidc/issues/434
     LOGOUT_REDIRECT_URL = "/"
 
-    # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-    LOGIN_URL = "/"
-
-    # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-    LOGOUT_URL = "/"
-
     OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
     OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET")
 
 elif AUTH_METHOD == "local":
-    # Points to 'route_manager:home'
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-    LOGIN_REDIRECT_URL = "local_auth:login"
+    LOGIN_REDIRECT_URL = "route_manager:home"
 
-    LOGOUT_REDIRECT_URL = "local_auth:logout"
+    LOGOUT_REDIRECT_URL = "route_manager:home"
 
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "local_auth:login"

@@ -26,6 +26,6 @@ drf-spectacular # https://github.com/tfranzel/drf-spectacular
 
 # OIDC
 # ------------------------------------------------------------------------------
-mozilla_django_oidc==2.0.0 # https://github.com/mozilla/mozilla-django-oidc
+mozilla_django_oidc==4.0.1 # https://github.com/mozilla/mozilla-django-oidc
 
 websockets~=10.3
