@@ -17,7 +17,7 @@ from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
-from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
+from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer, NoActiveEntryFound
 
 channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         entries = self.find_entries(pk, active_filter=True)
 
         if entries.count() != 1:
-            raise Http404
+            raise NoActiveEntryFound
 
         return entries.first()
 
