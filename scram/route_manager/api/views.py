@@ -75,7 +75,7 @@ class EntryViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = EntrySerializer
     lookup_value_regex = ".*"
-    http_method_names = ["get", "post", "put", "patch", "head", "delete"]
+    http_method_names = ["get", "post", "head", "delete"]
 
     def get_permissions(self):
         """Override the permissions classes for POST method since we want to accept Entry creates from any client.
