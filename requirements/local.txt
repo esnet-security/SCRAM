@@ -9,7 +9,7 @@ watchgod==0.8.2  # https://github.com/samuelcolvin/watchgod
 # ------------------------------------------------------------------------------
 django-stubs==1.11.0  # https://github.com/typeddjango/django-stubs
 pytest-sugar==0.9.6  # https://github.com/Frozenball/pytest-sugar
-behave-django==1.4.0  # https://github.com/behave/behave-django
+behave-django==1.7.0  # https://github.com/behave/behave-django
 
 # Documentation
 # ------------------------------------------------------------------------------
