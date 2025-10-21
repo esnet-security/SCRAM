@@ -1,4 +1,5 @@
 argon2-cffi==21.3.0  # https://github.com/hynek/argon2_cffi
+autobahn<25.10.1  # Pin to avoid v25.10.1 that is giving build troubles.
 django-celery-beat  # https://github.com/celery/django-celery-beat
 django-netfields # https://pypi.org/project/django-netfields/
 flower==1.0.0  # https://github.com/mher/flower
