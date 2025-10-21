@@ -16,8 +16,8 @@ from rest_framework.response import Response
 from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
-from .exceptions import ActiontypeNotAllowed, IgnoredRoute, PrefixTooLarge
-from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer, NoActiveEntryFound
+from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
+from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
 
 channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
