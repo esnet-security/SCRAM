@@ -166,3 +166,17 @@ copy-libs:
 	@docker compose cp translator:/app/capability_pb2.py translator/
 	@docker compose cp translator:/app/capability_pb2.pyi translator/
 	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
+
+## zeek-packet-gen: rewrite pcap IPs then replay training pcap files to generate network traffic for scram blocking
+.Phony: zeek-packet-gen
+zeek-packet-gen: compose.override.yml
+	@echo "Rewriting pcap files to use public IPs (1.0.0.0/8 instead of RFC1918)..."
+	@docker compose exec zeek sh -c 'for pcap in /training/*.pcap; do \
+		[ "$$pcap" = "/training/*_modified.pcap" ] && continue; \
+		[ -f "$${pcap%.pcap}_modified.pcap" ] && continue; \
+		echo "  Processing $$(basename $$pcap)..."; \
+		tcprewrite --pnat=10.0.0.0/8:1.0.0.0/8,192.168.0.0/16:1.0.0.0/8,172.16.0.0/12:1.0.0.0/8 \
+			--infile=$$pcap --outfile=$${pcap%.pcap}_modified.pcap 2>/dev/null || echo "    (skipped or already exists)"; \
+	done'
+	@echo "Replaying modified pcap files..."
+	@docker compose exec zeek sh -c "tcpreplay -i eth0 --mbps=500 /training/*_modified.pcap"

@@ -18,6 +18,8 @@ services:
       - ./.envs/.local/.postgres
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
+    expose:
+      - "8000"
     ports:
       - "8000"
       - 56780:56780
@@ -74,6 +76,20 @@ services:
     environment:
       # This can be set to either `debugpy` or `pycharm-pydevd` currently.
       - DEBUG=${DEBUG:-}
+
+  zeek:
+    build:
+      dockerfile: ./compose/local/zeek/Dockerfile
+    image: scram_local_zeek
+    depends_on:
+      django:
+        condition: service_healthy
+    volumes:
+      - ./zeek/etc/node.cfg:/zeek/etc/node.cfg:z
+      - ./zeek/etc/zeekctl.cfg:/zeek/etc/zeekctl.cfg:z
+      - ./zeek/etc/networks.cfg:/zeek/etc/networks.cfg:z
+      - ./zeek/share/zeek/site/local.zeek:/zeek/share/zeek/site/local.zeek:z
+      - ./zeek/scram-client/scram-client.conf:/etc/sysconfig/scram-client.conf:z
 
 networks:
   default:
