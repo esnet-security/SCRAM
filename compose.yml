@@ -35,7 +35,7 @@ services:
       replicas: ${POSTGRES_ENABLED:-0}
 
   redis:
-    image: redis:5.0
+    image: redis:8.2.2
     networks:
       default: {}
     sysctls:
