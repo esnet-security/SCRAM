@@ -20,7 +20,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12", "3.13"]
 
     steps:
       - name: Check out the code
@@ -68,18 +68,18 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
 
       - name: Upload Coverage to Coveralls
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
         uses: coverallsapp/github-action@v2
 
       - name: Upload Coverage to GitHub
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage.xml
 
       - name: Display Coverage Metrics
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: "50"
