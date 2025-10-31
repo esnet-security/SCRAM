@@ -23,7 +23,7 @@ SCRAM utilizes ``docker compose`` to run the following stack in production:
 - gobgp (communicating with networking gear over bgp for actions; blocking, shunting, redirecting, etc)
 - translator (a tool to pull information from SCRAM via websockets and send to gobgp container over gRPC)
 
-A predefined actiontype of "block" exists which utilizes bgp nullrouting to effectivley block any traffic you want to apply.
+A predefined actiontype of "block" exists which utilizes bgp nullrouting to effectively block any traffic you want to apply.
 You can add any other actiontypes via the admin page of the web interface dynamically, but keep in mind translator support would need to be added as well.
 
 ## Installation
