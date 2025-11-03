@@ -28,3 +28,11 @@ class ActiontypeNotAllowed(APIException):
     status_code = 403
     default_detail = "This client is not allowed to use this actiontype"
     default_code = "actiontype_not_allowed"
+
+
+class NoActiveEntryFound(APIException):
+    """An active entry was not found."""
+
+    status_code = 404
+    default_detail = "No active entry was found."
+    default_code = "no_entry_found"
