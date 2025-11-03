@@ -35,7 +35,7 @@ services:
       replicas: ${POSTGRES_ENABLED:-0}
 
   redis:
-    image: redis:5.0
+    image: redis:8.2.2
     networks:
       default: {}
     sysctls:
@@ -44,7 +44,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   gobgp:
-    image: jauderho/gobgp:v3.33.0
+    image: jauderho/gobgp:v3.37.0
     networks:
       default: {}
     sysctls:
