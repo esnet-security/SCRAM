@@ -15,17 +15,12 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     command: /start
-    # healthcheck:
-    #   interval: 30s
-    #   timeout: 30s
-    #   start_period: 30s
-    #   retries: 5
     healthcheck:
-      test: ["CMD", "/bin/true"]
-      interval: 30s       # Optional: Time between health checks (default: 30s)
-      timeout: 10s        # Optional: Time to wait before considering the check failed
-      retries: 3          # Optional: Number of retries before marking as unhealthy
-      start_period: 5s    # Optional: Initial delay before starting health checks
+      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 5
     deploy:
       replicas: ${DJANGO_REPLICAS:-1}
 
@@ -46,6 +41,7 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     command: /start
     healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
       interval: 30s
       timeout: 30s
       start_period: 30s
@@ -126,7 +122,7 @@ services:
       gobgp-secondary:
         condition: service_healthy
       django-secondary:
-        condition: service_started # TODO turn this to healthy once we re-add the healthcheck.
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
