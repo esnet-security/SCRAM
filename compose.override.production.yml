@@ -17,7 +17,6 @@ services:
           tag: scram-django
     env_file:
       - ./.envs/.production/.django
-      - ./.envs/.local/.django-primary
       - ./.envs/.production/.postgres
       - /etc/vault.d/secrets/kv_root_security.env
     volumes:
@@ -95,7 +94,6 @@ services:
           tag: scram-translator
     env_file:
       - ./.envs/.production/.translator
-      - ./.envs/.local/.translator-primary
 
 networks:
   default:
