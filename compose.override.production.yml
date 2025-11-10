@@ -30,7 +30,7 @@ services:
       options:
           tag: scram-postgres
     volumes:
-      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data:/var/lib/postgresql:Z
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
