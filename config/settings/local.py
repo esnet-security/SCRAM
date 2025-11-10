@@ -82,12 +82,6 @@ if AUTH_METHOD == "oidc":
     msg = "oidc is not yet implemented"
     raise NotImplementedError(msg)
 
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-url
-LOGIN_URL = "admin:login"
-# https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
-LOGOUT_URL = "admin:logout"
-
-
 SCRAM_HOSTNAME = env(
     "SCRAM_HOSTNAME",
     default="scram_hostname_not_set",

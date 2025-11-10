@@ -81,6 +81,7 @@ services:
     networks:
       default: {}
       peering:
+        gw_priority: 1000
         ipv4_address: ${SCRAM_V4_ADDRESS}
         ipv6_address: ${SCRAM_V6_ADDRESS}
     ports:
