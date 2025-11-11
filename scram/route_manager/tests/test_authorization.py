@@ -7,9 +7,8 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from scram.route_manager.authentication_backends import ESnetAuthBackend
-from scram.route_manager.models import ActionType
+from scram.route_manager.models import ActionType, Entry
 from scram.route_manager.models import Client as ClientModel
-from scram.route_manager.models import Entry
 from scram.users.models import User
 
 
@@ -25,7 +24,7 @@ class AuthzTest(TestCase):
         self.readonly_group, _ = Group.objects.get_or_create(name="readonly")
         # Assign view permission to readonly group
         content_type = ContentType.objects.get_for_model(Entry)
-        view_permission = Permission.objects.get(codename='view_entry', content_type=content_type)
+        view_permission = Permission.objects.get(codename="view_entry", content_type=content_type)
         self.readonly_group.permissions.add(view_permission)
 
         self.readonly_user = User.objects.create(username="readonly")
@@ -34,7 +33,7 @@ class AuthzTest(TestCase):
 
         self.readwrite_group, _ = Group.objects.get_or_create(name="readwrite")
         # Assign both view and add permissions to readwrite group
-        add_permission = Permission.objects.get(codename='add_entry', content_type=content_type)
+        add_permission = Permission.objects.get(codename="add_entry", content_type=content_type)
         self.readwrite_group.permissions.add(view_permission, add_permission)
 
         self.readwrite_user = User.objects.create(username="readwrite")

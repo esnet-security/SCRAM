@@ -31,7 +31,9 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             return
 
         # Avoid lazy evaluation
-        routes = await database_sync_to_async(list)(Entry.objects.filter(is_active=True).values_list("route__route", flat=True))
+        routes = await database_sync_to_async(list)(
+            Entry.objects.filter(is_active=True).values_list("route__route", flat=True)
+        )
 
         for route in routes:
             for element in elements:

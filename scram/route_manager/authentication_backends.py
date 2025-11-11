@@ -5,6 +5,8 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
+from scram.route_manager.models import Entry
+
 
 def groups_overlap(a, b):
     """Helper function to see if a and b have any overlap.
@@ -21,8 +23,6 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     @staticmethod
     def update_groups(user, claims):
         """Set the user's group(s) to whatever is in the claims."""
-        from scram.route_manager.models import Entry
-
         effective_groups = []
         claimed_groups = claims.get("groups", [])
 
@@ -36,8 +36,8 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
                 if created:
                     # Assign permissions to the newly created group
                     content_type = ContentType.objects.get_for_model(Entry)
-                    view_permission = Permission.objects.get(codename='view_entry', content_type=content_type)
-                    add_permission = Permission.objects.get(codename='add_entry', content_type=content_type)
+                    view_permission = Permission.objects.get(codename="view_entry", content_type=content_type)
+                    add_permission = Permission.objects.get(codename="add_entry", content_type=content_type)
                     readwrite_group.permissions.add(view_permission, add_permission)
                 effective_groups.append(readwrite_group)
             if groups_overlap(claimed_groups, settings.SCRAM_READONLY_GROUPS):
@@ -45,7 +45,7 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
                 if created:
                     # Assign permissions to the newly created group
                     content_type = ContentType.objects.get_for_model(Entry)
-                    view_permission = Permission.objects.get(codename='view_entry', content_type=content_type)
+                    view_permission = Permission.objects.get(codename="view_entry", content_type=content_type)
                     readonly_group.permissions.add(view_permission)
                 effective_groups.append(readonly_group)
 
