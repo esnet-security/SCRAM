@@ -64,7 +64,7 @@ jobs:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
         run: |
           python manage.py makemigrations --noinput || true
-          UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
+          UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $3}')
           if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
             for migration in $UNAPPLIED_MIGRATIONS; do
               python manage.py migrate $migration --fake-initial --noinput
