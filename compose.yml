@@ -4,6 +4,7 @@ services:
   django:
     build:
       context: .
+      dockerfile: ./compose/production/django/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -15,12 +16,38 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     command: /start
     healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
       interval: 30s
       timeout: 30s
       start_period: 30s
       retries: 5
     deploy:
       replicas: ${DJANGO_REPLICAS:-1}
+
+  django-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/production/django/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      django:
+        condition: service_healthy
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    command: /start
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 5
+    deploy:
+      replicas: ${DJANGO_REPLICAS:-0}
 
   postgres:
     build:
@@ -42,6 +69,8 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+    deploy:
+      replicas: ${REDIS_REPLICAS:-1}
 
   gobgp:
     image: jauderho/gobgp:v3.37.0
@@ -54,6 +83,17 @@ services:
     deploy:
       replicas: ${GOBGP_REPLICAS:-1}
 
+  gobgp-secondary:
+    image: jauderho/gobgp:v3.33.0
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    healthcheck:
+      test: ["CMD", "gobgp", "global"]
+    deploy:
+      replicas: ${GOBGP_REPLICAS:-0}
+
   translator:
     build:
       context: .
@@ -63,9 +103,29 @@ services:
         condition: service_healthy
       gobgp:
         condition: service_healthy
+      django:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     deploy:
       replicas: ${TRANSLATOR_REPLICAS:-1}
+
+  translator-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/local/translator/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      gobgp-secondary:
+        condition: service_healthy
+      django-secondary:
+        condition: service_healthy
+    networks:
+      default: {}
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    deploy:
+      replicas: ${TRANSLATOR_REPLICAS:-0}

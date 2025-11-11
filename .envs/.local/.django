@@ -4,12 +4,7 @@ USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
 # Redis
 # ------------------------------------------------------------------------------
-REDIS_URL=redis://redis:6379/0
-CELERY_BROKER_URL=REDIS_URL
 
 # Django
 DATABASE_URL=sqlite:///django.db
 DJANGO_SETTINGS_MODULE=config.settings.local
-
-
-SCRAM_HOSTNAME="localhost"
