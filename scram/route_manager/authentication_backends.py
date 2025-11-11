@@ -1,7 +1,8 @@
 """Define one or more custom auth backends."""
 
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 
@@ -20,6 +21,8 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
     @staticmethod
     def update_groups(user, claims):
         """Set the user's group(s) to whatever is in the claims."""
+        from scram.route_manager.models import Entry
+
         effective_groups = []
         claimed_groups = claims.get("groups", [])
 
@@ -29,9 +32,22 @@ class ESnetAuthBackend(OIDCAuthenticationBackend):
         else:
             is_admin = groups_overlap(claimed_groups, settings.SCRAM_ADMIN_GROUPS)
             if groups_overlap(claimed_groups, settings.SCRAM_READWRITE_GROUPS):
-                effective_groups.append(Group.objects.get(name="readwrite"))
+                readwrite_group, created = Group.objects.get_or_create(name="readwrite")
+                if created:
+                    # Assign permissions to the newly created group
+                    content_type = ContentType.objects.get_for_model(Entry)
+                    view_permission = Permission.objects.get(codename='view_entry', content_type=content_type)
+                    add_permission = Permission.objects.get(codename='add_entry', content_type=content_type)
+                    readwrite_group.permissions.add(view_permission, add_permission)
+                effective_groups.append(readwrite_group)
             if groups_overlap(claimed_groups, settings.SCRAM_READONLY_GROUPS):
-                effective_groups.append(Group.objects.get(name="readonly"))
+                readonly_group, created = Group.objects.get_or_create(name="readonly")
+                if created:
+                    # Assign permissions to the newly created group
+                    content_type = ContentType.objects.get_for_model(Entry)
+                    view_permission = Permission.objects.get(codename='view_entry', content_type=content_type)
+                    readonly_group.permissions.add(view_permission)
+                effective_groups.append(readonly_group)
 
         user.groups.set(effective_groups)
         user.is_staff = user.is_superuser = is_admin

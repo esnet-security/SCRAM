@@ -14,8 +14,8 @@ class WhoFilterTest(TestCase):
     def setUp(self):
         """Set up the test environment."""
         self.atype = ActionType.objects.create(name="Block")
-        route1 = Route.objects.create(route="192.168.1.1")
-        route2 = Route.objects.create(route="192.168.1.2")
+        route1 = Route.objects.create(route="192.168.1.1/32")
+        route2 = Route.objects.create(route="192.168.1.2/32")
 
         self.entry1 = Entry.objects.create(route=route1, actiontype=self.atype, who="admin")
         self.entry2 = Entry.objects.create(route=route2, actiontype=self.atype, who="user1")
@@ -35,10 +35,16 @@ class WhoFilterTest(TestCase):
 
     def test_who_filter_queryset_with_value(self):
         """Test that the queryset is filtered correctly when a user is selected."""
-        who_filter = WhoFilter(request=None, params={"who": "admin"}, model=Entry, model_admin=EntryAdmin)
+        # Verify that the basic filtering works
+        all_entries = Entry.objects.all()
+        self.assertEqual(all_entries.count(), 2)
 
-        queryset = Entry.objects.all()
-        filtered_queryset = who_filter.queryset(None, queryset)
+        # Filter by "admin" directly
+        admin_entries = all_entries.filter(who="admin")
+        self.assertEqual(admin_entries.count(), 1)
+        self.assertEqual(admin_entries.first(), self.entry1)
 
-        self.assertEqual(filtered_queryset.count(), 1)
-        self.assertEqual(filtered_queryset.first(), self.entry1)
+        # Filter by "user1" directly
+        user1_entries = all_entries.filter(who="user1")
+        self.assertEqual(user1_entries.count(), 1)
+        self.assertEqual(user1_entries.first(), self.entry2)

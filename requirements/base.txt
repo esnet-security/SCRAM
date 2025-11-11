@@ -1,32 +1,32 @@
-argon2-cffi==21.3.0  # https://github.com/hynek/argon2_cffi
+argon2-cffi  # https://github.com/hynek/argon2_cffi
 autobahn<25.10.1  # Pin to avoid v25.10.1 that is giving build troubles.
-django-celery-beat  # https://github.com/celery/django-celery-beat
 django-netfields # https://pypi.org/project/django-netfields/
-flower==1.0.0  # https://github.com/mher/flower
-python-slugify==6.1.2  # https://github.com/un33k/python-slugify
-uvicorn[standard]==0.17.6  # https://github.com/encode/uvicorn
-whitenoise==6.2.0  # https://github.com/evansd/whitenoise
+flower  # https://github.com/mher/flower
+python-slugify  # https://github.com/un33k/python-slugify
+uvicorn[standard]  # https://github.com/encode/uvicorn
+whitenoise  # https://github.com/evansd/whitenoise
 
 # Django
 # ------------------------------------------------------------------------------
-channels_redis==3.4.0
-crispy-bootstrap5==0.6  # https://github.com/django-crispy-forms/crispy-bootstrap5
-django~=4.2 # https://www.djangoproject.com/
+channels_redis
+crispy-bootstrap5  # https://github.com/django-crispy-forms/crispy-bootstrap5
+django~=5.2 # https://www.djangoproject.com/
+django-crispy-forms
 
-django-allauth==0.51.0  # https://github.com/pennersr/django-allauth
-django-environ==0.9.0  # https://github.com/joke2k/django-environ
-django-eventstream==4.5.1 # https://github.com/fanout/django-eventstream
-django-model-utils==4.2.0  # https://github.com/jazzband/django-model-utils
-django-redis==5.3.0
-django-simple-history~=3.1.1
+django-allauth  # https://github.com/pennersr/django-allauth
+django-environ  # https://github.com/joke2k/django-environ
+django-eventstream # https://github.com/fanout/django-eventstream
+django-model-utils  # https://github.com/jazzband/django-model-utils
+django-redis
+django-simple-history
 
 # Django REST Framework
-djangorestframework~=3.15  # https://github.com/encode/django-rest-framework
-django-cors-headers==3.13.0 # https://github.com/adamchainz/django-cors-headers
+djangorestframework  # https://github.com/encode/django-rest-framework
+django-cors-headers # https://github.com/adamchainz/django-cors-headers
 drf-spectacular # https://github.com/tfranzel/drf-spectacular
 
 # OIDC
 # ------------------------------------------------------------------------------
-mozilla_django_oidc==4.0.1 # https://github.com/mozilla/mozilla-django-oidc
+mozilla-django-oidc # https://github.com/mozilla/mozilla-django-oidc
 
-websockets~=10.3
+websockets

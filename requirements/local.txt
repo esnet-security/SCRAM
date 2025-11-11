@@ -1,15 +1,16 @@
 -r base.txt
 
-Werkzeug[watchdog]==2.0.3 # https://github.com/pallets/werkzeug
-ipdb==0.13.9  # https://github.com/gotcha/ipdb
-psycopg2-binary==2.9.10  # https://github.com/psycopg/psycopg2
-watchgod==0.8.2  # https://github.com/samuelcolvin/watchgod
+Werkzeug[watchdog] # https://github.com/pallets/werkzeug
+ipdb  # https://github.com/gotcha/ipdb
+psycopg2-binary  # https://github.com/psycopg/psycopg2
+watchgod  # https://github.com/samuelcolvin/watchgod
 
 # Testing
 # ------------------------------------------------------------------------------
-django-stubs==1.11.0  # https://github.com/typeddjango/django-stubs
-pytest-sugar==1.1.1  # https://github.com/Frozenball/pytest-sugar
-behave-django==1.7.0  # https://github.com/behave/behave-django
+daphne
+django-stubs[compatible-mypy]  # https://github.com/typeddjango/django-stubs
+pytest-sugar  # https://github.com/Frozenball/pytest-sugar
+behave-django  # https://github.com/behave/behave-django
 
 # Documentation
 # ------------------------------------------------------------------------------
@@ -28,19 +29,19 @@ mkdocstrings-python==1.12.2
 # ------------------------------------------------------------------------------
 flake8-docstrings==1.7.0 # https://github.com/pycqa/flake8-docstrings
 flake8-isort==4.1.1  # https://github.com/gforcada/flake8-isort
-black==22.3.0  # https://github.com/psf/black
+black==24.4.2  # https://github.com/psf/black
 pylint-django==2.5.3  # https://github.com/PyCQA/pylint-django
 pylint-celery==0.3  # https://github.com/PyCQA/pylint-celery
 pre-commit==2.19.0  # https://github.com/pre-commit/pre-commit
 
 # Django
 # ------------------------------------------------------------------------------
-factory-boy==3.2.1  # https://github.com/FactoryBoy/factory_boy
+factory-boy  # https://github.com/FactoryBoy/factory_boy
 
-django-debug-toolbar==3.4.0  # https://github.com/jazzband/django-debug-toolbar
-django-extensions==3.1.5  # https://github.com/django-extensions/django-extensions
-django-coverage-plugin==3.1.0  # https://github.com/nedbat/django_coverage_plugin
-pytest-django==4.5.2  # https://github.com/pytest-dev/pytest-django
+django-debug-toolbar  # https://github.com/jazzband/django-debug-toolbar
+django-extensions  # https://github.com/django-extensions/django-extensions
+django-coverage-plugin  # https://github.com/nedbat/django_coverage_plugin
+pytest-django  # https://github.com/pytest-dev/pytest-django
 
 # Debugging
 # ------------------------------------------------------------------------------

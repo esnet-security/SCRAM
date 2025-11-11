@@ -5,10 +5,11 @@ from asyncio import gather
 from contextlib import asynccontextmanager
 
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
 
 from config.routing import websocket_urlpatterns
@@ -44,7 +45,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
             await communicator.disconnect()
 
 
-class TestTranslatorBaseCase(TestCase):
+class TestTranslatorBaseCase(TransactionTestCase):
     """Base case that other test cases build on top of. Three translators in one group, test one v4 and one v6."""
 
     def setUp(self):
@@ -52,7 +53,7 @@ class TestTranslatorBaseCase(TestCase):
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@example.net", "admintestpassword")
-        self.client.login(username="admin", password="admintestpassword")
+        self.client.force_login(self.superuser)
         self.uuid = "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3"
 
         self.action_name = "block"
