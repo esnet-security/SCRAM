@@ -1,6 +1,6 @@
 # It'd be nice to keep these in sync with the defaults of the Dockerfiles
-PYTHON_IMAGE_VER ?= 3.12
-POSTGRES_IMAGE_VER ?= 12.3
+PYTHON_IMAGE_VER ?= 3.13
+POSTGRES_IMAGE_VER ?= 18
 
 .DEFAULT_GOAL := help
 

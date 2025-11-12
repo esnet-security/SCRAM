@@ -1,13 +1,14 @@
 """Define tests for authorization and permissions."""
 
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from scram.route_manager.authentication_backends import ESnetAuthBackend
+from scram.route_manager.models import ActionType, Entry
 from scram.route_manager.models import Client as ClientModel
-from scram.route_manager.models import Entry
 from scram.users.models import User
 
 
@@ -19,12 +20,22 @@ class AuthzTest(TestCase):
         self.client = Client()
         self.unauthorized_user = User.objects.create(username="unauthorized")
 
-        self.readonly_group = Group.objects.get(name="readonly")
+        # Create the groups that the migration would normally create and assign permissions
+        self.readonly_group, _ = Group.objects.get_or_create(name="readonly")
+        # Assign view permission to readonly group
+        content_type = ContentType.objects.get_for_model(Entry)
+        view_permission = Permission.objects.get(codename="view_entry", content_type=content_type)
+        self.readonly_group.permissions.add(view_permission)
+
         self.readonly_user = User.objects.create(username="readonly")
         self.readonly_user.groups.set([self.readonly_group])
         self.readonly_user.save()
 
-        self.readwrite_group = Group.objects.get(name="readwrite")
+        self.readwrite_group, _ = Group.objects.get_or_create(name="readwrite")
+        # Assign both view and add permissions to readwrite group
+        add_permission = Permission.objects.get(codename="add_entry", content_type=content_type)
+        self.readwrite_group.permissions.add(view_permission, add_permission)
+
         self.readwrite_user = User.objects.create(username="readwrite")
         self.readwrite_user.groups.set([self.readwrite_group])
         self.readwrite_user.save()
@@ -41,12 +52,15 @@ class AuthzTest(TestCase):
             self.admin_user,
         ]
 
+        # Create the ActionType
+        self.actiontype, _ = ActionType.objects.get_or_create(name="block")
+
         self.authorized_client = ClientModel.objects.create(
             hostname="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
-        self.authorized_client.authorized_actiontypes.set([1])
+        self.authorized_client.authorized_actiontypes.set([self.actiontype])
 
         self.unauthorized_client = ClientModel.objects.create(
             hostname="unauthorized_client.es.net",

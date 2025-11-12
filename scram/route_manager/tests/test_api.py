@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from scram.route_manager.models import Client
+from scram.route_manager.models import ActionType, Client
 
 
 class TestAddRemoveIP(APITestCase):
@@ -16,12 +16,16 @@ class TestAddRemoveIP(APITestCase):
         self.url = reverse("api:v1:entry-list")
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
+
+        # Create the ActionType
+        self.actiontype, _ = ActionType.objects.get_or_create(name="block")
+
         self.authorized_client = Client.objects.create(
             hostname="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
-        self.authorized_client.authorized_actiontypes.set([1])
+        self.authorized_client.authorized_actiontypes.set([self.actiontype])
 
     def test_block_ipv4(self):
         """Block a v4 IP."""
@@ -101,6 +105,9 @@ class TestUnauthenticatedAccess(APITestCase):
         """Define some helper variables."""
         self.entry_url = reverse("api:v1:entry-list")
         self.ignore_url = reverse("api:v1:ignoreentry-list")
+
+        # Create the ActionType that the API endpoint will try to look up
+        ActionType.objects.get_or_create(name="block")
 
     def test_unauthenticated_users_have_no_create_access(self):
         """Ensure an unauthenticated client can't add an Entry."""
