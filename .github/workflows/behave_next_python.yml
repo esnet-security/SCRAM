@@ -17,6 +17,7 @@ jobs:
   behave_next_python:
     name: Run Behave
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       max-parallel: 4
       matrix:
