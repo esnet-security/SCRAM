@@ -37,17 +37,6 @@ def home_page(request, prefilter=None):
     if not prefilter:
         prefilter = Entry.objects.all().select_related("actiontype", "route")
     num_entries = settings.RECENT_LIMIT
-    if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
-        readwrite = True
-    else:
-        readwrite = False
-    context = {"entries": {}, "readwrite": readwrite}
-    for at in ActionType.objects.all():
-        queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by("-pk")
-        context["entries"][at] = {
-            "objs": queryset_active[:num_entries],
-            "active": queryset_active.count(),
-        }
 
     if settings.AUTOCREATE_ADMIN:
         if User.objects.count() == 0:
@@ -65,6 +54,18 @@ def home_page(request, prefilter=None):
                 messages.INFO,
                 "You have been logged in as the admin user",
             )
+
+    if request.user.has_perms(("route_manager.view_entry", "route_manager.add_entry")):
+        readwrite = True
+    else:
+        readwrite = False
+    context = {"entries": {}, "readwrite": readwrite}
+    for at in ActionType.objects.all():
+        queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by("-pk")
+        context["entries"][at] = {
+            "objs": queryset_active[:num_entries],
+            "active": queryset_active.count(),
+        }
 
     return render(request, "route_manager/home.html", context)
 
