@@ -43,6 +43,7 @@ def create_authed_client(context, name):
         is_authorized=True,
     )
     authorized_client.authorized_actiontypes.set([at])
+    context.client = authorized_client
 
 
 @given("a client without {name} authorization")

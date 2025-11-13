@@ -25,6 +25,7 @@ from django.views.generic import DetailView, ListView
 from scram.route_manager.models import WebSocketSequenceElement
 
 from ..route_manager.api.views import EntryViewSet
+from ..shared.shared_code import make_random_password
 from ..users.models import User
 from .models import ActionType, Entry
 
@@ -51,10 +52,7 @@ def home_page(request, prefilter=None):
 
     if settings.AUTOCREATE_ADMIN:
         if User.objects.count() == 0:
-            password = User.objects.make_random_password(
-                length=20,
-                allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%^&*",
-            )
+            password = make_random_password(length=20)
             User.objects.create_superuser("admin", "admin@example.com", password)
             authenticated_admin = authenticate(request, username="admin", password=password)
             login(request, authenticated_admin)
@@ -146,8 +144,6 @@ def add_entry(request):
         messages.add_message(request, messages.ERROR, "Permission Denied")
     else:
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
-    with transaction.atomic():
-        home_page(request)
     return redirect("route_manager:home")
 
 

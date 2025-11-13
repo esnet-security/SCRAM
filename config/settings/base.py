@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 import environ
+from django.conf.global_settings import LOGIN_REDIRECT_URL
 
 logger = logging.getLogger(__name__)
 
@@ -292,15 +293,6 @@ CORS_URLS_REGEX = r"^/api/.*$"
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 
-# https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
-LOGIN_REDIRECT_URL = "route_manager:home"
-
-# Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
-# https://github.com/mozilla/mozilla-django-oidc/issues/118
-# Using `/` because named urls don't work for this package
-# https://github.com/mozilla/mozilla-django-oidc/issues/434
-LOGOUT_REDIRECT_URL = "route_manager:home"
-
 OIDC_OP_JWKS_ENDPOINT = os.environ.get(
     "OIDC_OP_JWKS_ENDPOINT",
     "https://example.com/auth/realms/example/protocol/openid-connect/certs",
@@ -333,10 +325,23 @@ if AUTH_METHOD == "oidc":
     # https://docs.djangoproject.com/en/dev/ref/settings/#logout-url
     LOGOUT_URL = "oidc_logout"
 
+    # Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
+    # https://github.com/mozilla/mozilla-django-oidc/issues/118
+    LOGIN_REDIRECT_URL = "/"
+
+    # Using `/` because named urls don't work for this package
+    # https://github.com/mozilla/mozilla-django-oidc/issues/434
+    LOGOUT_REDIRECT_URL = "/"
+
     OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
     OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET")
 
 elif AUTH_METHOD == "local":
+    # https://docs.djangoproject.com/en/dev/ref/settings/#login-redirect-url
+    LOGIN_REDIRECT_URL = "route_manager:home"
+
+    LOGOUT_REDIRECT_URL = "route_manager:home"
+
     # https://docs.djangoproject.com/en/dev/ref/settings/#login-url
     LOGIN_URL = "local_auth:login"
 

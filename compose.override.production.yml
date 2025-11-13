@@ -30,7 +30,7 @@ services:
       options:
           tag: scram-postgres
     volumes:
-      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data:/var/lib/postgresql:Z
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
@@ -80,6 +80,7 @@ services:
     networks:
       default: {}
       peering:
+        gw_priority: 1000
         ipv4_address: ${SCRAM_V4_ADDRESS}
         ipv6_address: ${SCRAM_V6_ADDRESS}
     ports:

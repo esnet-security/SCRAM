@@ -1,6 +1,7 @@
 """Define steps used for IP-related logic by the Behave tests."""
 
 import ipaddress
+import json
 
 from behave import then, when
 from django.urls import reverse
@@ -39,15 +40,32 @@ def check_error(context):
     assert isinstance(context.queryException, ValueError)
 
 
-@then("the change entry for {value:S} is {comment}")
+@then("the comment for entry {value:S} is {comment}")
 def check_comment(context, value, comment):
     """Verify the comment for the Entry."""
     try:
         objs = context.test.client.get(reverse("api:v1:entry-detail", args=[value]))
-        context.test.assertEqual(objs.json()[0]["comment"], comment)
+        context.test.assertEqual(objs.json()["comment"], comment)
     except ValueError as e:
         context.response = None
         context.queryException = e
+
+
+@then("we update the entry {value:S} with comment {comment}")
+def update_entry_comment(context, value, comment):
+    """Update the entry with a new comment."""
+    data = {"comment": comment, "who": context.client.hostname}
+
+    context.response = context.test.client.put(
+        reverse("api:v1:entry-detail", args=[value]), data=json.dumps(data), content_type="application/json"
+    )
+
+
+@then("the entry {value:S} comment is {comment}")
+def check_entry_comment_not_equal(context, value, comment):
+    """Verify the comment was updated."""
+    objs = context.test.client.get(reverse("api:v1:entry-detail", args=[value]))
+    context.test.assertEqual(objs.json()["comment"], comment)
 
 
 @when("we search for {ip}")

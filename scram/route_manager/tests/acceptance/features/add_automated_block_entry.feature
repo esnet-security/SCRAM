@@ -33,7 +33,15 @@ Feature: an automated source adds a block entry
     When we're logged in
     And  we add the entry 192.0.2.133 with comment it's coming from inside the house
     Then we get a 201 status code
-    And  the change entry for 192.0.2.133 is it's coming from inside the house
+    And  the comment for entry 192.0.2.133 is it's coming from inside the house
+
+  @history:
+  Scenario: Update comment on a block entry
+    Given a client with block authorization
+    When we're logged in
+    And  we add the entry 192.0.2.10 with comment it's coming from inside the house
+    Then we get a 201 status code
+    And we update the entry 192.0.2.10 with comment it's coming from outside the house
 
   Scenario Outline: add a block entry multiple times and it's accepted
     Given a client with block authorization

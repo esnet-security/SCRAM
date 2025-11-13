@@ -1,0 +1,5 @@
+{
+    "pylint.args": [
+      "--django-settings-module=config.settings.local"
+    ],
+}
