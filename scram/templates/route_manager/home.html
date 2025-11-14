@@ -12,20 +12,30 @@
   </div>
   {% if readwrite %}
   <div class="d-flex justify-content-center mt-2">
-    <form class="form-inline" action="{% url 'route_manager:add' %}" method="post">
+    <form class="w-100" action="{% url 'route_manager:add' %}" method="post">
       {% csrf_token %}
-      <div class="form-group inline mb-2">
-        <input class="form-control mb-2 mr-2" name="route" placeholder="cidr" type="text">
-        <select class="form-control mb-2 mr-2" name="actiontype">
-          {% for at in entries.keys %}
-            {% if at.available %}
-              <option>{{ at }}</option>
-            {% endif %}
-          {% endfor %}
-        </select>
-        <input class="form-control mb-2 mr-2" name="comment" placeholder="comment" type="text">
-        <input class="form-control mb-2 mr-2" name="expiration" type="datetime-local">
-        <button class="btn btn-info mb-2 ml-2" style="background-color:#2ba6c8!important;" type="submit">Add Entry</button>
+      <div class="form-row align-items-center justify-content-center">
+        <div class="col-auto mb-2">
+          <input class="form-control" name="route" placeholder="cidr" type="text">
+        </div>
+        <div class="col-auto mb-2">
+          <select class="form-control" name="actiontype">
+            {% for at in entries.keys %}
+              {% if at.available %}
+                <option>{{ at }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto mb-2">
+          <input class="form-control" name="comment" placeholder="comment" type="text">
+        </div>
+        <div class="col-auto mb-2">
+          <input class="form-control" name="expiration" type="datetime-local">
+        </div>
+        <div class="col-auto mb-2">
+          <button class="btn btn-info" style="background-color:#2ba6c8!important;" type="submit">Add Entry</button>
+        </div>
       </div>
     </form>
   </div>
