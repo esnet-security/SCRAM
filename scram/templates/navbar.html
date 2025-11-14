@@ -14,34 +14,35 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav ml-auto text-nowrap">
-        <li class="nav-item d-inline mt-2">
-          <a id="entry-list" class="nav-link" href="{% url 'route_manager:entry-list' %}">{% trans "Entries" %}</a>
+      <ul class="navbar-nav flex-column flex-lg-row justify-content-lg-end align-items-lg-center w-100">
+        <li class="nav-item pl-lg-2">
+          <a id="entry-list" class="nav-link py-1 px-lg-1" href="{% url 'route_manager:entry-list' %}">{% trans "Entries" %}</a>
         </li>
         {% if request.user.is_superuser %}
-          <li class="nav-item d-inline mt-2">
-            <a id="admin-page" class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
+          <li class="nav-item">
+            <a id="admin-page" class="nav-link py-1 px-lg-1" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
           </li>
         {% endif %}
         {% if user.is_authenticated %}
-          <li class="nav-item d-inline mt-2">
-            <a id="account-home" class="nav-link" href="{% url 'users:detail' user.username %}">{{ user.name }}</a>
+          <li class="nav-item">
+            <a id="account-home" class="nav-link py-1 px-lg-1" href="{% url 'users:detail' user.username %}">{{ user.name }}</a>
           </li>
-          <li class="nav-item d-inline mt-3">
+          <li class="nav-item py-1">
             <span class="badge badge-info badge-pill" style="background-color:#2ba6c8!important;">Blocks:<br>{{ active_block_entries }}</span>
           </li>
-          <li class="nav-item mt-2 d-inline">
+          <li class="nav-item pl-lg-3 pl-0 pt-lg-0 pt-2">
              <form action="{{ logout }}" method="post">
                {% csrf_token %}
-              <button class="btn btn-outline-info ml-2 mb-2" style="outline-color:#2ba6c8!important;" type="submit">Logout</button>
+              <button class="btn btn-outline-info" style="outline-color:#2ba6c8!important;" type="submit">Logout</button>
              </form>
           </li>
         {% else %}
-            <li class="nav-item d-inline mt-3">
+            <li class="nav-item py-1">
               <span class="badge badge-info badge-pill" style="background-color:#2ba6c8!important;">Blocks:<br>{{ active_block_entries }}</span>
             </li>
-           <li class="nav-item mt-2 d-inline">
-            <a class="btn btn-outline-info ml-2 mb-2" style="color:#2ba6c8!important;" role="button" href="{{ login }}">Login</a>          </li>
+           <li class="nav-item pl-lg-3 pl-0 pt-lg-0 pt-2">
+            <a class="btn btn-outline-info" style="color:#2ba6c8!important;" role="button" href="{{ login }}">Login</a>
+          </li>
         {% endif %}
       </ul>
     </div>
