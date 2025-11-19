@@ -14,4 +14,5 @@ urlpatterns = [
     path(route="<int:pk>/", view=views.EntryDetailView.as_view(), name="detail"),
     path("entries/", views.EntryListView.as_view(), name="entry-list"),
     path("add/", views.add_entry, name="add"),
+    path("is_blocked/<int:pk>/", views.is_blocked, name="is_blocked"),
 ]
