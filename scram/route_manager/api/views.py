@@ -16,7 +16,7 @@ from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
-from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
+from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer, IsBlockedSerializer
 
 channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
@@ -62,6 +62,15 @@ class ClientViewSet(viewsets.ModelViewSet):
     lookup_field = "hostname"
     http_method_names = ["post"]
 
+class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):  # Use ReadOnly if you only need GET
+    serializer_class = IsBlockedSerializer
+
+    def get_queryset(self):
+        queryset = Entry.objects.filter(is_active=True)
+        ip_address = self.request.query_params.get("ip")
+        if ip_address:
+            queryset = queryset.filter(route__route=ip_address)
+        return queryset
 
 @extend_schema(
     description="API endpoint for entries",
