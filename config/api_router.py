@@ -2,7 +2,7 @@
 
 from rest_framework.routers import DefaultRouter
 
-from scram.route_manager.api.views import ActionTypeViewSet, ClientViewSet, EntryViewSet, IgnoreEntryViewSet
+from scram.route_manager.api.views import ActionTypeViewSet, ClientViewSet, EntryViewSet, IgnoreEntryViewSet, IsBlockedViewSet
 from scram.users.api.views import UserViewSet
 
 router = DefaultRouter()

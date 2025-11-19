@@ -62,7 +62,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     lookup_field = "hostname"
     http_method_names = ["post"]
 
-class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):  # Use ReadOnly if you only need GET
+class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IsBlockedSerializer
 
     def get_queryset(self):
