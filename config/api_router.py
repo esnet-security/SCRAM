@@ -12,7 +12,7 @@ router.register("actiontypes", ActionTypeViewSet)
 router.register("register_client", ClientViewSet)
 router.register("entries", EntryViewSet)
 router.register("ignore_entries", IgnoreEntryViewSet)
-
+router.register("is_blocked", IsBlockedViewSet, "is_blocked")
 
 app_name = "api"
 urlpatterns = router.urls
