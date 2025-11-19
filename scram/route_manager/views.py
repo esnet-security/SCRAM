@@ -23,7 +23,7 @@ from django.views.generic import DetailView, ListView
 
 from scram.route_manager.models import WebSocketSequenceElement
 
-from ..route_manager.api.views import EntryViewSet
+from ..route_manager.api.views import EntryViewSet, IsBlockedViewSet
 from ..shared.shared_code import make_random_password
 from ..users.models import User
 from .models import ActionType, Entry
@@ -146,6 +146,18 @@ def add_entry(request):
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     return redirect("route_manager:home")
 
+is_blocked_api = IsBlockedViewSet.as_view({"get"})
+
+def is_blocked(request):
+    """Check if a user is blocked by an administrator."""
+    with transaction.atomic():
+        res = is_blocked_api(request)
+
+    if res.status_code == 200 and res:
+        return True
+    else:
+        return False
+
 
 def process_updates(request):
     """For entries with an expiration, set them to inactive if expired.
@@ -244,3 +256,4 @@ class EntryListView(ListView):
 
         context["entries"] = entries_by_type
         return context
+
