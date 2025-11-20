@@ -52,6 +52,15 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = ["hostname", "uuid"]
 
 
+class IsBlockedSerializer(serializers.ModelSerializer):
+    """Map the serializer to the Entry model."""
+
+    class Meta:
+        """Maps to the Entry model, but limits to the is_active field."""
+        model = Entry
+        fields = ["is_active"]
+
+
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
     """Due to the use of ForeignKeys, this follows some relationships to make sense via the API."""
 

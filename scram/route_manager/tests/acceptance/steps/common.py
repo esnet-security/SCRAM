@@ -9,12 +9,7 @@ from channels.layers import get_channel_layer
 from django import conf
 from django.urls import reverse
 
-from scram.route_manager.models import (
-    ActionType,
-    Client,
-    WebSocketMessage,
-    WebSocketSequenceElement,
-)
+from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
 
 
 @given("a {name} actiontype is defined")

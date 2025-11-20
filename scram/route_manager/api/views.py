@@ -16,7 +16,13 @@ from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
-from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
+from .serializers import (
+    ActionTypeSerializer,
+    ClientSerializer,
+    EntrySerializer,
+    IgnoreEntrySerializer,
+    IsBlockedSerializer,
+)
 
 channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
@@ -61,6 +67,29 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     lookup_field = "hostname"
     http_method_names = ["post"]
+
+
+class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
+    """Look up a route to see if SCRAM considers it active or deactivated."""
+
+    serializer_class = IsBlockedSerializer
+    permission_classes = (AllowAny,)
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        """Focus queryset on active routes."""
+        queryset = Entry.objects.filter(is_active=True)
+        ip_address = self.request.query_params.get("ip")
+        if ip_address:
+            queryset = queryset.filter(route__route=ip_address)
+        return queryset
+
+    def list(self, request):
+        """OVerride the list function to just return a boolean instead of other metadata."""
+        entry = self.get_queryset().first()
+        is_active = entry is not None
+
+        return Response({"is_active": is_active})
 
 
 @extend_schema(
