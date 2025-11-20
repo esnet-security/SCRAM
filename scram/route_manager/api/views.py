@@ -62,9 +62,11 @@ class ClientViewSet(viewsets.ModelViewSet):
     lookup_field = "hostname"
     http_method_names = ["post"]
 
+
 class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IsBlockedSerializer
     permission_classes = (AllowAny,)
+    http_method_names = ["get"]
 
     def get_queryset(self):
         queryset = Entry.objects.filter(is_active=True)
@@ -72,6 +74,12 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
         if ip_address:
             queryset = queryset.filter(route__route=ip_address)
         return queryset
+
+    def list(self, request):
+        entry = self.get_queryset().first()
+        is_active = entry is not None
+
+        return Response({"is_active": is_active})
 
 @extend_schema(
     description="API endpoint for entries",
