@@ -53,11 +53,10 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class IsBlockedSerializer(serializers.ModelSerializer):
-    """Map the serializer to the model via Meta."""
+    """Map the serializer to the Entry model."""
 
     class Meta:
         """Maps to the Entry model, but limits to the is_active field."""
-
         model = Entry
         fields = ["is_active"]
 
