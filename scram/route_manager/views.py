@@ -146,18 +146,6 @@ def add_entry(request):
         messages.add_message(request, messages.WARNING, f"Something went wrong: {res.status_code}")
     return redirect("route_manager:home")
 
-is_blocked_api = IsBlockedViewSet.as_view({"get"})
-
-def is_blocked(request):
-    """Check if a user is blocked by an administrator."""
-    with transaction.atomic():
-        res = is_blocked_api(request)
-
-    if res.status_code == 200 and res:
-        return True
-    else:
-        return False
-
 
 def process_updates(request):
     """For entries with an expiration, set them to inactive if expired.
