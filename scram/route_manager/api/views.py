@@ -64,6 +64,7 @@ class ClientViewSet(viewsets.ModelViewSet):
 
 class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IsBlockedSerializer
+    permission_classes = (AllowAny,)
 
     def get_queryset(self):
         queryset = Entry.objects.filter(is_active=True)
