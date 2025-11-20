@@ -23,7 +23,7 @@ from django.views.generic import DetailView, ListView
 
 from scram.route_manager.models import WebSocketSequenceElement
 
-from ..route_manager.api.views import EntryViewSet, IsBlockedViewSet
+from ..route_manager.api.views import EntryViewSet
 from ..shared.shared_code import make_random_password
 from ..users.models import User
 from .models import ActionType, Entry
@@ -244,4 +244,3 @@ class EntryListView(ListView):
 
         context["entries"] = entries_by_type
         return context
-
