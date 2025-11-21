@@ -57,3 +57,16 @@ def make_random_password(length: int = 20, min_digits: int = 5, max_attempts: in
     # required password length being very long and the min_digits being high.
     message = f"Failed to generate a valid password after {max_attempts} attempts"
     raise RuntimeError(message)
+
+
+def get_client_ip(request) -> str | None:
+    """Get the client's IP address from the request.
+
+    Checks the HTTP_X_FORWARDED_FOR header first, then falls back to REMOTE_ADDR.
+    """
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+    return ip
