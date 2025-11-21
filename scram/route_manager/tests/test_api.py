@@ -17,7 +17,7 @@ class TestAddRemoveIP(APITestCase):
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )

@@ -38,7 +38,7 @@ def create_authed_client(context, name):
     """Create a client and authorize it for that action type."""
     at, _ = ActionType.objects.get_or_create(name=name)
     authorized_client = Client.objects.create(
-        hostname="authorized_client.es.net",
+        client_name="authorized_client.es.net",
         uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
         is_authorized=True,
     )
@@ -50,7 +50,7 @@ def create_authed_client(context, name):
 def create_unauthed_client(context, name):
     """Create a client that has no authorized action types."""
     unauthorized_client = Client.objects.create(
-        hostname="unauthorized_client.es.net",
+        client_name="unauthorized_client.es.net",
         uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
     )
     unauthorized_client.authorized_actiontypes.set([])
@@ -214,13 +214,13 @@ def check_object(context, value, model):
     context.test.assertTrue(found)
 
 
-@when("we register a client named {hostname} with the uuid of {uuid}")
-def add_client(context, hostname, uuid):
+@when("we register a client named {client_name} with the uuid of {uuid}")
+def add_client(context, client_name, uuid):
     """Create a client with a specific UUID."""
     context.response = context.test.client.post(
         reverse("api:v1:client-list"),
         {
-            "hostname": hostname,
+            "client_name": client_name,
             "uuid": uuid,
         },
     )

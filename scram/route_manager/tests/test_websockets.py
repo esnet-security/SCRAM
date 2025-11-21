@@ -61,7 +61,7 @@ class TestTranslatorBaseCase(TestCase):
         self.actiontype.save()
 
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.example.net",
+            client_name="authorized_client.example.net",
             uuid=self.uuid,
             is_authorized=True,
         )

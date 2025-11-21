@@ -169,15 +169,16 @@ class IgnoreEntry(models.Model):
 class Client(models.Model):
     """Any client that would like to hit the API to add entries (e.g. Zeek)."""
 
-    hostname = models.CharField(max_length=50, unique=True)
-    uuid = models.UUIDField()
+    client_name = models.CharField(max_length=50, unique=True)
+    uuid = models.UUIDField(default=uuid_lib.uuid4, editable=False, unique=True)
+    registered_from_ip = models.GenericIPAddressField(null=True, blank=True)
 
     is_authorized = models.BooleanField(null=True, blank=True, default=False)
     authorized_actiontypes = models.ManyToManyField(ActionType)
 
     def __str__(self):
-        """Only display the hostname."""
-        return str(self.hostname)
+        """Only display the client_name."""
+        return str(self.client_name)
 
 
 channel_layer = get_channel_layer()
