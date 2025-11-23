@@ -114,9 +114,13 @@ class EntryViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied("Client not found.")
 
             # Check if client is authorized for the action type
-            if not client.is_authorized or actiontype not in client.authorized_actiontypes.values_list("name", flat=True):
+            if not client.is_authorized or actiontype not in client.authorized_actiontypes.values_list(
+                "name", flat=True
+            ):
                 logger.debug(
-                    "Client: %s, actiontypes: %s", uuid, list(client.authorized_actiontypes.values_list("name", flat=True))
+                    "Client: %s, actiontypes: %s",
+                    uuid,
+                    list(client.authorized_actiontypes.values_list("name", flat=True)),
                 )
                 logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
