@@ -110,8 +110,9 @@ class EntryViewSet(viewsets.ModelViewSet):
         if uuid:
             try:
                 client = Client.objects.get(uuid=uuid)
-            except Client.DoesNotExist:
-                raise PermissionDenied("Client not found.")
+            except Client.DoesNotExist as client_dne:
+                msg = f"Client {self.client_name} does not exist"
+                raise PermissionDenied(msg) from client_dne
 
             # Check if client is authorized for the action type
             if not client.is_authorized or actiontype not in client.authorized_actiontypes.values_list(
@@ -135,7 +136,8 @@ class EntryViewSet(viewsets.ModelViewSet):
                         request_ip,
                         client.registered_from_ip,
                     )
-                    raise PermissionDenied("Request from unauthorized IP address.")
+                    msg = "Request from unauthorized IP address %s"
+                    raise PermissionDenied(msg)
 
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied

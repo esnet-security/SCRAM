@@ -63,6 +63,9 @@ def get_client_ip(request) -> str | None:
     """Get the client's IP address from the request.
 
     Checks the HTTP_X_FORWARDED_FOR header first, then falls back to REMOTE_ADDR.
+
+    Returns:
+        IP address from the client
     """
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
