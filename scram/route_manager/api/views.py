@@ -85,7 +85,7 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request):
-        """OVerride the list function to just return a boolean instead of other metadata."""
+        """Override the list function to just return a boolean instead of other metadata."""
         entry = self.get_queryset().first()
         is_active = entry is not None
 
