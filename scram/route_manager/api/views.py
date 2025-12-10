@@ -111,7 +111,7 @@ class EntryViewSet(viewsets.ModelViewSet):
             try:
                 client = Client.objects.get(uuid=uuid)
             except Client.DoesNotExist as client_dne:
-                msg = f"Client {self.client_name} does not exist"
+                msg = f"Client does not exist"
                 raise PermissionDenied(msg) from client_dne
 
             # Check if client is authorized for the action type
