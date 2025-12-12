@@ -88,7 +88,7 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             normalized_cidr = ipaddress.ip_network(cidr, strict=False)
         except ValueError:
-            raise ValidationError(detail={'error': 'invalid ip address or network'})
+            raise ValidationError(detail={"error": "invalid ip address or network"}) from None
 
         self.normalization_warning = None
         self.normalized_cidr_for_response = normalized_cidr
@@ -96,18 +96,18 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
         if str(cidr) != str(normalized_cidr):
             # save the warning so we can use it in the list response
             self.normalization_warning = (f"Input CIDR '{cidr}' was not canonical and was normalized to "
-                                          f"'{str(normalized_cidr)}' for the search.")
+                                          f"'{normalized_cidr!s}' for the search.")
 
-        return  Entry.objects.filter(route__route__net_contained_or_equal=normalized_cidr, is_active=True)
+        return Entry.objects.filter(route__route__net_contained_or_equal=normalized_cidr, is_active=True)
 
     def list(self, request):
         """Override the list function to just return a boolean instead of other metadata."""
         queryset = self.get_queryset()
         warning_message = None
-        if hasattr(self, 'normalization_warning') and self.normalization_warning:
+        if hasattr(self, "normalization_warning") and self.normalization_warning:
             warning_message = self.normalization_warning
 
-        if not queryset.exists() and hasattr(self, 'normalized_cidr_for_response'):
+        if not queryset.exists() and hasattr(self, "normalized_cidr_for_response"):
             response_data = {"results": [{
                 "is_active": False,
                  "route": str(self.normalized_cidr_for_response)
