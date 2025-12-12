@@ -95,8 +95,9 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
 
         if str(cidr) != str(normalized_cidr):
             # save the warning so we can use it in the list response
-            self.normalization_warning = (f"Input CIDR '{cidr}' was not canonical and was normalized to "
-                                          f"'{normalized_cidr!s}' for the search.")
+            self.normalization_warning = (
+                f"Input CIDR '{cidr}' was not canonical and was normalized to '{normalized_cidr!s}' for the search."
+            )
 
         return Entry.objects.filter(route__route__net_contained_or_equal=normalized_cidr, is_active=True)
 
@@ -108,10 +109,7 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
             warning_message = self.normalization_warning
 
         if not queryset.exists() and hasattr(self, "normalized_cidr_for_response"):
-            response_data = {"results": [{
-                "is_active": False,
-                 "route": str(self.normalized_cidr_for_response)
-             }]}
+            response_data = {"results": [{"is_active": False, "route": str(self.normalized_cidr_for_response)}]}
         else:
             serializer = self.get_serializer(queryset, many=True)
             response_data = {"results": serializer.data}
