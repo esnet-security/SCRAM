@@ -169,32 +169,40 @@ class TestIsBlocked(APITestCase):
 
     def test_blocked_ipv4_returns_true(self):
         """Check that a blocked IPv4 returns is_active=true."""
-        response = self.client.get(self.url, {"ip": "192.0.2.100"})
+        response = self.client.get(self.url, {"cidr": "192.0.2.100"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"is_active": True})
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["is_active"], True)
+        self.assertEqual(response.data["results"][0]["route"], "192.0.2.100/32")
 
     def test_blocked_ipv6_returns_true(self):
         """Check that a blocked IPv6 returns is_active=true."""
-        response = self.client.get(self.url, {"ip": "2001:db8::1"})
+        response = self.client.get(self.url, {"cidr": "2001:db8::1"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"is_active": True})
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["is_active"], True)
+        self.assertEqual(response.data["results"][0]["route"], "2001:db8::1/128")
 
     def test_inactive_entry_ipv4_returns_false(self):
         """Check that an inactive entry returns is_active=false."""
-        response = self.client.get(self.url, {"ip": "192.0.2.200"})
+        response = self.client.get(self.url, {"cidr": "192.0.2.200"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"is_active": False})
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["is_active"], False)
+        self.assertEqual(response.data["results"][0]["route"], "192.0.2.200/32")
 
     def test_inactive_entry_ipv6_returns_false(self):
         """Check that an inactive entry returns is_active=false."""
-        response = self.client.get(self.url, {"ip": "2001:db8::5"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"is_active": False})
+        response = self.client.get(self.url, {"cidr": "2001:db8::5"})
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["is_active"], False)
+        self.assertEqual(response.data["results"][0]["route"], "2001:db8::5/128")
 
     def test_unauthenticated_access_allowed(self):
         """Ensure unauthenticated clients can check if IPs are blocked."""
         # Logout any authenticated user
         self.client.logout()
-        response = self.client.get(self.url, {"ip": "192.0.2.100"})
+        response = self.client.get(self.url, {"cidr": "192.0.2.100"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {"is_active": True})
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["is_active"], True)
