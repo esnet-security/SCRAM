@@ -10,6 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from simple_history.utils import update_change_reason
@@ -79,9 +80,11 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Focus queryset on active routes."""
         queryset = Entry.objects.filter(is_active=True)
-        ip_address = self.request.query_params.get("ip")
-        if ip_address:
-            queryset = queryset.filter(route__route=ip_address)
+        ip = self.request.query_params.get("ip")
+        if not ip:
+            raise ValidationError(detail={"error": "ip parameter is required"})
+        else:
+            queryset = queryset.filter(route__route=ip)
         return queryset
 
     def list(self, request):
