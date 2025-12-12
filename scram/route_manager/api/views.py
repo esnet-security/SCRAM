@@ -77,22 +77,47 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
     http_method_names = ["get"]
 
+    normalization_warning: str | None
+    normalized_cidr_for_response: ipaddress.IPv4Network | ipaddress.IPv6Network | None
+
     def get_queryset(self):
         """Focus queryset on active routes."""
-        queryset = Entry.objects.filter(is_active=True)
-        ip = self.request.query_params.get("ip")
-        if not ip:
-            raise ValidationError(detail={"error": "ip parameter is required"})
-        else:
-            queryset = queryset.filter(route__route=ip)
-        return queryset
+        cidr = self.request.query_params.get("cidr")
+        if not cidr:
+            raise ValidationError(detail={"error": "cidr parameter is required"})
+        try:
+            normalized_cidr = ipaddress.ip_network(cidr, strict=False)
+        except ValueError:
+            raise ValidationError(detail={'error': 'invalid ip address or network'})
+
+        self.normalization_warning = None
+        self.normalized_cidr_for_response = normalized_cidr
+
+        if str(cidr) != str(normalized_cidr):
+            # save the warning so we can use it in the list response
+            self.normalization_warning = (f"Input CIDR '{cidr}' was not canonical and was normalized to "
+                                          f"'{str(normalized_cidr)}' for the search.")
+
+        return  Entry.objects.filter(route__route__net_contained_or_equal=normalized_cidr, is_active=True)
 
     def list(self, request):
         """Override the list function to just return a boolean instead of other metadata."""
-        entry = self.get_queryset().first()
-        is_active = entry is not None
+        queryset = self.get_queryset()
+        warning_message = None
+        if hasattr(self, 'normalization_warning') and self.normalization_warning:
+            warning_message = self.normalization_warning
 
-        return Response({"is_active": is_active})
+        if not queryset.exists() and hasattr(self, 'normalized_cidr_for_response'):
+            response_data = {"results": [{
+                "is_active": False,
+                 "route": str(self.normalized_cidr_for_response)
+             }]}
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            response_data = {"results": serializer.data}
+        response_data["warning"] = warning_message
+
+        return Response(response_data)
 
 
 @extend_schema(
