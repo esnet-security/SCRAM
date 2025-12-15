@@ -7,7 +7,7 @@ from scram.route_manager.api.views import (
     ClientViewSet,
     EntryViewSet,
     IgnoreEntryViewSet,
-    IsBlockedViewSet,
+    IsActiveViewSet,
 )
 from scram.users.api.views import UserViewSet
 
@@ -18,7 +18,7 @@ router.register("actiontypes", ActionTypeViewSet)
 router.register("register_client", ClientViewSet)
 router.register("entries", EntryViewSet)
 router.register("ignore_entries", IgnoreEntryViewSet)
-router.register("is_blocked", IsBlockedViewSet, "is_blocked")
+router.register("is_active", IsActiveViewSet, "is_active")
 
 app_name = "api"
 urlpatterns = router.urls

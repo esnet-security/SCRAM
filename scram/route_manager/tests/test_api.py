@@ -127,12 +127,12 @@ class TestUnauthenticatedAccess(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class TestIsBlocked(APITestCase):
-    """Test the is_blocked endpoint."""
+class TestIsActive(APITestCase):
+    """Test the is_active endpoint."""
 
     def setUp(self):
         """Set up test data."""
-        self.url = reverse("api:v1:is_blocked-list")
+        self.url = reverse("api:v1:is_active-list")
         self.authorized_client = Client.objects.create(
             hostname="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
@@ -141,18 +141,18 @@ class TestIsBlocked(APITestCase):
         self.authorized_client.authorized_actiontypes.set([1])
         self.actiontype, _ = ActionType.objects.get_or_create(pk=1, defaults={"name": "block"})
 
-        # Create some blocked entries
+        # Create some active entries
 
-        # Active blocked IPv4
+        # Active IPv4
         route_v4 = Route.objects.create(route="192.0.2.100")
         Entry.objects.create(
-            route=route_v4, is_active=True, comment="test block", who="test", actiontype=self.actiontype
+            route=route_v4, is_active=True, comment="test active", who="test", actiontype=self.actiontype
         )
 
-        # Active blocked IPv6
+        # Active IPv6
         route_v6 = Route.objects.create(route="2001:db8::1")
         Entry.objects.create(
-            route=route_v6, is_active=True, comment="test block v6", who="test", actiontype=self.actiontype
+            route=route_v6, is_active=True, comment="test active v6", who="test", actiontype=self.actiontype
         )
 
         # Deactivated IPv4 entry
@@ -167,16 +167,16 @@ class TestIsBlocked(APITestCase):
             route=route_inactive, is_active=False, comment="inactive", who="test", actiontype=self.actiontype
         )
 
-    def test_blocked_ipv4_returns_true(self):
-        """Check that a blocked IPv4 returns is_active=true."""
+    def test_active_ipv4_returns_true(self):
+        """Check that an active IPv4 returns is_active=true."""
         response = self.client.get(self.url, {"cidr": "192.0.2.100"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["is_active"], True)
         self.assertEqual(response.data["results"][0]["route"], "192.0.2.100/32")
 
-    def test_blocked_ipv6_returns_true(self):
-        """Check that a blocked IPv6 returns is_active=true."""
+    def test_active_ipv6_returns_true(self):
+        """Check that an active IPv6 returns is_active=true."""
         response = self.client.get(self.url, {"cidr": "2001:db8::1"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
@@ -199,7 +199,7 @@ class TestIsBlocked(APITestCase):
         self.assertEqual(response.data["results"][0]["route"], "2001:db8::5/128")
 
     def test_unauthenticated_access_allowed(self):
-        """Ensure unauthenticated clients can check if IPs are blocked."""
+        """Ensure unauthenticated clients can check if IPs are active."""
         # Logout any authenticated user
         self.client.logout()
         response = self.client.get(self.url, {"cidr": "192.0.2.100"})
