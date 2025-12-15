@@ -22,7 +22,7 @@ from .serializers import (
     ClientSerializer,
     EntrySerializer,
     IgnoreEntrySerializer,
-    IsBlockedSerializer,
+    IsActiveSerializer,
 )
 
 channel_layer = get_channel_layer()
@@ -70,10 +70,10 @@ class ClientViewSet(viewsets.ModelViewSet):
     http_method_names = ["post"]
 
 
-class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
+class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
     """Look up a route to see if SCRAM considers it active or deactivated."""
 
-    serializer_class = IsBlockedSerializer
+    serializer_class = IsActiveSerializer
     permission_classes = (AllowAny,)
     http_method_names = ["get"]
 
@@ -104,16 +104,13 @@ class IsBlockedViewSet(viewsets.ReadOnlyModelViewSet):
     def list(self, request):
         """Override the list function to just return a boolean instead of other metadata."""
         queryset = self.get_queryset()
-        warning_message = None
-        if hasattr(self, "normalization_warning") and self.normalization_warning:
-            warning_message = self.normalization_warning
 
         if not queryset.exists() and hasattr(self, "normalized_cidr_for_response"):
             response_data = {"results": [{"is_active": False, "route": str(self.normalized_cidr_for_response)}]}
         else:
             serializer = self.get_serializer(queryset, many=True)
             response_data = {"results": serializer.data}
-        response_data["warning"] = warning_message
+        response_data["warning"] = self.normalization_warning
 
         return Response(response_data)
 
