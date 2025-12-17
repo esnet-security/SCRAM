@@ -260,7 +260,10 @@ def process_updates(request):
 
     # Grab all of the other entries that need processing and... process them!
     cutoff_time = current_time - timedelta(minutes=2)
-    if entries_to_process := get_entries_to_process(cutoff_time=cutoff_time):
+    entries_to_process = get_entries_to_process(cutoff_time=cutoff_time)
+    entries_reprocessed_list = [str(entry.route) for entry in entries_to_process]
+
+    if entries_to_process:
         reprocess_entries(entries_to_process)
     else:
         logger.info("No new entries to process")
@@ -271,6 +274,7 @@ def process_updates(request):
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
                 "entries_reprocessed": len(entries_to_process),
+                "entries_reprocessed_list": entries_reprocessed_list,
             },
         ),
         content_type="application/json",
