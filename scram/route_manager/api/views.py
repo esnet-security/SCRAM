@@ -10,13 +10,20 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
-from .serializers import ActionTypeSerializer, ClientSerializer, EntrySerializer, IgnoreEntrySerializer
+from .serializers import (
+    ActionTypeSerializer,
+    ClientSerializer,
+    EntrySerializer,
+    IgnoreEntrySerializer,
+    IsActiveSerializer,
+)
 
 channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
@@ -61,6 +68,51 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     lookup_field = "hostname"
     http_method_names = ["post"]
+
+
+class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
+    """Look up a route to see if SCRAM considers it active or deactivated."""
+
+    serializer_class = IsActiveSerializer
+    permission_classes = (AllowAny,)
+    http_method_names = ["get"]
+
+    normalization_warning: str | None
+    normalized_cidr_for_response: ipaddress.IPv4Network | ipaddress.IPv6Network | None
+
+    def get_queryset(self):
+        """Focus queryset on active routes."""
+        cidr = self.request.query_params.get("cidr")
+        if not cidr:
+            raise ValidationError(detail={"error": "cidr parameter is required"})
+        try:
+            normalized_cidr = ipaddress.ip_network(cidr, strict=False)
+        except ValueError:
+            raise ValidationError(detail={"error": "invalid ip address or network"}) from None
+
+        self.normalization_warning = None
+        self.normalized_cidr_for_response = normalized_cidr
+
+        if str(cidr) != str(normalized_cidr):
+            # save the warning so we can use it in the list response
+            self.normalization_warning = (
+                f"Input CIDR '{cidr}' was not canonical and was normalized to '{normalized_cidr!s}' for the search."
+            )
+
+        return Entry.objects.filter(route__route__net_contained_or_equal=normalized_cidr, is_active=True)
+
+    def list(self, request):
+        """Override the list function to just return a boolean instead of other metadata."""
+        queryset = self.get_queryset()
+
+        if not queryset.exists() and hasattr(self, "normalized_cidr_for_response"):
+            response_data = {"results": [{"is_active": False, "route": str(self.normalized_cidr_for_response)}]}
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            response_data = {"results": serializer.data}
+        response_data["warning"] = self.normalization_warning
+
+        return Response(response_data)
 
 
 @extend_schema(

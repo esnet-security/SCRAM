@@ -2,7 +2,13 @@
 
 from rest_framework.routers import DefaultRouter
 
-from scram.route_manager.api.views import ActionTypeViewSet, ClientViewSet, EntryViewSet, IgnoreEntryViewSet
+from scram.route_manager.api.views import (
+    ActionTypeViewSet,
+    ClientViewSet,
+    EntryViewSet,
+    IgnoreEntryViewSet,
+    IsActiveViewSet,
+)
 from scram.users.api.views import UserViewSet
 
 router = DefaultRouter()
@@ -12,7 +18,7 @@ router.register("actiontypes", ActionTypeViewSet)
 router.register("register_client", ClientViewSet)
 router.register("entries", EntryViewSet)
 router.register("ignore_entries", IgnoreEntryViewSet)
-
+router.register("is_active", IsActiveViewSet, "is_active")
 
 app_name = "api"
 urlpatterns = router.urls
