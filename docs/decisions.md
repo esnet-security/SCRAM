@@ -79,11 +79,18 @@ If you want two or more instances of SCRAM to share data between themselves we h
 3. For normal syncing where both translators have been connected, we are currently using process_updates (since it runs 
    regularly) to grab new data out of the database that comes from other connected instances and reannounces those locally.
 
-Honestly, step 3 is kind of gross and we realize this. We are probably looking at a task runner or something to handle
-this moving forward, but we needed to get this fixed in the meantime. Status can be tracked with
-[Github Issue 125](https://github.com/esnet-security/SCRAM/issues/125) 
+##### The Unblocking Problem® (PR #157)
+
+We had a bug where entries that had expired or been deleted on one SCRAM instance were never being unblocked on other instances. The original sync logic only looked at the `when` field (creation time), so it would happily find new entries but completely miss any that were modified, expired, or de-activated after creation. This was bad because things could get stuck being blocked forever (until gobgp and translator are restarted) and not show up in the web UI (because the database says it's not blocked.) Eventually, we should add "ghost" routes to the UI to show someone if there is something that's advertised by its translator but not in the database. We could even use a cute little ghost icon for it!
+
+The fix takes advantage of the already existing `django-simple-history` models that track any entry modifications. To sync, we query the history models to see if something has changed in any way, and we just go ahead and re-send that to the translator, ensuring eventual consistency (since translator is idempotent).
+
+##### Future Work
+
+Honestly, the use of compose health checks is kind of gross and we realize this. The `process_updates` polling approach works, but it's not elegant. We're probably looking at Celery or some other task runner to handle this properly. it'd be good to have something that can react to database changes on a message bus rather than polling every 30 seconds. But this gets things fixed for now, and the history-based seems solid enough for our needs.
 
 #### Entries Page
+
 We intentionally chose to only list the active entries. Our thinking is that the home page shows the most recent additions.
 Then, if you went to the entries page, it would be overwhelmingly huge to show all the historical entries including the 
 ones that timed out/were deactivated. If you wanted to know about a specific entry even if it were not currently active
