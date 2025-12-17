@@ -1,6 +1,5 @@
 """Define the Views that will handle the HTTP requests."""
 
-import datetime
 import ipaddress
 import json
 import logging
@@ -148,71 +147,88 @@ def add_entry(request):
     return redirect("route_manager:home")
 
 
-def get_entries_to_process(cutoff_time: datetime) -> list[Entry]:
-    """get_entries_to_process returns a list of entries that have recently been changed by a different server.
+def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
+    """Return entries that have been recently modified by another SCRAM instance.
 
-    _extended_summary_
+    Queries the Entry history (simple history)table to find any entries modified
+    since the cutoff time, then filters to only those originating from other SCRAM instances.
+
+    Args:
+        cutoff_time(timedelta): Only consider entries modified after this time.
 
     Returns:
-        list[Entry]: The list of entry objects that have been modified by a different server.
+        List of Entry objects that need to be reprocessed.
     """
-    logger.debug("Looking for new entries from other SCRAM instances")
+    logger.debug("Looking for entries modified by other SCRAM instances")
 
-    # Grab all of the the HistoricalEntry objects (from the Entry model) that were created
-    # (i.e. an Entry object was modified) since the cutoff time
-    # Does this re-process expired entries? (i.e. do the entries we just "deleted" have a new history entry? TODO: Test
-    logger.debug("Grabbing entry history models")
-    recently_touched_histories = Entry.history.filter(history_date__gt=cutoff_time)
+    # Grab (only, via values_list) the Entry IDs that have had their history records touched since the cutoff time.
+    recently_touched_ids = set(Entry.history.filter(history_date__gt=cutoff_time).values_list("id", flat=True))
 
-    # Grab a set of all of the Entry IDs from the modified histories since there can be multiple history entries
-    # per Entry object.
-    recently_touched_entries_id = {history.id for history in recently_touched_histories}
-    logger.debug("Found the following recently touched entry IDs: %s", recently_touched_entries_id)
+    if not recently_touched_ids:
+        logger.debug("No recently modified entries found")
+        return []
 
-    # Get all of the Entry objects from the database that were recently touched now that we have the modified
-    # Entry object IDs.
-    recently_touched_entries = [Entry.objects.get(id=entry_id) for entry_id in recently_touched_entries_id]
-    logger.debug("Found the following recently touched entries: %s", recently_touched_entries)
+    logger.debug("Found recently touched entry IDs: %s", recently_touched_ids)
 
-    # Next, we want to filter the entries that were recently touched, to the ones from a different SCRAM instance.
-    entries_to_process = []
-    for entry in recently_touched_entries:
-        if entry.originating_scram_instance != settings.SCRAM_HOSTNAME:
-            entries_to_process.append(entry)
-            logger.debug("Adding entry %s to processing list", entry)
-        else:
-            logger.debug("Entry %s was not added to processing list", entry)
+    # Using the ID's from above, fetch all matching entries and associated models excluding entries from this instance.
+    entries_to_process = list(
+        Entry.objects.filter(id__in=recently_touched_ids)
+        .exclude(originating_scram_instance=settings.SCRAM_HOSTNAME)
+        .select_related("actiontype", "route")
+    )
 
+    _check_for_orphaned_history(recently_touched_ids, entries_to_process)
+
+    logger.debug("Found %d entries to process from other instances", len(entries_to_process))
     return entries_to_process
 
 
-def reprocess_entries(entries_to_process: list[Entry]) -> None:
-    """reprocess_entries takes a list of entries and adds them to the correct translator websocket group.
+def _check_for_orphaned_history(recently_touched_ids: set[int], entries_to_process: list[Entry]) -> None:
+    """Check for orphaned history records where the Entry was deleted but history remains.
 
-    Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
-    whether that is to block or unblock them. This is used by `process_updates()`.
+    This shouldn't happen in production since Entry.delete() is overridden on the model,
+    but we log a warning if it occurs for debugging purposes.
 
     Args:
-        entries_to_process (list[Entry]): the list of entry DB objects that we want to reprocess.
+        recently_touched_ids(set): Set of Entry IDs that have recent history records.
+        entries_to_process(list): Entry objects fetched from the database (excludes local instance).
     """
-    # Resend new entries that popped up in the database
-    # TODO: Make this thingy a function that we can call from everywhere?
+    # IDs of entries that currently exist in the DB (excluding local instance entries)
+    found_ids = {entry.id for entry in entries_to_process}
+    # Account for entries filtered out cuz they're from this instance
+    local_ids = set(
+        Entry.objects.filter(
+            id__in=recently_touched_ids, originating_scram_instance=settings.SCRAM_HOSTNAME
+        ).values_list("id", flat=True)
+    )
+    # IDs with history but no corresponding Entry row = orphaned (hard-deleted outside of Entry.delete())
+    orphaned_ids = recently_touched_ids - found_ids - local_ids
+    if orphaned_ids:
+        logger.warning("Found history records with no corresponding Entry: %s", orphaned_ids)
 
-    # I think we have to override the message type defaults to add?
-    logger.info("Executing reprocess_entries with %d entries", len(entries_to_process))
-    logger.debug("List of entries to process: %s", entries_to_process)
+
+def reprocess_entries(entries_to_process: list[Entry]) -> None:
+    """Take a list of Entries and send appropriatewebsocket messages to translators.
+
+    Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
+    whether that is to block or unblock them. This is used by `process_updates()`. In this, we take each entry
+    and send either a translator_add or translator_remove message, depending on the entry's is_active state, and
+    notify translators to Do the Thing.
+
+    Args:
+        entries_to_process(list[Entry]): Entry objects that need to be sent to translators.
+    """
+    logger.info("Reprocessing %d entries", len(entries_to_process))
 
     for entry in entries_to_process:
-        logger.info("Processing new entry: %s", entry)
-
-        if entry.is_active:
-            message_type = "translator_add"
-        if not entry.is_active:
-            message_type = "translator_remove"
+        message_type = "translator_add" if entry.is_active else "translator_remove"
+        logger.info("Processing entry %s (active=%s)", entry, entry.is_active)
 
         translator_group = f"translator_{entry.actiontype}"
-        elements = list(
-            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
+        elements = (
+            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype)
+            .order_by("order_num")
+            .select_related("websocketmessage")
         )
 
         for element in elements:
