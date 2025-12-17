@@ -177,13 +177,13 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
         .select_related("actiontype", "route")
     )
 
-    _check_for_orphaned_history(recently_touched_ids, entries_to_process)
+    check_for_orphaned_history(recently_touched_ids, entries_to_process)
 
     logger.debug("Found %d entries to process from other instances", len(entries_to_process))
     return entries_to_process
 
 
-def _check_for_orphaned_history(recently_touched_ids: set[int], entries_to_process: list[Entry]) -> None:
+def check_for_orphaned_history(recently_touched_ids: set[int], entries_to_process: list[Entry]) -> None:
     """Check for orphaned history records where the Entry was deleted but history remains.
 
     This shouldn't happen in production since Entry.delete() is overridden on the model,
@@ -208,7 +208,7 @@ def _check_for_orphaned_history(recently_touched_ids: set[int], entries_to_proce
 
 
 def reprocess_entries(entries_to_process: list[Entry]) -> None:
-    """Take a list of Entries and send appropriatewebsocket messages to translators.
+    """Take a list of Entries and send appropriate websocket messages to translators.
 
     Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
     whether that is to block or unblock them. This is used by `process_updates()`. In this, we take each entry
