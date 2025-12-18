@@ -7,8 +7,11 @@ import urllib.parse
 import requests
 from behave import then, when
 
+DJANGO_PRIMARY_URL = "http://django:8000"
+DJANGO_SECONDARY_URL = "http://django-secondary:8000"
 
-def get_auth_token(base_url="http://django:8000"):
+
+def get_auth_token(base_url: str = DJANGO_PRIMARY_URL):
     """Obtain an API authentication token for the test user."""
     response = requests.post(f"{base_url}/auth-token/", data={"username": "user", "password": "password"}, timeout=10)
     response.raise_for_status()
@@ -20,7 +23,7 @@ def create_entry_on_primary(context, ip):
     """Creates an entry via API call to the primary container."""
     try:
         response = requests.post(
-            "http://django:8000/api/v1/entries/",
+            f"{DJANGO_PRIMARY_URL}/api/v1/entries/",
             json={
                 "route": ip,
                 "actiontype": "block",
@@ -45,7 +48,7 @@ def create_entry_with_expiration(context, ip, seconds):
 
     try:
         response = requests.post(
-            "http://django:8000/api/v1/entries/",
+            f"{DJANGO_PRIMARY_URL}/api/v1/entries/",
             json={
                 "route": ip,
                 "actiontype": "block",
@@ -71,7 +74,7 @@ def deactivate_entry_on_primary(context, ip):
 
     try:
         list_response = requests.get(
-            "http://django:8000/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            f"{DJANGO_PRIMARY_URL}/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             headers={"Authorization": f"Token {context.auth_token}"},
             timeout=10,
         )
@@ -89,7 +92,7 @@ def deactivate_entry_on_primary(context, ip):
 
         encoded_route = urllib.parse.quote(entry_route, safe="")
         response = requests.delete(
-            f"http://django:8000/api/v1/entries/{encoded_route}/",
+            f"{DJANGO_PRIMARY_URL}/api/v1/entries/{encoded_route}/",
             headers={"Authorization": f"Token {context.auth_token}"},
             timeout=10,
         )
@@ -113,9 +116,9 @@ def wait_for_expiration(context, seconds):
 
 @when("secondary instance runs process_updates")
 def secondary_runs_process_updates(context):
-    """Makes HTTP call to secondary instance's process_updates endpoint."""
+    """Makes API call to secondary instance's process_updates endpoint."""
     try:
-        response = requests.get("http://django-secondary:8000/process_updates/", timeout=10)
+        response = requests.get(f"{DJANGO_SECONDARY_URL}/process_updates/", timeout=10)
         response.raise_for_status()
         context.secondary_response = response
         context.secondary_process_data = response.json()
@@ -125,9 +128,9 @@ def secondary_runs_process_updates(context):
 
 @when("primary instance runs process_updates to expire entries")
 def primary_runs_process_updates(context):
-    """Runs process_updates on the primary instance via HTTP."""
+    """Runs process_updates on the primary instance via API."""
     try:
-        response = requests.get("http://django:8000/process_updates/", timeout=10)
+        response = requests.get(f"{DJANGO_PRIMARY_URL}/process_updates/", timeout=10)
         response.raise_for_status()
         context.primary_response = response
         context.primary_process_data = response.json()
@@ -139,11 +142,11 @@ def primary_runs_process_updates(context):
 def check_entry_inactive_on_secondary(context, ip):
     """Checks if entry is inactive by verifying it's NOT in the active entries list."""
     if not hasattr(context, "auth_token"):
-        context.auth_token = get_auth_token("http://django-secondary:8000")
+        context.auth_token = get_auth_token(DJANGO_SECONDARY_URL)
 
     try:
         list_response = requests.get(
-            "http://django-secondary:8000/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            f"{DJANGO_SECONDARY_URL}/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             headers={"Authorization": f"Token {context.auth_token}"},
             timeout=10,
         )
@@ -163,12 +166,12 @@ def check_entry_inactive_on_secondary(context, ip):
 def check_announced_on_secondary(context, ip):
     """Verifies entry was processed and announced to translators."""
     if not hasattr(context, "auth_token"):
-        context.auth_token = get_auth_token("http://django-secondary:8000")
+        context.auth_token = get_auth_token(DJANGO_SECONDARY_URL)
 
     # First verify the entry exists and is active via API
     try:
         list_response = requests.get(
-            "http://django-secondary:8000/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            f"{DJANGO_SECONDARY_URL}/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             headers={"Authorization": f"Token {context.auth_token}"},
             timeout=10,
         )
@@ -206,12 +209,12 @@ def check_announced_on_secondary(context, ip):
 def check_removal_announced_on_secondary(context, ip):
     """Verifies entry removal was processed and announced to translators."""
     if not hasattr(context, "auth_token"):
-        context.auth_token = get_auth_token("http://django-secondary:8000")
+        context.auth_token = get_auth_token(DJANGO_SECONDARY_URL)
 
     # First verify the entry is NOT in the active entries list (since it was removed)
     try:
         list_response = requests.get(
-            "http://django-secondary:8000/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
+            f"{DJANGO_SECONDARY_URL}/api/v1/entries/?uuid=0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             headers={"Authorization": f"Token {context.auth_token}"},
             timeout=10,
         )
