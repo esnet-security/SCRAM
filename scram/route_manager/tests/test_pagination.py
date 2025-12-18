@@ -21,60 +21,37 @@ class TestEntriesListView(TestCase):
         """Set up the test environment."""
         self.fake = Faker()
         self.fake.add_provider(internet)
-        get_user_model().objects.create_user(
-            username="testuser", password="testpass123"
-        )
+        get_user_model().objects.create_user(username="testuser", password="testpass123")
 
         self.atype1 = ActionType.objects.create(name="Type1", available=True)
         self.atype2 = ActionType.objects.create(name="Type2", available=True)
         self.atype3 = ActionType.objects.create(name="Type3", available=False)
 
         # Create enough entries to test pagination
-        created_routes = Route.objects.bulk_create(
-            [
-                Route(route=self.fake.unique.ipv4_public())
-                for x in range(self.TEST_PAGINATION_SIZE + 3)
-            ]
-        )
-        entries_type1 = Entry.objects.bulk_create(
-            [
-                Entry(route=route, actiontype=self.atype1, is_active=True)
-                for route in created_routes
-            ]
-        )
+        created_routes = Route.objects.bulk_create([
+            Route(route=self.fake.unique.ipv4_public()) for x in range(self.TEST_PAGINATION_SIZE + 3)
+        ])
+        entries_type1 = Entry.objects.bulk_create([
+            Entry(route=route, actiontype=self.atype1, is_active=True) for route in created_routes
+        ])
 
         # Create a second type of entries to test filtering per actiontype
-        created_routes = Route.objects.bulk_create(
-            [Route(route=self.fake.unique.ipv4_public()) for x in range(3)]
-        )
-        entries_type2 = Entry.objects.bulk_create(
-            [
-                Entry(route=route, actiontype=self.atype2, is_active=True)
-                for route in created_routes
-            ]
-        )
+        created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
+        entries_type2 = Entry.objects.bulk_create([
+            Entry(route=route, actiontype=self.atype2, is_active=True) for route in created_routes
+        ])
 
         # Create inactive entries to test filtering by available actiontypes
-        created_routes = Route.objects.bulk_create(
-            [Route(route=self.fake.unique.ipv4_public()) for x in range(3)]
-        )
-        Entry.objects.bulk_create(
-            [
-                Entry(route=route, actiontype=self.atype1, is_active=False)
-                for route in created_routes
-            ]
-        )
+        created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
+        Entry.objects.bulk_create([
+            Entry(route=route, actiontype=self.atype1, is_active=False) for route in created_routes
+        ])
 
         # Create entries for an invalid actiontype to test that
-        created_routes = Route.objects.bulk_create(
-            [Route(route=self.fake.unique.ipv4_public()) for x in range(3)]
-        )
-        Entry.objects.bulk_create(
-            [
-                Entry(route=route, actiontype=self.atype3, is_active=False)
-                for route in created_routes
-            ]
-        )
+        created_routes = Route.objects.bulk_create([Route(route=self.fake.unique.ipv4_public()) for x in range(3)])
+        Entry.objects.bulk_create([
+            Entry(route=route, actiontype=self.atype3, is_active=False) for route in created_routes
+        ])
 
         self.entries = {
             "type1": entries_type1,

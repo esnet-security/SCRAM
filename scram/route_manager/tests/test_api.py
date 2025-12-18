@@ -14,9 +14,7 @@ class TestAddRemoveIP(APITestCase):
     def setUp(self):
         """Set up the environment for our tests."""
         self.url = reverse("api:v1:entry-list")
-        self.superuser = get_user_model().objects.create_superuser(
-            "admin", "admin@es.net", "admintestpassword"
-        )
+        self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
             client_name="authorized_client.es.net",
@@ -119,9 +117,7 @@ class TestUnauthenticatedAccess(APITestCase):
 
     def test_unauthenticated_users_have_no_ignore_create_access(self):
         """Ensure an unauthenticated client can't add an IgnoreEntry."""
-        response = self.client.post(
-            self.ignore_url, {"route": "192.0.2.4"}, format="json"
-        )
+        response = self.client.post(self.ignore_url, {"route": "192.0.2.4"}, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_unauthenticated_users_have_no_list_access(self):
@@ -142,9 +138,7 @@ class TestIsActive(APITestCase):
             is_authorized=True,
         )
         self.authorized_client.authorized_actiontypes.set([1])
-        self.actiontype, _ = ActionType.objects.get_or_create(
-            pk=1, defaults={"name": "block"}
-        )
+        self.actiontype, _ = ActionType.objects.get_or_create(pk=1, defaults={"name": "block"})
 
         # Create some active entries
 

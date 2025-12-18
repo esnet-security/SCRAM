@@ -29,9 +29,7 @@ class AuthzTest(TestCase):
         self.readwrite_user.groups.set([self.readwrite_group])
         self.readwrite_user.save()
 
-        self.admin_user = User.objects.create(
-            username="admin", is_staff=True, is_superuser=True
-        )
+        self.admin_user = User.objects.create(username="admin", is_staff=True, is_superuser=True)
 
         self.write_blocked_users = [None, self.unauthorized_user, self.readonly_user]
         self.write_allowed_users = [self.readwrite_user, self.admin_user]
@@ -106,9 +104,7 @@ class AuthzTest(TestCase):
         for user in self.detail_blocked_users:
             if user:
                 self.client.force_login(user)
-            response = self.client.get(
-                reverse("route_manager:detail", kwargs={"pk": pk})
-            )
+            response = self.client.get(reverse("route_manager:detail", kwargs={"pk": pk}))
             self.assertIn(response.status_code, [302, 403], msg=f"username={user}")
 
     def test_authorized_detail_view(self):
@@ -117,9 +113,7 @@ class AuthzTest(TestCase):
 
         for user in self.detail_allowed_users:
             self.client.force_login(user)
-            response = self.client.get(
-                reverse("route_manager:detail", kwargs={"pk": pk})
-            )
+            response = self.client.get(reverse("route_manager:detail", kwargs={"pk": pk}))
             self.assertEqual(response.status_code, 200, msg=f"username={user}")
 
     def test_unauthorized_after_group_removal(self):

@@ -43,9 +43,7 @@ def check_not_announced(context, ip):
     testing_hostname = settings.SCRAM_HOSTNAME
 
     try:
-        entry = Entry.objects.get(
-            route__route=ip, originating_scram_instance=testing_hostname
-        )
+        entry = Entry.objects.get(route__route=ip, originating_scram_instance=testing_hostname)
     except Entry.DoesNotExist:
         return
 

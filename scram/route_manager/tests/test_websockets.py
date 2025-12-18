@@ -33,8 +33,7 @@ async def get_communicators(actiontypes, should_match, *args, **kwds):
     """
     router = URLRouter(websocket_urlpatterns)
     communicators = [
-        WebsocketCommunicator(router, f"/ws/route_manager/translator_{actiontype}/")
-        for actiontype in actiontypes
+        WebsocketCommunicator(router, f"/ws/route_manager/translator_{actiontype}/") for actiontype in actiontypes
     ]
     response = zip(communicators, should_match, strict=True)
 
@@ -57,9 +56,7 @@ class TestTranslatorBaseCase(TestCase):
         """Set up our test environment."""
         # TODO: This is copied from test_api; should de-dupe this.
         self.url = reverse("api:v1:entry-list")
-        self.superuser = get_user_model().objects.create_superuser(
-            "admin", "admin@example.net", "admintestpassword"
-        )
+        self.superuser = get_user_model().objects.create_superuser("admin", "admin@example.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.uuid = "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3"
 
@@ -75,9 +72,7 @@ class TestTranslatorBaseCase(TestCase):
         )
         self.authorized_client.authorized_actiontypes.set([self.actiontype])
 
-        wsm, _ = WebSocketMessage.objects.get_or_create(
-            msg_type="translator_add", msg_data_route_field="route"
-        )
+        wsm, _ = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
         _, _ = WebSocketSequenceElement.objects.get_or_create(
             websocketmessage=wsm,
             verb="A",
@@ -114,9 +109,7 @@ class TestTranslatorBaseCase(TestCase):
 
     async def add_ip(self, ip, mask):
         """Ensure we can add an IP to block."""
-        async with get_communicators(
-            self.actiontypes, self.should_match
-        ) as communicators:
+        async with get_communicators(self.actiontypes, self.should_match) as communicators:
             await self.api_create_entry(ip)
 
             # A list of that many function calls to verify the response
@@ -181,18 +174,14 @@ class TranslatorSequenceTestCase(TestTranslatorBaseCase):
 
     def local_setup(self):
         """Define the messages we want to send."""
-        wsm2 = WebSocketMessage.objects.create(
-            msg_type="translator_add", msg_data_route_field="foo"
-        )
+        wsm2 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="foo")
         _ = WebSocketSequenceElement.objects.create(
             websocketmessage=wsm2,
             verb="A",
             action_type=self.actiontype,
             order_num=20,
         )
-        wsm3 = WebSocketMessage.objects.create(
-            msg_type="translator_add", msg_data_route_field="bar"
-        )
+        wsm3 = WebSocketMessage.objects.create(msg_type="translator_add", msg_data_route_field="bar")
         _ = WebSocketSequenceElement.objects.create(
             websocketmessage=wsm3,
             verb="A",
@@ -221,9 +210,7 @@ class TranslatorParametersTestCase(TestTranslatorBaseCase):
 
     def local_setup(self):
         """Define the message we want to send."""
-        wsm = WebSocketMessage.objects.get(
-            msg_type="translator_add", msg_data_route_field="route"
-        )
+        wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
         wsm.msg_data = {
             "asn": 65550,
             "community": 100,

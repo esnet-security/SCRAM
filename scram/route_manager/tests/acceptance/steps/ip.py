@@ -27,9 +27,7 @@ def check_route(context, route, model):
 def check_ip(context, ip):
     """Find an Entry for the specified IP."""
     try:
-        context.response = context.test.client.get(
-            reverse("api:v1:entry-detail", args=[ip])
-        )
+        context.response = context.test.client.get(reverse("api:v1:entry-detail", args=[ip]))
         context.queryException = None
     except ValueError as e:
         context.response = None

@@ -27,13 +27,9 @@ def create_actiontype(context, name):
     )
 
     at, _ = ActionType.objects.get_or_create(name=name)
-    wsm, _ = WebSocketMessage.objects.get_or_create(
-        msg_type="translator_add", msg_data_route_field="route"
-    )
+    wsm, _ = WebSocketMessage.objects.get_or_create(msg_type="translator_add", msg_data_route_field="route")
     wsm.save()
-    wsse, _ = WebSocketSequenceElement.objects.get_or_create(
-        websocketmessage=wsm, verb="A", action_type=at
-    )
+    wsse, _ = WebSocketSequenceElement.objects.get_or_create(websocketmessage=wsm, verb="A", action_type=at)
     wsse.save()
 
 
@@ -174,9 +170,7 @@ def add_ignore_entry(context, value):
 @when("we remove the {model} {value}")
 def remove_an_object(context, model, value):
     """Remove any model object with the matching value."""
-    context.response = context.test.client.delete(
-        reverse(f"api:v1:{model.lower()}-detail", args=[value])
-    )
+    context.response = context.test.client.delete(reverse(f"api:v1:{model.lower()}-detail", args=[value]))
 
 
 @when("we list the {model}s")
