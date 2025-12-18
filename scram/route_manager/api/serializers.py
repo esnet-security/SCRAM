@@ -53,6 +53,18 @@ class ClientSerializer(serializers.ModelSerializer):
         read_only_fields = ["registered_from_ip"]
 
 
+class IsActiveSerializer(serializers.ModelSerializer):
+    """Map the serializer to the Entry model."""
+
+    route = serializers.StringRelatedField(source="route.route")
+
+    class Meta:
+        """Maps to the Entry model, but limits to the the appropriate fields."""
+
+        model = Entry
+        fields = ["is_active", "route"]
+
+
 class EntrySerializer(serializers.HyperlinkedModelSerializer):
     """Due to the use of ForeignKeys, this follows some relationships to make sense via the API."""
 
