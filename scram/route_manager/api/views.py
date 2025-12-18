@@ -178,7 +178,7 @@ class EntryViewSet(viewsets.ModelViewSet):
                 logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
 
-            # Check if the client's IP address is whitelisted
+            # Check if the client's IP address is allow listed
             if client.registered_from_ip:
                 request_ip = self.get_client_ip()
                 if client.registered_from_ip != request_ip:
