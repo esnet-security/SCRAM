@@ -91,10 +91,6 @@ select = [
 max-complexity = 7 # our current code adheres to this without too much effort
 
 [tool.ruff.lint.per-file-ignores]
-"**/{tests}/*" = [
-  "C901", # function is too complex (applies to test helpers)
-]
-
 "**/tests/**" = [
   "C901", # function is too complex (applies to test helpers)
   "DOC201", # documenting return values
