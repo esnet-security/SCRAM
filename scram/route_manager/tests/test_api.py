@@ -142,32 +142,50 @@ class TestIsActive(APITestCase):
             is_authorized=True,
         )
         self.authorized_client.authorized_actiontypes.set([1])
-        self.actiontype, _ = ActionType.objects.get_or_create(pk=1, defaults={"name": "block"})
+        self.actiontype, _ = ActionType.objects.get_or_create(
+            pk=1, defaults={"name": "block"}
+        )
 
         # Create some active entries
 
         # Active IPv4
         route_v4 = Route.objects.create(route="192.0.2.100")
         Entry.objects.create(
-            route=route_v4, is_active=True, comment="test active", who="test", actiontype=self.actiontype
+            route=route_v4,
+            is_active=True,
+            comment="test active",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Active IPv6
         route_v6 = Route.objects.create(route="2001:db8::1")
         Entry.objects.create(
-            route=route_v6, is_active=True, comment="test active v6", who="test", actiontype=self.actiontype
+            route=route_v6,
+            is_active=True,
+            comment="test active v6",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Deactivated IPv4 entry
         route_inactive = Route.objects.create(route="192.0.2.200")
         Entry.objects.create(
-            route=route_inactive, is_active=False, comment="inactive", who="test", actiontype=self.actiontype
+            route=route_inactive,
+            is_active=False,
+            comment="inactive",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Deactived IPv6 entry
         route_inactive = Route.objects.create(route="2001:db8::5")
         Entry.objects.create(
-            route=route_inactive, is_active=False, comment="inactive", who="test", actiontype=self.actiontype
+            route=route_inactive,
+            is_active=False,
+            comment="inactive",
+            who="test",
+            actiontype=self.actiontype,
         )
 
     def test_active_ipv4_returns_true(self):

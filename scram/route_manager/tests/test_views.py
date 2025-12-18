@@ -54,5 +54,7 @@ class NotFoundTest(TestCase):
         """Grab a bad URL."""
         response = self.client.get("/foobarbaz")
         self.assertContains(
-            response, b'<div class="mb-4 lead">The page you are looking for was not found.</div>', status_code=404
+            response,
+            b'<div class="mb-4 lead">The page you are looking for was not found.</div>',
+            status_code=404,
         )

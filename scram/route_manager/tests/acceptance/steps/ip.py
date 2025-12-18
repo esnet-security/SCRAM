@@ -27,7 +27,9 @@ def check_route(context, route, model):
 def check_ip(context, ip):
     """Find an Entry for the specified IP."""
     try:
-        context.response = context.test.client.get(reverse("api:v1:entry-detail", args=[ip]))
+        context.response = context.test.client.get(
+            reverse("api:v1:entry-detail", args=[ip])
+        )
         context.queryException = None
     except ValueError as e:
         context.response = None
@@ -57,7 +59,9 @@ def update_entry_comment(context, value, comment):
     data = {"comment": comment, "who": context.client.client_name}
 
     context.response = context.test.client.put(
-        reverse("api:v1:entry-detail", args=[value]), data=json.dumps(data), content_type="application/json"
+        reverse("api:v1:entry-detail", args=[value]),
+        data=json.dumps(data),
+        content_type="application/json",
     )
 
 

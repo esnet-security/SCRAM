@@ -3,7 +3,15 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from .models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketMessage, WebSocketSequenceElement
+from .models import (
+    ActionType,
+    Client,
+    Entry,
+    IgnoreEntry,
+    Route,
+    WebSocketMessage,
+    WebSocketSequenceElement,
+)
 
 
 class WhoFilter(admin.SimpleListFilter):
@@ -55,6 +63,7 @@ class EntryAdmin(SimpleHistoryAdmin):
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     """Configure the Client and how it shows up in the Admin site."""
+
     list_display = ("client_name", "uuid", "registered_from_ip")
     readonly_fields = ("uuid",)
 
