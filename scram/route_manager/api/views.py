@@ -77,7 +77,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         serializer.save(registered_from_ip=ip)
 
     def create(self, request, *args, **kwargs):
-        """Create a new Client or retrieve an existing one, avoiding client_name enumeration."""
+        """Create a new Client or retrieve an existing one."""
         client_name = request.data.get("client_name")
         client = self.queryset.filter(client_name=client_name).first()
 
