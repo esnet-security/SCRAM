@@ -54,7 +54,7 @@ def check_comment(context, value, comment):
 @then("we update the entry {value:S} with comment {comment}")
 def update_entry_comment(context, value, comment):
     """Update the entry with a new comment."""
-    data = {"comment": comment, "who": context.client.hostname}
+    data = {"comment": comment, "who": context.client.client_name}
 
     context.response = context.test.client.put(
         reverse("api:v1:entry-detail", args=[value]), data=json.dumps(data), content_type="application/json"
