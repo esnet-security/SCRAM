@@ -172,7 +172,8 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
 
     # Using the ID's from above, fetch all matching entries and associated models excluding entries from this instance.
     entries_to_process = list(
-        Entry.objects.filter(id__in=recently_touched_ids)
+        Entry.objects
+        .filter(id__in=recently_touched_ids)
         .exclude(originating_scram_instance=settings.SCRAM_HOSTNAME)
         .select_related("actiontype", "route")
     )
@@ -226,7 +227,8 @@ def reprocess_entries(entries_to_process: list[Entry]) -> None:
 
         translator_group = f"translator_{entry.actiontype}"
         elements = (
-            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype)
+            WebSocketSequenceElement.objects
+            .filter(action_type__name=entry.actiontype)
             .order_by("order_num")
             .select_related("websocketmessage")
         )
