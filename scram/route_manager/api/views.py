@@ -8,7 +8,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -32,11 +32,15 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(
-    description="API endpoint for actiontypes",
-    responses={200: ActionTypeSerializer},
+    description="API endpoint for actiontypes.",
+    responses={
+        200: OpenApiResponse(response=ActionTypeSerializer, description="Successful retrieval of actiontype(s)."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested actiontype does not exist."),
+    },
 )
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
+    """Lookup ActionTypes by name, and bind to the serializer."""
 
     queryset = ActionType.objects.all()
     permission_classes = (IsAuthenticated,)
@@ -45,8 +49,15 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for ignore entries",
-    responses={200: IgnoreEntrySerializer},
+    description="API endpoint for ignore entries.",
+    responses={
+        200: OpenApiResponse(response=IgnoreEntrySerializer, description="Successful retrieval or update of an ignore entry."),
+        201: OpenApiResponse(response=IgnoreEntrySerializer, description="Ignore entry successfully created."),
+        204: OpenApiResponse(description="Ignore entry successfully deleted."),
+        400: OpenApiResponse(description="Invalid data provided."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested ignore entry does not exist."),
+    },
 )
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
     """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
@@ -58,8 +69,17 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for clients",
-    responses={200: ClientSerializer},
+    description="API endpoint for clients.",
+    responses={
+        200: OpenApiResponse(
+            response=ClientSerializer,
+            description="Client already existed and was retrieved successfully.",
+        ),
+        201: OpenApiResponse(response=ClientSerializer, description="Client successfully created."),
+        400: OpenApiResponse(
+            description="A client with this name may already exist with a different UUID, or client_name was not provided."
+        ),
+    },
 )
 class ClientViewSet(viewsets.ModelViewSet):
     """Lookup Client by client_name on POSTs regardless of authentication, and bind to the serializer."""
@@ -77,17 +97,50 @@ class ClientViewSet(viewsets.ModelViewSet):
         serializer.save(registered_from_ip=ip)
 
     def create(self, request, *args, **kwargs):
-        """Create a new Client or retrieve an existing one."""
+        """Create a new Client while avoiding information leaks hopefully."""
         client_name = request.data.get("client_name")
-        client = self.queryset.filter(client_name=client_name).first()
+        request_uuid = request.data.get("uuid")
 
-        if client:
-            serializer = self.get_serializer(client)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if not client_name:
+            return Response({"detail": "client_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing_client = self.queryset.filter(client_name=client_name).first()
+
+        if existing_client:
+            if request_uuid and str(existing_client.uuid) == request_uuid:
+                # Idempotent success
+                serializer = self.get_serializer(existing_client)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Log the conflict without leaking client_names to the user
+            logger.warning(
+                "Client registration conflict for name: %s. A client with this name already exists with a different UUID.",
+                client_name,
+            )
+            return Response(
+                {"detail": "Invalid client registration request."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return super().create(request, *args, **kwargs)
 
 
+@extend_schema(
+    description="API endpoint to check if a route is active.",
+    parameters=[
+        {
+            "name": "cidr",
+            "required": True,
+            "type": "string",
+            "description": "The CIDR network to check (e.g., 192.0.2.0/24).",
+            "in": "query",
+        }
+    ],
+    responses={
+        200: OpenApiResponse(response=IsActiveSerializer, description="The 'is_active' field indicates the status of the route."),
+        400: OpenApiResponse(description="The 'cidr' parameter is missing or invalid."),
+    },
+)
 class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
     """Look up a route to see if SCRAM considers it active or deactivated."""
 
@@ -134,8 +187,15 @@ class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for entries",
-    responses={200: EntrySerializer},
+    description="API endpoint for entries.",
+    responses={
+        200: OpenApiResponse(response=EntrySerializer, description="Successful retrieval of an entry/entries."),
+        201: OpenApiResponse(response=EntrySerializer, description="Entry successfully created."),
+        204: OpenApiResponse(description="Entry successfully deleted."),
+        400: OpenApiResponse(description="The route is likely on the ignore list or the prefix is too large."),
+        403: OpenApiResponse(description="The client is not authorized for this action."),
+        404: OpenApiResponse(description="The requested entry does not exist."),
+    },
 )
 class EntryViewSet(viewsets.ModelViewSet):
     """Lookup Entry when authenticated, and bind to the serializer."""
