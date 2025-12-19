@@ -44,7 +44,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     """Map the serializer to the model via Meta."""
-    uuid = serializers.UUIDField()
+    uuid = serializers.UUIDField(required=False)
 
     class Meta:
         """Maps to the Client model, and specifies the fields exposed by the API."""
