@@ -79,7 +79,7 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
         ),
         201: OpenApiResponse(response=ClientSerializer, description="Client successfully created."),
         400: OpenApiResponse(
-            description="A client with this name already exists with a different UUID, or client_name was not provided."
+            description="Client with this name already exists with a different UUID, or client_name was not provided."
         ),
     },
 )
@@ -116,7 +116,7 @@ class ClientViewSet(viewsets.ModelViewSet):
 
             # Log the conflict without leaking client_names to the user
             logger.warning(
-                "Client named: %s exists with different UUID",
+                "Client named %s already exists with a different UUID",
                 client_name,
             )
             return Response(
