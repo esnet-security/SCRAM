@@ -215,7 +215,7 @@ def check_object(context, value, model):
 
 
 @when("we register a client named {client_name} with the uuid of {uuid}")
-def add_client(context, client_name, uuid):
+def add_client_uuid(context, client_name, uuid):
     """Create a client with a specific UUID."""
     context.response = context.test.client.post(
         reverse("api:v1:client-list"),
@@ -223,4 +223,14 @@ def add_client(context, client_name, uuid):
             "client_name": client_name,
             "uuid": uuid,
         },
+    )
+
+@when("we register a client named {client_name} and no UUID")
+def add_client_no_uuid(context, client_name):
+    """Create a client without a UUID."""
+    context.response = context.test.client.post(
+        reverse("api:v1:client-list"),
+        {
+            "client_name": client_name,
+        }
     )
