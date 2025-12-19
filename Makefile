@@ -33,6 +33,11 @@ behave-all: compose.override.yml
 behave: compose.override.yml
 	@docker compose run --rm django python manage.py behave --no-input --simple -i $(FEATURE)
 
+## integration-tests: runs multi-instance system tests against docker compose running containers
+.Phony: integration-tests
+integration-tests: run
+	@docker compose exec -T django coverage run -a manage.py behave --no-input --use-existing-database scram/route_manager/tests/integration
+
 ## behave-translator
 .Phony: behave-translator
 behave-translator: compose.override.yml
@@ -46,11 +51,11 @@ build: compose.override.yml
 	@docker compose restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all behave-translator
+coverage.xml: pytest behave-all integration-tests behave-translator
 	@docker compose run --rm django coverage report
 	@docker compose run --rm django coverage xml
 
-## ci-test: runs all tests just like Gitlab CI does
+## ci-test: runs all tests just like Github CI does
 .Phony: ci-test
 ci-test: | toggle-local build migrate run coverage.xml
 
