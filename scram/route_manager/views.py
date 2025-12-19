@@ -150,7 +150,7 @@ def add_entry(request):
 def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
     """Return entries that have been recently modified by another SCRAM instance.
 
-    Queries the Entry history (simple history)table to find any entries modified
+    Queries the Entry history (simple history) table to find any entries modified
     since the cutoff time, then filters to only those originating from other SCRAM instances.
 
     Args:
