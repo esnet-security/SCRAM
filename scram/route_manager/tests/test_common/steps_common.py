@@ -1,4 +1,4 @@
-"""Define steps used exclusively by the Behave tests."""
+"""Define shared steps used by the Behave tests."""
 
 import datetime
 import time
@@ -9,12 +9,7 @@ from channels.layers import get_channel_layer
 from django import conf
 from django.urls import reverse
 
-from scram.route_manager.models import (
-    ActionType,
-    Client,
-    WebSocketMessage,
-    WebSocketSequenceElement,
-)
+from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
 
 
 @given("a {name} actiontype is defined")
@@ -37,10 +32,12 @@ def create_actiontype(context, name):
 def create_authed_client(context, name):
     """Create a client and authorize it for that action type."""
     at, _ = ActionType.objects.get_or_create(name=name)
-    authorized_client = Client.objects.create(
-        client_name="authorized_client.es.net",
+    authorized_client, _ = Client.objects.update_or_create(
         uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
-        is_authorized=True,
+        defaults={
+            "hostname": "authorized_client.es.net",
+            "is_authorized": True,
+        },
     )
     authorized_client.authorized_actiontypes.set([at])
     context.client = authorized_client
@@ -50,7 +47,7 @@ def create_authed_client(context, name):
 def create_unauthed_client(context, name):
     """Create a client that has no authorized action types."""
     unauthorized_client = Client.objects.create(
-        client_name="unauthorized_client.es.net",
+        hostname="unauthorized_client.es.net",
         uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
     )
     unauthorized_client.authorized_actiontypes.set([])
@@ -214,13 +211,13 @@ def check_object(context, value, model):
     context.test.assertTrue(found)
 
 
-@when("we register a client named {client_name} with the uuid of {uuid}")
-def add_client_uuid(context, client_name, uuid):
+@when("we register a client named {hostname} with the uuid of {uuid}")
+def add_client(context, hostname, uuid):
     """Create a client with a specific UUID."""
     context.response = context.test.client.post(
         reverse("api:v1:client-list"),
         {
-            "client_name": client_name,
+            "hostname": hostname,
             "uuid": uuid,
         },
     )

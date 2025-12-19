@@ -147,6 +147,98 @@ def add_entry(request):
     return redirect("route_manager:home")
 
 
+def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
+    """Return entries that have been recently modified by another SCRAM instance.
+
+    Queries the Entry history (simple history) table to find any entries modified
+    since the cutoff time, then filters to only those originating from other SCRAM instances.
+
+    Args:
+        cutoff_time(timedelta): Only consider entries modified after this time.
+
+    Returns:
+        List of Entry objects that need to be reprocessed.
+    """
+    logger.debug("Looking for entries modified by other SCRAM instances")
+
+    # Grab (only, via values_list) the Entry IDs that have had their history records touched since the cutoff time.
+    recently_touched_ids = set(Entry.history.filter(history_date__gt=cutoff_time).values_list("id", flat=True))
+
+    if not recently_touched_ids:
+        logger.debug("No recently modified entries found")
+        return []
+
+    logger.debug("Found recently touched entry IDs: %s", recently_touched_ids)
+
+    # Using the ID's from above, fetch all matching entries and associated models excluding entries from this instance.
+    entries_to_process = list(
+        Entry.objects.filter(id__in=recently_touched_ids)
+        .exclude(originating_scram_instance=settings.SCRAM_HOSTNAME)
+        .select_related("actiontype", "route")
+    )
+
+    check_for_orphaned_history(recently_touched_ids, entries_to_process)
+
+    logger.debug("Found %d entries to process from other instances", len(entries_to_process))
+    return entries_to_process
+
+
+def check_for_orphaned_history(recently_touched_ids: set[int], entries_to_process: list[Entry]) -> None:
+    """Check for orphaned history records where the Entry was deleted but history remains.
+
+    This shouldn't happen in production since Entry.delete() is overridden on the model,
+    but we log a warning if it occurs for debugging purposes.
+
+    Args:
+        recently_touched_ids(set): Set of Entry IDs that have recent history records.
+        entries_to_process(list): Entry objects fetched from the database (excludes local instance).
+    """
+    # IDs of entries that currently exist in the DB (excluding local instance entries)
+    found_ids = {entry.id for entry in entries_to_process}
+    # Account for entries filtered out cuz they're from this instance
+    local_ids = set(
+        Entry.objects.filter(
+            id__in=recently_touched_ids, originating_scram_instance=settings.SCRAM_HOSTNAME
+        ).values_list("id", flat=True)
+    )
+    # IDs with history but no corresponding Entry row = orphaned (hard-deleted outside of Entry.delete())
+    orphaned_ids = recently_touched_ids - found_ids - local_ids
+    if orphaned_ids:
+        logger.warning("Found history records with no corresponding Entry: %s", orphaned_ids)
+
+
+def reprocess_entries(entries_to_process: list[Entry]) -> None:
+    """Take a list of Entries and send appropriate websocket messages to translators.
+
+    Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
+    whether that is to block or unblock them. This is used by `process_updates()`. In this, we take each entry
+    and send either a translator_add or translator_remove message, depending on the entry's is_active state, and
+    notify translators to Do the Thing.
+
+    Args:
+        entries_to_process(list[Entry]): Entry objects that need to be sent to translators.
+    """
+    logger.info("Reprocessing %d entries", len(entries_to_process))
+
+    for entry in entries_to_process:
+        message_type = "translator_add" if entry.is_active else "translator_remove"
+        logger.info("Processing entry %s (active=%s)", entry, entry.is_active)
+
+        translator_group = f"translator_{entry.actiontype}"
+        elements = (
+            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype)
+            .order_by("order_num")
+            .select_related("websocketmessage")
+        )
+
+        for element in elements:
+            msg = element.websocketmessage
+            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
+
+            json_to_send = {"type": message_type, "message": msg.msg_data}
+            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
+
+
 def process_updates(request):
     """For entries with an expiration, set them to inactive if expired.
 
@@ -166,33 +258,23 @@ def process_updates(request):
         obj.delete()
     entries_end = Entry.objects.filter(is_active=True).count()
 
-    logger.debug("Looking for new entries from other SCRAM instances")
-    # Grab all entries from the last 2 minutes that originated from a different SCRAM instance.
+    # Grab all of the other entries that need processing and... process them!
     cutoff_time = current_time - timedelta(minutes=2)
-    new_entries = Entry.objects.filter(when__gt=cutoff_time).exclude(
-        originating_scram_instance=settings.SCRAM_HOSTNAME
-    )
+    entries_to_process = get_entries_to_process(cutoff_time=cutoff_time)
+    entries_reprocessed_list = [str(entry.route) for entry in entries_to_process]
 
-    # Resend new entries that popped up in the database
-    for entry in new_entries:
-        logger.info("Processing new entry: %s", entry)
-        translator_group = f"translator_{entry.actiontype}"
-        elements = list(
-            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype).order_by("order_num")
-        )
-        for element in elements:
-            msg = element.websocketmessage
-            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
-
-            json_to_send = {"type": msg.msg_type, "message": msg.msg_data}
-            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
+    if entries_to_process:
+        reprocess_entries(entries_to_process)
+    else:
+        logger.info("No new entries to process")
 
     return HttpResponse(
         json.dumps(
             {
                 "entries_deleted": entries_start - entries_end,
                 "active_entries": entries_end,
-                "remote_entries_added": new_entries.count(),
+                "entries_reprocessed": len(entries_to_process),
+                "entries_reprocessed_list": entries_reprocessed_list,
             },
         ),
         content_type="application/json",

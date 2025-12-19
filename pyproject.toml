@@ -1,117 +1,119 @@
 # ==== pytest ====
 [tool.pytest.ini_options]
-minversion = "6.0"
 addopts = "--ds=config.settings.test --reuse-db"
+minversion = "6.0"
 python_files = [
-    "tests.py",
-    "test_*.py",
+  "tests.py",
+  "test_*.py",
 ]
 
 # ==== Coverage ====
 [tool.coverage.run]
+branch = true
+data_file = "coverage.coverage"
 include = ["scram/*", "config/*", "translator/*"]
 omit = ["**/migrations/*", "scram/contrib/*", "*/tests/*"]
 plugins = ["django_coverage_plugin"]
-branch = true
-data_file = "coverage.coverage"
 
 [tool.coverage.report]
 exclude_also = [
-    "if debug:",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    ]
+  "if debug:",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]
 
 # ===== ruff ====
 [tool.ruff]
 exclude = [
-    "migrations",
+  "migrations",
 ]
 
 line-length = 119
-target-version = 'py312'
 preview = true
+target-version = 'py312'
 
 [tool.ruff.lint]
-select = [
-    "A",     # builtins
-    "ASYNC", # async
-    "B",     # bugbear
-    "BLE",   # blind-except
-    "C4",    # comprehensions
-    "C90",   # complexity
-    "COM",   # commas
-    "D",     # pydocstyle
-    "DJ",    # django
-    "DOC",   # pydoclint
-    "DTZ",   # datetimez
-    "E",     # pycodestyle
-    "EM",    # errmsg
-    "ERA",   # eradicate
-    "F",     # pyflakes
-    "FBT",   # boolean-trap
-    "FLY",   # flynt
-    "G",     # logging-format
-    "I",     # isort
-    "ICN",   # import-conventions
-    "ISC",   # implicit-str-concat
-    "LOG",   # logging
-    "N",     # pep8-naming
-    "PERF",  # perflint
-    "PIE",   # pie
-    "PL",    # pylint
-    "PTH",   # use-pathlib
-    "Q",     # quotes
-    "RET",   # return
-    "RSE",   # raise
-    "RUF",   # Ruff
-    "S",     # bandit
-    "SIM",   # simplify
-    "SLF",   # self
-    "SLOT",  # slots
-    "T20",   # print
-    "TRY",   # tryceratops
-    "UP",    # pyupgrade
-]
 ignore = [
-    "COM812", # handled by the formatter
-    "DOC501", # add possible exceptions to the docstring (TODO)
-    "ISC001", # handled by the formatter
-    "RUF012", # need more widespread typing
-    "SIM102", # use a single `if` statement instead of nested `if` statements
-    "SIM108", # use ternary operator instead of `if`-`else`-block
-    "PERF401", # list comprehensions are harder to read in our opinion and not worth the performance gain
-    "PERF403", # dict comprehensions are harder to read in our opinion and not worth the performance gain
+  "COM812", # handled by the formatter
+  "DOC501", # add possible exceptions to the docstring (TODO)
+  "ISC001", # handled by the formatter
+  "RUF012", # need more widespread typing
+  "SIM102", # use a single `if` statement instead of nested `if` statements
+  "SIM108", # use ternary operator instead of `if`-`else`-block
+  "PERF401", # list comprehensions are harder to read in our opinion and not worth the performance gain
+  "PERF403", # dict comprehensions are harder to read in our opinion and not worth the performance gain
+]
+select = [
+  "A", # builtins
+  "ASYNC", # async
+  "B", # bugbear
+  "BLE", # blind-except
+  "C4", # comprehensions
+  "C90", # complexity
+  "COM", # commas
+  "D", # pydocstyle
+  "DJ", # django
+  "DOC", # pydoclint
+  "DTZ", # datetimez
+  "E", # pycodestyle
+  "EM", # errmsg
+  "ERA", # eradicate
+  "F", # pyflakes
+  "FBT", # boolean-trap
+  "FLY", # flynt
+  "G", # logging-format
+  "I", # isort
+  "ICN", # import-conventions
+  "ISC", # implicit-str-concat
+  "LOG", # logging
+  "N", # pep8-naming
+  "PERF", # perflint
+  "PIE", # pie
+  "PL", # pylint
+  "PTH", # use-pathlib
+  "Q", # quotes
+  "RET", # return
+  "RSE", # raise
+  "RUF", # Ruff
+  "S", # bandit
+  "SIM", # simplify
+  "SLF", # self
+  "SLOT", # slots
+  "T20", # print
+  "TRY", # tryceratops
+  "UP", # pyupgrade
 ]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 7 # our current code adheres to this without too much effort
 
 [tool.ruff.lint.per-file-ignores]
-"**/{tests}/*" = [
-    "DOC201", # documenting return values
-    "DOC402", # documenting yield values
-    "PLR6301", # could be a static method
-    "S101", # use of assert
-    "S106", # hardcoded password
-    "PLR2004" # magic value used in comparison
-]
-"test.py" = [
-    "S105", # hardcoded password as argument
-]
-"scram/route_manager/**" = [
-    "DOC201", # documenting return values
-]
-"scram/users/**" = [
-    "DOC201", # documenting return values
-    "FBT001", # minimal issue; don't need to mess with in the User app
-    "PLR2004", # magic values when checking HTTP status codes
+"**/tests/**" = [
+  "C901", # function is too complex (applies to test helpers)
+  "DOC201", # documenting return values
+  "DOC402", # documenting yield values
+  "FBT002", # boolean default argument in function definition
+  "PLR6301", # could be a static method
+  "S101", # use of assert
+  "S106", # hardcoded password
+  "PLR2004", # magic value used in comparison
 ]
 "**/views.py" = [
-    "DOC201", # documenting return values; it's fairly obvious in a View
+  "DOC201", # documenting return values; it's fairly obvious in a View
+]
+"scram/route_manager/**" = [
+  "DOC201", # documenting return values
+]
+"scram/users/**" = [
+  "DOC201", # documenting return values
+  "FBT001", # minimal issue; don't need to mess with in the User app
+  "PLR2004", # magic values when checking HTTP status codes
+]
+"test.py" = [
+  "S105", # hardcoded password as argument
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -119,21 +121,21 @@ convention = "google"
 
 # ==== mypy ====
 [tool.mypy]
-python_version = "3.11"
 check_untyped_defs = true
 ignore_missing_imports = true
-warn_unused_ignores = true
+plugins = [
+  "mypy_django_plugin.main",
+  "mypy_drf_plugin.main",
+]
+python_version = "3.11"
 warn_redundant_casts = true
 warn_unused_configs = true
-plugins = [
-    "mypy_django_plugin.main",
-    "mypy_drf_plugin.main",
-]
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 # Django migrations should not produce any errors:
-module = "*.migrations.*"
 ignore_errors = true
+module = "*.migrations.*"
 
 [tool.django-stubs]
 django_settings_module = "config.settings.test"

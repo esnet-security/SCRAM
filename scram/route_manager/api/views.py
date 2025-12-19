@@ -8,7 +8,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -51,7 +51,9 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 @extend_schema(
     description="API endpoint for ignore entries.",
     responses={
-        200: OpenApiResponse(response=IgnoreEntrySerializer, description="Successful retrieval or update of an ignore entry."),
+        200: OpenApiResponse(
+            response=IgnoreEntrySerializer, description="Successful retrieval or update of an ignore entry."
+        ),
         201: OpenApiResponse(response=IgnoreEntrySerializer, description="Ignore entry successfully created."),
         204: OpenApiResponse(description="Ignore entry successfully deleted."),
         400: OpenApiResponse(description="Invalid data provided."),
@@ -77,7 +79,7 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
         ),
         201: OpenApiResponse(response=ClientSerializer, description="Client successfully created."),
         400: OpenApiResponse(
-            description="A client with this name may already exist with a different UUID, or client_name was not provided."
+            description="A client with this name already exists with a different UUID, or client_name was not provided."
         ),
     },
 )
@@ -114,7 +116,7 @@ class ClientViewSet(viewsets.ModelViewSet):
 
             # Log the conflict without leaking client_names to the user
             logger.warning(
-                "Client registration conflict for name: %s. A client with this name already exists with a different UUID.",
+                "Client named: %s exists with different UUID",
                 client_name,
             )
             return Response(
@@ -137,7 +139,9 @@ class ClientViewSet(viewsets.ModelViewSet):
         }
     ],
     responses={
-        200: OpenApiResponse(response=IsActiveSerializer, description="The 'is_active' field indicates the status of the route."),
+        200: OpenApiResponse(
+            response=IsActiveSerializer, description="The 'is_active' field indicates the status of the route."
+        ),
         400: OpenApiResponse(description="The 'cidr' parameter is missing or invalid."),
     },
 )

@@ -6,5 +6,5 @@ IPYTHONDIR=/app/.ipython
 # ------------------------------------------------------------------------------
 
 # Django
-DATABASE_URL=sqlite:///django.db
+DATABASE_URL=postgres://debug:debug@postgres:5432/scram
 DJANGO_SETTINGS_MODULE=config.settings.local
