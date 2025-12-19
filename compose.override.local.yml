@@ -19,6 +19,7 @@ services:
       - ./.envs/.local/.postgres
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
+      interval: 120s
     ports:
       - "8000"
       - 56780:56780
@@ -40,6 +41,7 @@ services:
       - ./.envs/.local/.postgres
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django-secondary:8000/process_updates/"]
+      interval: 120s
     ports:
       - "8000"
       - 56781:56780
