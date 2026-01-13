@@ -242,3 +242,33 @@ def check_removal_announced_on_secondary(context, ip):
         assert ip in reprocessed_list, (
             f"Expected {ip} in reprocessed list, got {reprocessed_list}. Instance hostname: {hostname}"
         )
+
+
+@then("primary announces {ip:S} removal to block translators")
+def check_removal_announced_on_primary(context, ip):
+    """Verifies entry removal was processed and announced to translators."""
+    if not hasattr(context, "auth_token"):
+        context.auth_token = get_auth_token(DJANGO_PRIMARY_URL)
+
+    try:
+        list_response = requests.get(
+            f"{DJANGO_PRIMARY_URL}/api/v1/entries/",
+            headers={"Authorization": f"Token {context.auth_token}"},
+            timeout=10,
+        )
+        list_response.raise_for_status()
+
+        entries = list_response.json().get("results", [])
+        for entry in entries:
+            if entry.get("route") == ip:
+                context.test.fail(f"Entry {ip} should be inactive but was found in active entries list")
+    except requests.exceptions.RequestException as e:
+        context.test.fail(f"Failed to call API: {e}")
+
+    process_data = getattr(context, "primary_process_data", {})
+    if process_data:
+        reprocessed_list = process_data.get("entries_reprocessed_list", [])
+        hostname = process_data.get("scram_hostname", "UNKNOWN")
+        assert ip in reprocessed_list, (
+            f"Expected {ip} in reprocessed list, got {reprocessed_list}. Instance hostname: {hostname}"
+        )

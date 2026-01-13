@@ -187,18 +187,12 @@ def check_for_orphaned_history(recently_touched_ids: set[int], entries_to_proces
 
     Args:
         recently_touched_ids(set): Set of Entry IDs that have recent history records.
-        entries_to_process(list): Entry objects fetched from the database (excludes local instance).
+        entries_to_process(list): Entry objects fetched from the database.
     """
-    # IDs of entries that currently exist in the DB (excluding local instance entries)
+    # IDs of entries that currently exist in the DB
     found_ids = {entry.id for entry in entries_to_process}
-    # Account for entries filtered out cuz they're from this instance
-    local_ids = set(
-        Entry.objects.filter(
-            id__in=recently_touched_ids, originating_scram_instance=settings.SCRAM_HOSTNAME
-        ).values_list("id", flat=True)
-    )
     # IDs with history but no corresponding Entry row = orphaned (hard-deleted outside of Entry.delete())
-    orphaned_ids = recently_touched_ids - found_ids - local_ids
+    orphaned_ids = recently_touched_ids - found_ids
     if orphaned_ids:
         logger.warning("Found history records with no corresponding Entry: %s", orphaned_ids)
 
