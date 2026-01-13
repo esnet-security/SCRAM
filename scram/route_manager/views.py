@@ -148,10 +148,10 @@ def add_entry(request):
 
 
 def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
-    """Return entries that have been recently modified by another SCRAM instance.
+    """Return entries that have been recently modified by any SCRAM instance.
 
     Queries the Entry history (simple history) table to find any entries modified
-    since the cutoff time, then filters to only those originating from other SCRAM instances.
+    since the cutoff time.
 
     Args:
         cutoff_time(timedelta): Only consider entries modified after this time.
@@ -159,7 +159,7 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
     Returns:
         List of Entry objects that need to be reprocessed.
     """
-    logger.debug("Looking for entries modified by other SCRAM instances")
+    logger.debug("Looking for entries modified by any SCRAM instance")
 
     # Grab (only, via values_list) the Entry IDs that have had their history records touched since the cutoff time.
     recently_touched_ids = set(Entry.history.filter(history_date__gt=cutoff_time).values_list("id", flat=True))
@@ -170,17 +170,12 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
 
     logger.debug("Found recently touched entry IDs: %s", recently_touched_ids)
 
-    # Using the ID's from above, fetch all matching entries and associated models excluding entries from this instance.
-    entries_to_process = list(
-        Entry.objects
-        .filter(id__in=recently_touched_ids)
-        .exclude(originating_scram_instance=settings.SCRAM_HOSTNAME)
-        .select_related("actiontype", "route")
-    )
+    # Using the ID's from above, fetch all matching entries and associated models.
+    entries_to_process = list(Entry.objects.filter(id__in=recently_touched_ids).select_related("actiontype", "route"))
 
     check_for_orphaned_history(recently_touched_ids, entries_to_process)
 
-    logger.debug("Found %d entries to process from other instances", len(entries_to_process))
+    logger.debug("Found %d entries to process", len(entries_to_process))
     return entries_to_process
 
 
