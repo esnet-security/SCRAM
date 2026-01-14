@@ -79,11 +79,13 @@ If you want two or more instances of SCRAM to share data between themselves we h
 3. For normal syncing where both translators have been connected, we are currently using process_updates (since it runs 
    regularly) to grab new data out of the database that comes from other connected instances and reannounces those locally.
 
-##### The Unblocking Problem® (PR #157)
+##### The Unblocking Problem® (PRs #157 and #193)
 
 We had a bug where entries that had expired or been deleted on one SCRAM instance were never being unblocked on other instances. The original sync logic only looked at the `when` field (creation time), so it would happily find new entries but completely miss any that were modified, expired, or de-activated after creation. This was bad because things could get stuck being blocked forever (until gobgp and translator are restarted) and not show up in the web UI (because the database says it's not blocked.) Eventually, we should add "ghost" routes to the UI to show someone if there is something that's advertised by its translator but not in the database. We could even use a cute little ghost icon for it!
 
 The fix takes advantage of the already existing `django-simple-history` models that track any entry modifications. To sync, we query the history models to see if something has changed in any way, and we just go ahead and re-send that to the translator, ensuring eventual consistency (since translator is idempotent).
+
+We initially tried excluding any entries from the local instance from reprocessing (`originating_scram_instance != settings.SCRAM_HOSTNAME`) because we thought local entries would already be in the right state (i.e. if something blocked the entry on one host, it would then deactivate it on the same host), but this was wrong for expiration. When entries expire, it could be performed from any instance at any time (via the health check), not just the instance that it was originally blocked on, so the originating instance needs to reprocess even its own expired entries to guarantee that we send the `translator_remove` message. We removed the exclusion filter entirely (PR #193), so now all instances reprocess everything that changed. It's a bit redundant and wastes more resources, but it's idempotent and good enough until we re-design syncing from the ground up.
 
 ##### Future Work
 
@@ -92,6 +94,6 @@ Honestly, the use of compose health checks is kind of gross and we realize this.
 #### Entries Page
 
 We intentionally chose to only list the active entries. Our thinking is that the home page shows the most recent additions.
-Then, if you went to the entries page, it would be overwhelmingly huge to show all the historical entries including the 
+Then, if you went to the entries page, it would be overwhelmingly huge to show all the historical entries including the
 ones that timed out/were deactivated. If you wanted to know about a specific entry even if it were not currently active
 (to see the history of it say), you would likely be using the search anyway.
