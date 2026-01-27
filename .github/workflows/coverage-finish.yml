@@ -10,6 +10,8 @@ on:
 jobs:
   finish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Finish Coveralls
         uses: coverallsapp/github-action@v2
