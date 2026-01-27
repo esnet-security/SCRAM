@@ -19,9 +19,13 @@ def perform_process_updates() -> dict[Any, Any]:
     Returns:
         dict: Response containing api response, success status, and timestamp.
     """
-    timeout = settings.process_updates_interval - settings.process_updates_timeout_offset
+    timeout = (
+        settings.process_updates_interval - settings.process_updates_timeout_offset
+    )
     with httpx.Client() as client:
-        response = client.get(f"{settings.scram_api_url}process_updates/", timeout=timeout)
+        response = client.get(
+            f"{settings.scram_api_url}process_updates/", timeout=timeout
+        )
         response.raise_for_status()
 
         return {
