@@ -1,6 +1,14 @@
+[project]
+name = "SCRAM"
+version = "1.5.1"
+
 # ==== pytest ====
 [tool.pytest.ini_options]
-addopts = "--ds=config.settings.test --reuse-db"
+addopts = [
+  "--ds=config.settings.test",
+  "--reuse-db",
+  "--ignore=scheduler"
+]
 minversion = "6.0"
 python_files = [
   "tests.py",
@@ -139,3 +147,7 @@ module = "*.migrations.*"
 
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
+
+
+[tool.uv.workspace]
+exclude = ["scheduler"]

@@ -10,15 +10,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      celery-worker:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     command: /start
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
       interval: 30s
-      timeout: 30s
+      timeout: 2s
       start_period: 30s
       retries: 5
     deploy:
@@ -35,15 +37,17 @@ services:
         condition: service_healthy
       django:
         condition: service_healthy
+      celery-worker-secondary:
+        condition: service_healthy
     networks:
       default: {}
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     command: /start
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/process_updates/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
       interval: 30s
-      timeout: 30s
+      timeout: 2s
       start_period: 30s
       retries: 5
     deploy:
@@ -129,3 +133,93 @@ services:
       - net.ipv6.conf.all.disable_ipv6=0
     deploy:
       replicas: ${TRANSLATOR_REPLICAS:-0}
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "scheduler.app:scram_api_scheduler", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  celery-worker-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "scheduler.app:scram_api_scheduler", "inspect", "ping"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: ${CELERY_WORKER_REPLICAS:-0}
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery-worker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  celery-beat-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery-worker-secondary:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${CELERY_BEAT_REPLICAS:-0}
+
+  flower:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery-worker:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  flower-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/production/celery/Dockerfile
+    depends_on:
+      redis:
+        condition: service_healthy
+      celery-worker-secondary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      replicas: ${FLOWER_REPLICAS:-0}

@@ -129,6 +129,11 @@ pass-reset: compose.override.yml
 pytest: compose.override.yml
 	@docker compose run --rm django coverage run -m pytest
 
+## pytest-scheduler: runs scheduler package tests with coverage
+.Phony: pytest-scheduler
+pytest-scheduler:
+	@cd scheduler && uv run pytest
+
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run
 run: compose.override.yml

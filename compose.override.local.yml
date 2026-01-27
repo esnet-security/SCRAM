@@ -130,6 +130,57 @@ services:
     deploy:
       replicas: 1
 
+  celery-worker:
+    volumes:
+      - ./scheduler/src/scheduler/:/app/scheduler:ro
+    env_file:
+      - ./.envs/.local/.celery
+
+  celery-worker-secondary:
+    volumes:
+      - ./scheduler/src/scheduler/:/app/scheduler:ro
+    env_file:
+      - ./.envs/.local/.celery-secondary
+    deploy:
+      replicas: 1
+
+  celery-beat:
+    command:
+      ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
+    env_file:
+      - ./.envs/.local/.celery
+    environment:
+      - DISABLE_PROCESS_UPDATES=False
+
+  celery-beat-secondary:
+    command:
+      ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
+    env_file:
+      - ./.envs/.local/.celery-secondary
+    environment:
+      - DISABLE_PROCESS_UPDATES=False
+    deploy:
+      replicas: 1
+
+  flower:
+    env_file:
+      - ./.envs/.local/.celery
+    command:
+      ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
+    ports:
+      - "5555:5555"
+
+  flower-secondary:
+    env_file:
+      - ./.envs/.local/.celery-secondary
+    command:
+      ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
+    ports:
+      - "5556:5555"
+    deploy:
+      replicas: 1
+
+
 networks:
   default:
     ipam:

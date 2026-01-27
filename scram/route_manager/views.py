@@ -1,7 +1,6 @@
 """Define the Views that will handle the HTTP requests."""
 
 import ipaddress
-import json
 import logging
 from datetime import timedelta
 
@@ -15,10 +14,10 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, ListView
 
 from scram.route_manager.models import WebSocketSequenceElement
@@ -259,17 +258,18 @@ def process_updates(request):
     else:
         logger.info("No new entries to process")
 
-    return HttpResponse(
-        json.dumps(
-            {
-                "entries_deleted": entries_start - entries_end,
-                "active_entries": entries_end,
-                "entries_reprocessed": len(entries_to_process),
-                "entries_reprocessed_list": entries_reprocessed_list,
-            },
-        ),
-        content_type="application/json",
-    )
+    return JsonResponse({
+        "entries_deleted": entries_start - entries_end,
+        "active_entries": entries_end,
+        "entries_reprocessed": len(entries_to_process),
+        "entries_reprocessed_list": entries_reprocessed_list,
+    })
+
+
+@require_GET
+def health(request):
+    """Return a simple health check endpoint."""
+    return JsonResponse({"status": "ok"})
 
 
 class EntryListView(ListView):
