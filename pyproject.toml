@@ -144,7 +144,6 @@ module = "*.migrations.*"
 [tool.django-stubs]
 django_settings_module = "config.settings.test"
 
+
 [tool.uv.workspace]
-members = [
-    "scheduler",
-]
+exclude = ["scheduler"]
