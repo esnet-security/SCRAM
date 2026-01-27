@@ -82,3 +82,16 @@ jobs:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
           REDIS_HOST: "localhost"
         run: pytest
+
+      - name: Run Scheduler Tests with Coverage
+        run: |
+          cd scheduler
+          uv run pytest
+
+      - name: Upload Coverage to Coveralls
+        if: matrix.python-version == '3.12'
+        uses: coverallsapp/github-action@v2
+        with:
+          file: ./scheduler/coverage.xml
+          parallel: true
+          flag-name: scheduler

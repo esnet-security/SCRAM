@@ -1,0 +1,17 @@
+---
+name: Finish Coverage
+
+on:
+  workflow_run:
+    workflows: ["Run pytest", "Run behave"]
+    types:
+      - completed
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true

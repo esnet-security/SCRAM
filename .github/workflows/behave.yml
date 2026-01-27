@@ -70,6 +70,9 @@ jobs:
       - name: Upload Coverage to Coveralls
         if: matrix.python-version == '3.12'
         uses: coverallsapp/github-action@v2
+        with:
+            parallel: true
+            flag-name: behave
 
       - name: Upload Coverage to GitHub
         if: matrix.python-version == '3.12'

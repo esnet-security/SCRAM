@@ -51,7 +51,7 @@ build: compose.override.yml
 	@docker compose restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all integration-tests behave-translator
+coverage.xml: pytest behave-all integration-tests behave-translator pytest-scheduler
 	@docker compose run --rm django coverage report
 	@docker compose run --rm django coverage xml
 
@@ -128,6 +128,11 @@ pass-reset: compose.override.yml
 .Phony: pytest
 pytest: compose.override.yml
 	@docker compose run --rm django coverage run -m pytest
+
+## pytest-scheduler: runs scheduler package tests with coverage
+.Phony: pytest-scheduler
+pytest-scheduler:
+	@cd scheduler && uv run pytest
 
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run
