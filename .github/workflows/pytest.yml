@@ -10,7 +10,6 @@ on:
       - main
       - develop
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -62,7 +61,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install uv
           uv pip install --system -r requirements/local.txt --prerelease=allow
-          # https://github.com/pytest-dev/pytest-github-actions-annotate-failures/pull/68 isn't yet in a release
           uv pip install --system git+https://github.com/pytest-dev/pytest-github-actions-annotate-failures.git@6e66cd895fe05cd09be8bad58f5d79110a20385f
 
       - name: Apply migrations
@@ -83,7 +81,12 @@ jobs:
           REDIS_HOST: "localhost"
         run: pytest
 
-      - name: Run Scheduler Tests with Coverage
+      - name: Install Scheduler Dependencies
+        run: |
+          cd scheduler
+          uv sync
+
+      - name: Run Scheduler Tests
         run: |
           cd scheduler
           uv run pytest
