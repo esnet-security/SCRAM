@@ -51,7 +51,7 @@ build: compose.override.yml
 	@docker compose restart $(CONTAINER)
 
 ## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all integration-tests behave-translator pytest-scheduler
+coverage.xml: pytest behave-all integration-tests behave-translator
 	@docker compose run --rm django coverage report
 	@docker compose run --rm django coverage xml
 
