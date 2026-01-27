@@ -88,6 +88,7 @@ jobs:
 
       - name: Run Scheduler Tests
         run: |
+          pip install uv
           cd scheduler
           uv run pytest
 
@@ -98,3 +99,10 @@ jobs:
           file: ./scheduler/coverage.xml
           parallel: true
           flag-name: scheduler
+
+      - name: Display Scheduler Coverage Metrics for scheduler tests
+        if: matrix.python-version == '3.12'
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          path: ./scheduler/coverage.xml
+          minimum_coverage: "80"
