@@ -105,6 +105,6 @@ jobs:
         if: matrix.python-version == '3.12'
         uses: 5monkeys/cobertura-action@v14
         with:
-          report_name: "Pytest Scheduler Coverage"
+          report_name: "Pytest Celery Scheduler Coverage"
           path: ./scheduler/coverage.xml
           minimum_coverage: "80"
