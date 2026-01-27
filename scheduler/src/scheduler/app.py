@@ -11,7 +11,7 @@ scram_api_scheduler = Celery(
 )
 
 scram_api_scheduler.conf.update(
-    result_expires=604800,
+    result_expires=settings.celery_keep_results_time,
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
