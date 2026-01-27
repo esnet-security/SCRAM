@@ -33,6 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose make
+          pip install uv
 
       - name: Check Docker state (pre-build)
         run: docker ps
@@ -86,6 +87,8 @@ jobs:
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: "50"
+          report_name: "Django Pytest/Behave Coverage"
+
 
       - name: Check Docker state (post-test)
         if: always()
