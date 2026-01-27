@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    needs: [behave, pytest]
     steps:
       - name: Finish Coveralls
         uses: coverallsapp/github-action@v2
