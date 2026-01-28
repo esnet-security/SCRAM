@@ -18,7 +18,8 @@ services:
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
-      - ${SECRETS_FILE:-/dev/null}
+      - '/etc/vault.d/secrets/kv_root_security.env'
+        required: false
     volumes:
       - ./staticfiles:/staticfiles
     healthcheck:
