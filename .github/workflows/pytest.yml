@@ -62,6 +62,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install uv
           uv pip install --system -r requirements/local.txt --prerelease=allow
+          uv pip install pytest-github-actions-annotate-failures
 
       - name: Apply migrations
         env:
