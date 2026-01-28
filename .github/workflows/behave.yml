@@ -70,6 +70,9 @@ jobs:
       - name: Upload Coverage to Coveralls
         if: matrix.python-version == '3.12'
         uses: coverallsapp/github-action@v2
+        with:
+            parallel: true
+            flag-name: behave
 
       - name: Upload Coverage to GitHub
         if: matrix.python-version == '3.12'
@@ -83,6 +86,8 @@ jobs:
         uses: 5monkeys/cobertura-action@v14
         with:
           minimum_coverage: "50"
+          report_name: "Django Pytest/Behave Coverage"
+
 
       - name: Check Docker state (post-test)
         if: always()
