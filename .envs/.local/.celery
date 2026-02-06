@@ -1,3 +1,1 @@
-CELERY_BROKER_URL=redis://scram-redis-1:6379/2
-CELERY_RESULT_BACKEND=redis://scram-redis-1:6379/2
-SCRAM_API_URL=http://django:8000/
+# For any future Celery variables shared between primary and secondary.

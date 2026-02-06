@@ -135,11 +135,13 @@ services:
       - ./scheduler/src/scheduler/:/app/scheduler:ro
     env_file:
       - ./.envs/.local/.celery
+      - ./.envs/.local/.celery-primary
 
   celery-worker-secondary:
     volumes:
       - ./scheduler/src/scheduler/:/app/scheduler:ro
     env_file:
+      - ./.envs/.local/.celery
       - ./.envs/.local/.celery-secondary
     deploy:
       replicas: 1
@@ -149,6 +151,7 @@ services:
       ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
     env_file:
       - ./.envs/.local/.celery
+      - ./.envs/.local/.celery-primary
     environment:
       - DISABLE_PROCESS_UPDATES=False
 
@@ -156,6 +159,7 @@ services:
     command:
       ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
     env_file:
+      - ./.envs/.local/.celery
       - ./.envs/.local/.celery-secondary
     environment:
       - DISABLE_PROCESS_UPDATES=False
@@ -165,6 +169,7 @@ services:
   flower:
     env_file:
       - ./.envs/.local/.celery
+      - ./.envs/.local/.celery-primary
     command:
       ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
     ports:
@@ -172,6 +177,7 @@ services:
 
   flower-secondary:
     env_file:
+      - ./.envs/.local/.celery
       - ./.envs/.local/.celery-secondary
     command:
       ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
