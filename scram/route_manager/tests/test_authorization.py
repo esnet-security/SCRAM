@@ -42,14 +42,14 @@ class AuthzTest(TestCase):
         ]
 
         self.authorized_client = ClientModel.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
         self.authorized_client.authorized_actiontypes.set([1])
 
         self.unauthorized_client = ClientModel.objects.create(
-            hostname="unauthorized_client.es.net",
+            client_name="unauthorized_client.es.net",
             uuid="91e134a5-77cf-4560-9797-6bbdbffde9f8",
         )
 
@@ -123,12 +123,18 @@ class AuthzTest(TestCase):
         test_user.save()
 
         self.client.force_login(test_user)
-        response = self.client.post(reverse("route_manager:add"), {"route": "192.0.2.4/32", "actiontype": "block"})
+        response = self.client.post(
+            reverse("route_manager:add"),
+            {"route": "192.0.2.4/32", "actiontype": "block"},
+        )
         self.assertEqual(response.status_code, 302)
 
         test_user.groups.set([])
 
-        response = self.client.post(reverse("route_manager:add"), {"route": "192.0.2.5/32", "actiontype": "block"})
+        response = self.client.post(
+            reverse("route_manager:add"),
+            {"route": "192.0.2.5/32", "actiontype": "block"},
+        )
         self.assertEqual(response.status_code, 302)
 
 

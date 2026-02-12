@@ -8,12 +8,14 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from simple_history.utils import update_change_reason
+
+from scram.shared.shared_code import get_client_ip
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
@@ -30,11 +32,15 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(
-    description="API endpoint for actiontypes",
-    responses={200: ActionTypeSerializer},
+    description="API endpoint for actiontypes.",
+    responses={
+        200: OpenApiResponse(response=ActionTypeSerializer, description="Successful retrieval of actiontype(s)."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested actiontype does not exist."),
+    },
 )
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
+    """Lookup ActionTypes by name, and bind to the serializer."""
 
     queryset = ActionType.objects.all()
     permission_classes = (IsAuthenticated,)
@@ -43,8 +49,17 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for ignore entries",
-    responses={200: IgnoreEntrySerializer},
+    description="API endpoint for ignore entries.",
+    responses={
+        200: OpenApiResponse(
+            response=IgnoreEntrySerializer, description="Successful retrieval or update of an ignore entry."
+        ),
+        201: OpenApiResponse(response=IgnoreEntrySerializer, description="Ignore entry successfully created."),
+        204: OpenApiResponse(description="Ignore entry successfully deleted."),
+        400: OpenApiResponse(description="Invalid data provided."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested ignore entry does not exist."),
+    },
 )
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
     """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
@@ -56,20 +71,80 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for clients",
-    responses={200: ClientSerializer},
+    description="API endpoint for clients.",
+    responses={
+        200: OpenApiResponse(
+            response=ClientSerializer,
+            description="Client already existed and was retrieved successfully.",
+        ),
+        201: OpenApiResponse(response=ClientSerializer, description="Client successfully created."),
+        400: OpenApiResponse(
+            description="Client with this name already exists with a different UUID, or client_name was not provided."
+        ),
+    },
 )
 class ClientViewSet(viewsets.ModelViewSet):
-    """Lookup Client by hostname on POSTs regardless of authentication, and bind to the serializer."""
+    """Lookup Client by client_name on POSTs regardless of authentication, and bind to the serializer."""
 
     queryset = Client.objects.all()
     # We want to allow a client to be registered from anywhere
     permission_classes = (AllowAny,)
     serializer_class = ClientSerializer
-    lookup_field = "hostname"
+    lookup_field = "client_name"
     http_method_names = ["post"]
 
+    def perform_create(self, serializer):
+        """Create a new Client, capturing the IP address it was created from."""
+        ip = get_client_ip(self.request)
+        serializer.save(registered_from_ip=ip)
 
+    def create(self, request, *args, **kwargs):
+        """Create a new Client while avoiding information leaks hopefully."""
+        client_name = request.data.get("client_name")
+        request_uuid = request.data.get("uuid")
+
+        if not client_name:
+            return Response({"detail": "client_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing_client = self.queryset.filter(client_name=client_name).first()
+
+        if existing_client:
+            if request_uuid and str(existing_client.uuid) == request_uuid:
+                # Idempotent success
+                serializer = self.get_serializer(existing_client)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Log the conflict without leaking client_names to the user
+            logger.warning(
+                "Client named %s already exists with a different UUID",
+                client_name,
+            )
+            return Response(
+                {"detail": "Invalid client registration request."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return super().create(request, *args, **kwargs)
+
+
+@extend_schema(
+    description="API endpoint to check if a route is active.",
+    parameters=[
+        {
+            "name": "cidr",
+            "required": True,
+            "type": "string",
+            "description": "The CIDR network to check (e.g., 192.0.2.0/24).",
+            "in": "query",
+        }
+    ],
+    responses={
+        200: OpenApiResponse(
+            response=IsActiveSerializer, description="The 'is_active' field indicates the status of the route."
+        ),
+        400: OpenApiResponse(description="The 'cidr' parameter is missing or invalid."),
+    },
+)
 class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
     """Look up a route to see if SCRAM considers it active or deactivated."""
 
@@ -116,8 +191,15 @@ class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for entries",
-    responses={200: EntrySerializer},
+    description="API endpoint for entries.",
+    responses={
+        200: OpenApiResponse(response=EntrySerializer, description="Successful retrieval of an entry/entries."),
+        201: OpenApiResponse(response=EntrySerializer, description="Entry successfully created."),
+        204: OpenApiResponse(description="Entry successfully deleted."),
+        400: OpenApiResponse(description="The route is likely on the ignore list or the prefix is too large."),
+        403: OpenApiResponse(description="The client is not authorized for this action."),
+        404: OpenApiResponse(description="The requested entry does not exist."),
+    },
 )
 class EntryViewSet(viewsets.ModelViewSet):
     """Lookup Entry when authenticated, and bind to the serializer."""
@@ -139,18 +221,40 @@ class EntryViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def check_client_authorization(self, actiontype):
-        """Ensure that a given client is authorized to use a given actiontype."""
+        """Ensure that a given client is authorized to use a given actiontype and IP address."""
         uuid = self.request.data.get("uuid")
         if uuid:
-            authorized_actiontypes = Client.objects.filter(uuid=uuid).values_list(
-                "authorized_actiontypes__name",
-                flat=True,
-            )
-            authorized_client = Client.objects.filter(uuid=uuid).values("is_authorized")
-            if not authorized_client or actiontype not in authorized_actiontypes:
-                logger.debug("Client: %s, actiontypes: %s", uuid, authorized_actiontypes)
+            try:
+                client = Client.objects.get(uuid=uuid)
+            except Client.DoesNotExist as client_dne:
+                msg = "Client does not exist"
+                raise PermissionDenied(msg) from client_dne
+
+            # Check if client is authorized for the action type
+            if not client.is_authorized or actiontype not in client.authorized_actiontypes.values_list(
+                "name", flat=True
+            ):
+                logger.debug(
+                    "Client: %s, actiontypes: %s",
+                    uuid,
+                    list(client.authorized_actiontypes.values_list("name", flat=True)),
+                )
                 logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
+
+            # Check if the client's IP address is allow listed
+            if client.registered_from_ip:
+                request_ip = self.get_client_ip()
+                if client.registered_from_ip != request_ip:
+                    logger.warning(
+                        "Client %s attempted to authorize from unauthorized IP %s (expected %s)",
+                        uuid,
+                        request_ip,
+                        client.registered_from_ip,
+                    )
+                    msg = "Request from unauthorized IP address %s"
+                    raise PermissionDenied(msg)
+
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied
 

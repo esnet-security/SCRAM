@@ -17,7 +17,7 @@ class TestAddRemoveIP(APITestCase):
         self.superuser = get_user_model().objects.create_superuser("admin", "admin@es.net", "admintestpassword")
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
@@ -110,7 +110,6 @@ class TestUnauthenticatedAccess(APITestCase):
                 "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
-                "who": "person",
             },
             format="json",
         )
@@ -134,7 +133,7 @@ class TestIsActive(APITestCase):
         """Set up test data."""
         self.url = reverse("api:v1:is_active-list")
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
@@ -146,25 +145,41 @@ class TestIsActive(APITestCase):
         # Active IPv4
         route_v4 = Route.objects.create(route="192.0.2.100")
         Entry.objects.create(
-            route=route_v4, is_active=True, comment="test active", who="test", actiontype=self.actiontype
+            route=route_v4,
+            is_active=True,
+            comment="test active",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Active IPv6
         route_v6 = Route.objects.create(route="2001:db8::1")
         Entry.objects.create(
-            route=route_v6, is_active=True, comment="test active v6", who="test", actiontype=self.actiontype
+            route=route_v6,
+            is_active=True,
+            comment="test active v6",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Deactivated IPv4 entry
         route_inactive = Route.objects.create(route="192.0.2.200")
         Entry.objects.create(
-            route=route_inactive, is_active=False, comment="inactive", who="test", actiontype=self.actiontype
+            route=route_inactive,
+            is_active=False,
+            comment="inactive",
+            who="test",
+            actiontype=self.actiontype,
         )
 
         # Deactived IPv6 entry
         route_inactive = Route.objects.create(route="2001:db8::5")
         Entry.objects.create(
-            route=route_inactive, is_active=False, comment="inactive", who="test", actiontype=self.actiontype
+            route=route_inactive,
+            is_active=False,
+            comment="inactive",
+            who="test",
+            actiontype=self.actiontype,
         )
 
     def test_active_ipv4_returns_true(self):
