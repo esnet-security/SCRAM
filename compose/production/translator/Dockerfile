@@ -1,6 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 ENV PYTHONUNBUFFERED=1
+ENV UV_NO_DEV=1
 
 RUN apt-get update \
   # dependencies for building Python packages
@@ -24,9 +25,9 @@ COPY ./translator/src /app/
 # Generate protobuf files
 # TODO: Make this less jank and don't do the git clone crap?
 RUN git clone -b v3.33.0 https://github.com/osrg/gobgp.git gobgp \
-  && cd gobgp/api \
-  && python3 -m grpc_tools.protoc -I./ --python_out=/app/translator/ --pyi_out=/app/translator/ --grpc_python_out=/app/translator/ *.proto \
-  && cd /app && rm -rf gobgp
+    && cd gobgp/api \
+    && python3 -m grpc_tools.protoc -I./ --python_out=/app/translator/ --pyi_out=/app/translator/ --grpc_python_out=/app/translator/ *.proto \
+    && cd /app && rm -rf gobgp
 
 # Install the project itself (including the protobuff stuff)
 RUN uv sync --locked

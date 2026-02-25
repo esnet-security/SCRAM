@@ -101,7 +101,7 @@ services:
   translator:
     build:
       context: .
-      dockerfile: ./compose/local/translator/Dockerfile
+      dockerfile: ./compose/production/translator/Dockerfile
     depends_on:
       redis:
         condition: service_healthy
@@ -119,7 +119,7 @@ services:
   translator-secondary:
     build:
       context: .
-      dockerfile: ./compose/local/translator/Dockerfile
+      dockerfile: ./compose/production/translator/Dockerfile
     depends_on:
       redis:
         condition: service_healthy

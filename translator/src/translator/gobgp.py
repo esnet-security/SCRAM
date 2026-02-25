@@ -2,13 +2,12 @@
 
 import logging
 
-import attribute_pb2
-import gobgp_pb2
-import gobgp_pb2_grpc
 import grpc
-from exceptions import ASNError
 from google.protobuf.any_pb2 import Any
-from shared import asn_is_valid
+
+from . import attribute_pb2, gobgp_pb2, gobgp_pb2_grpc
+from .exceptions import ASNError
+from .shared import asn_is_valid
 
 _TIMEOUT_SECONDS = 1000
 DEFAULT_ASN = 65400
