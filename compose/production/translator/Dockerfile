@@ -24,9 +24,15 @@ COPY ./translator/src /app/
 
 # Generate protobuf files
 # TODO: Make this less jank and don't do the git clone crap?
+# Protos don't work well in packages so we generate them in /app/ outside the package so that bare
+# `import gobgp_pb2` style imports work.
 RUN git clone -b v3.33.0 https://github.com/osrg/gobgp.git gobgp \
     && cd gobgp/api \
-    && python3 -m grpc_tools.protoc -I./ --python_out=/app/translator/ --pyi_out=/app/translator/ --grpc_python_out=/app/translator/ *.proto \
+    && python3 -m grpc_tools.protoc -I./ \
+    --python_out=/app/ \
+    --pyi_out=/app/ \
+    --grpc_python_out=/app/ \
+    *.proto \
     && cd /app && rm -rf gobgp
 
 # Install the project itself (including the protobuff stuff)
