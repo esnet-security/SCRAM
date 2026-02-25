@@ -18,7 +18,7 @@ django-environ==0.9.0  # https://github.com/joke2k/django-environ
 django-eventstream==4.5.1 # https://github.com/fanout/django-eventstream
 django-model-utils==4.2.0  # https://github.com/jazzband/django-model-utils
 django-redis==5.3.0
-django-simple-history~=3.1.1
+django-simple-history>=3.4.0  # 3.4.0+ dropped the pkg_resources dependency
 
 # Django REST Framework
 djangorestframework~=3.15  # https://github.com/encode/django-rest-framework
