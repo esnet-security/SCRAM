@@ -1,0 +1,81 @@
+[project]
+name = "scram-django"
+version = "1.5.1"
+
+# ==== pytest ====
+[tool.pytest.ini_options]
+addopts = [
+  "--ds=config.settings.test",
+  "--reuse-db",
+]
+minversion = "6.0"
+pythonpath = ["src"]
+python_files = [
+  "tests.py",
+  "test_*.py",
+]
+
+# ==== Coverage ====
+[tool.coverage.run]
+branch = true
+data_file = "coverage.coverage"
+include = ["src/scram/*", "src/config/*"]
+omit = ["**/migrations/*", "src/scram/contrib/*", "*/tests/*"]
+plugins = ["django_coverage_plugin"]
+
+[tool.coverage.report]
+exclude_also = [
+  "if debug:",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+]
+
+# ===== ruff ====
+# Base ruff config is inherited from the root pyproject.toml.
+# Only Django-specific per-file-ignores are defined here.
+[tool.ruff.lint.per-file-ignores]
+"src/scram/route_manager/**" = [
+  "DOC201", # documenting return values
+]
+"src/scram/users/**" = [
+  "DOC201", # documenting return values
+  "FBT001", # minimal issue; don't need to mess with in the User app
+  "PLR2004", # magic values when checking HTTP status codes
+]
+"test.py" = [
+  "S105", # hardcoded password as argument
+]
+
+# ==== mypy ====
+[tool.mypy]
+check_untyped_defs = true
+exclude = ["src/scram/route_manager/tests"]
+ignore_missing_imports = true
+plugins = [
+  "mypy_django_plugin.main",
+  # We did used to have mypy_drf_plugin.main but it seems like it never actually worked...
+]
+python_version = "3.12"
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# Django migrations should not produce any errors:
+ignore_errors = true
+module = "*.migrations.*"
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+# ==== behave ====
+[tool.behave]
+paths = ["src/scram/route_manager/tests/acceptance"]
+stderr_capture = false
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -2,37 +2,6 @@
 name = "SCRAM"
 version = "1.5.1"
 
-# ==== pytest ====
-[tool.pytest.ini_options]
-addopts = [
-  "--ds=config.settings.test",
-  "--reuse-db",
-  "--ignore=scheduler"
-]
-minversion = "6.0"
-python_files = [
-  "tests.py",
-  "test_*.py",
-]
-
-# ==== Coverage ====
-[tool.coverage.run]
-branch = true
-data_file = "coverage.coverage"
-include = ["scram/*", "config/*", "translator/*"]
-omit = ["**/migrations/*", "scram/contrib/*", "*/tests/*"]
-plugins = ["django_coverage_plugin"]
-
-[tool.coverage.report]
-exclude_also = [
-  "if debug:",
-  "if self.debug:",
-  "if settings.DEBUG",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-]
-
 # ===== ruff ====
 [tool.ruff]
 exclude = [
@@ -112,42 +81,9 @@ max-complexity = 7 # our current code adheres to this without too much effort
 "**/views.py" = [
   "DOC201", # documenting return values; it's fairly obvious in a View
 ]
-"scram/route_manager/**" = [
-  "DOC201", # documenting return values
-]
-"scram/users/**" = [
-  "DOC201", # documenting return values
-  "FBT001", # minimal issue; don't need to mess with in the User app
-  "PLR2004", # magic values when checking HTTP status codes
-]
-"test.py" = [
-  "S105", # hardcoded password as argument
-]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-# ==== mypy ====
-[tool.mypy]
-check_untyped_defs = true
-ignore_missing_imports = true
-plugins = [
-  "mypy_django_plugin.main",
-  "mypy_drf_plugin.main",
-]
-python_version = "3.11"
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-# Django migrations should not produce any errors:
-ignore_errors = true
-module = "*.migrations.*"
-
-[tool.django-stubs]
-django_settings_module = "config.settings.test"
-
-
 [tool.uv.workspace]
-exclude = ["scheduler", "translator"]
+exclude = ["django", "scheduler", "translator"]
