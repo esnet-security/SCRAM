@@ -1,11 +1,11 @@
 [project]
 name = "translator"
 dependencies = [
-  "aiohttp-sse-client>=0.2.1",
-  "behave>=1.2.6",
-  "coverage>=5.5",
-  "grpcio-tools>=1.69.0",
-  "websockets>=10.3",
+  "aiohttp-sse-client==0.2.1",
+  "behave~=1.2.6",
+  "coverage==5.5",
+  "grpcio-tools==1.69.0",
+  "websockets==10.3",
 ]
 requires-python = ">=3.13"
 version = "0.1.0"
