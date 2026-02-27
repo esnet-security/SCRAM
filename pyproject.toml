@@ -86,4 +86,4 @@ max-complexity = 7 # our current code adheres to this without too much effort
 convention = "google"
 
 [tool.uv.workspace]
-exclude = ["django", "scheduler", "translator"]
+members = ["django", "scheduler", "translator"]
