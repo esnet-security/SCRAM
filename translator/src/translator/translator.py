@@ -10,8 +10,9 @@ import os
 from os import getenv
 
 import websockets
-from gobgp import GoBGP
 from grpc import RpcError
+
+from .gobgp import GoBGP
 
 LOG_LEVEL = getenv("LOG_LEVEL", "INFO")
 GOBGP_HOST = getenv("GOBGP_HOST", "gobgp")
@@ -31,31 +32,11 @@ KNOWN_MESSAGES = {
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
 debug_mode = os.environ.get("DEBUG")
 if debug_mode:
-
-    def install_deps():
-        """Install necessary dependencies for debuggers.
-
-        Because of how we build translator currently, we don't have a great way to selectively
-        install things at build, so we just do it here! Right now this also includes base.txt,
-        which is unecessary, but in the future when we build a little better, it'll already be
-        setup.
-        """
-        logger.info("Installing dependencies for debuggers")
-
-        import subprocess  # noqa: S404, PLC0415
-        import sys  # noqa: PLC0415
-
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "/requirements/local.txt"])  # noqa: S603 TODO: add this to the container build
-
-        logger.info("Done installing dependencies for debuggers")
-
     logger.info("Translator is set to use a debugger. Provided debug mode: %s", debug_mode)
     # We have to setup the debugger appropriately for various IDEs. It'd be nice if they all used the same thing but
     # sadly, we live in a fallen world.
     if debug_mode == "pycharm-pydevd":
         logger.info("Entering debug mode for pycharm, make sure the debug server is running in PyCharm!")
-
-        install_deps()
 
         import pydevd_pycharm
 
@@ -64,8 +45,6 @@ if debug_mode:
         logger.info("Debugger started.")
     elif debug_mode == "debugpy":
         logger.info("Entering debug mode for debugpy (VSCode)")
-
-        install_deps()
 
         import debugpy
 

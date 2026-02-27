@@ -21,19 +21,23 @@ ENV UV_NO_DEV=1
 ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
 COPY ./scheduler/pyproject.toml ./scheduler/uv.lock* ./
-
-# Install the project's dependencies using the lockfile and settings
+# Install the project's dependencies only
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=scheduler/uv.lock,target=uv.lock \
-    --mount=type=bind,source=scheduler/pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=scheduler/pyproject.toml,target=scheduler/pyproject.toml \
+    uv sync --frozen --no-install-project --package scheduler
 
 # Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
-COPY ./scheduler/src /app/
+# Installing separately from its dependencies allows optimal layer caching. We use --frozen since we
+# have differing python versions across the stack.
+COPY ./scheduler/src ./scheduler/src/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=scheduler/pyproject.toml,target=scheduler/pyproject.toml \
+    uv sync --frozen --package scheduler
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"

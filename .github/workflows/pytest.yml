@@ -98,6 +98,7 @@ jobs:
           file: ./scheduler/coverage.xml
           parallel: true
           flag-name: scheduler
+          fail-on-error: false
 
       - name: Display Scheduler Coverage Metrics for scheduler tests
         if: matrix.python-version == '3.12'
