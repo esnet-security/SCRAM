@@ -1,5 +1,5 @@
 exclude: 'docs|migrations|.git|.tox'
-default_stages: [commit]
+default_stages: [pre-commit]
 fail_fast: true
 
 repos:
@@ -15,3 +15,12 @@ repos:
       - id: ruff-format
       - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: local
+    hooks:
+      - id: update-env-docs
+        name: Check Environment Variables Markdown
+        entry: make update-env-docs CHECK=true
+        language: system
+        pass_filenames: false
+        always_run: true

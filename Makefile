@@ -175,4 +175,12 @@ copy-libs:
 	@docker compose cp translator:/app/attribute_pb2_grpc.py translator/
 	@docker compose cp translator:/app/capability_pb2.py translator/
 	@docker compose cp translator:/app/capability_pb2.pyi translator/
-	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
+
+## update-env-docs: update environment variable documentation append CHECK=true to get a diff if not up to date
+.Phony: update-env-docs
+update-env-docs:
+ifeq ($(CHECK),true)
+	@uv run scripts/extract_env_vars.py --check
+else
+	@uv run scripts/extract_env_vars.py
+endif
