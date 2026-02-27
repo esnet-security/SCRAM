@@ -7,7 +7,7 @@ dependencies = [
   "grpcio-tools==1.69.0",
   "websockets==10.3",
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.12.9"
 version = "0.1.0"
 
 [dependency-groups]
