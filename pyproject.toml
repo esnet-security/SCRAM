@@ -1,6 +1,7 @@
 [project]
 name = "SCRAM"
 version = "1.5.1"
+requires-python = ">=3.12"
 
 # ==== pytest ====
 [tool.pytest.ini_options]
