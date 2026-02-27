@@ -105,6 +105,9 @@ services:
       replicas: 1
 
   translator:
+    build:
+      context: .
+      dockerfile: ./compose/local/translator/Dockerfile
     volumes:
       - ./translator/tests/:/app/tests/
     env_file:
@@ -117,6 +120,9 @@ services:
       - DEBUG=${DEBUG:-}
 
   translator-secondary:
+    build:
+      context: .
+      dockerfile: ./compose/local/translator/Dockerfile
     volumes:
       - ./translator/tests/:/app/tests/
     env_file:

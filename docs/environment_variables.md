@@ -55,6 +55,6 @@ To update, run `make update-env-docs`.
 | `CELERY_RESULT_BACKEND` | Scheduler | Test | - | [scheduler/tests/test_settings.py](file://scheduler/tests/test_settings.py) | - |
 | `DISABLE_PROCESS_UPDATES` | Scheduler | Test | - | [scheduler/tests/test_app.py](file://scheduler/tests/test_app.py) | Set the disable env var and then reload settings, then the app |
 | `SCRAM_API_URL` | Scheduler | Test | - | [scheduler/tests/test_settings.py](file://scheduler/tests/test_settings.py) | - |
-| `DEBUG` | Translator | Unknown | - | [translator/translator.py](file://translator/translator.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
-| `SCRAM_EVENTS_URL` | Translator | Unknown | "ws://django:8000/ws/route_manager/translator_block/" | [translator/translator.py](file://translator/translator.py) | - |
-| `SCRAM_HOSTNAME` | Translator | Unknown | "scram_hostname_not_set" | [translator/translator.py](file://translator/translator.py) | Must match the URL in asgi.py, and needs a trailing slash |
+| `DEBUG` | Translator | Unknown | - | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
+| `SCRAM_EVENTS_URL` | Translator | Unknown | "ws://django:8000/ws/route_manager/translator_block/" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | - |
+| `SCRAM_HOSTNAME` | Translator | Unknown | "scram_hostname_not_set" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Must match the URL in asgi.py, and needs a trailing slash |

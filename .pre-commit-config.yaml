@@ -1,5 +1,5 @@
 exclude: 'docs|migrations|.git|.tox'
-default_stages: [pre-commit]
+default_stages: [commit]
 fail_fast: true
 
 repos:
@@ -24,3 +24,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.10.7
+    hooks:
+      - id: uv-lock
+        args: [--check]

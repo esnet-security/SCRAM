@@ -73,6 +73,7 @@ jobs:
         with:
             parallel: true
             flag-name: behave
+            fail-on-error: false
 
       - name: Upload Coverage to GitHub
         if: matrix.python-version == '3.12'

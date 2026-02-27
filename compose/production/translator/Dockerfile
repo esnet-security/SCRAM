@@ -1,6 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 ENV PYTHONUNBUFFERED=1
+ENV UV_NO_DEV=1
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
@@ -31,13 +32,13 @@ COPY ./translator/src ./translator/src/
 # Protos don't work well in packages so we generate them in /app/ outside the package so that bare
 # `import gobgp_pb2` style imports work.
 RUN git clone -b v3.33.0 https://github.com/osrg/gobgp.git gobgp \
-  && cd gobgp/api \
-  && python3 -m grpc_tools.protoc -I./ \
-  --python_out=/app/ \
-  --pyi_out=/app/ \
-  --grpc_python_out=/app/ \
-  *.proto \
-  && cd /app && rm -rf gobgp
+    && cd gobgp/api \
+    && python3 -m grpc_tools.protoc -I./ \
+    --python_out=/app/ \
+    --pyi_out=/app/ \
+    --grpc_python_out=/app/ \
+    *.proto \
+    && cd /app && rm -rf gobgp
 
 # Install the project itself (including the protobuff stuff) again mounting in the project files.
 RUN --mount=type=cache,target=/root/.cache/uv \

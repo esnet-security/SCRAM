@@ -1,6 +1,6 @@
 """Provide a location for code that we want to share between all translators."""
 
-from exceptions import ASNError
+from .exceptions import ASNError
 
 MAX_ASN_VAL = 2**32 - 1
 
