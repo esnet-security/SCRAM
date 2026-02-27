@@ -35,7 +35,9 @@ exclude_also = [
 
 # ===== ruff ====
 # Base ruff config is inherited from the root pyproject.toml.
-# Only Django-specific per-file-ignores are defined here.
+[tool.ruff]
+exclude = ["migrations"]
+
 [tool.ruff.lint.per-file-ignores]
 "src/scram/route_manager/**" = [
   "DOC201", # documenting return values

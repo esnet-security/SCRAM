@@ -87,3 +87,8 @@ convention = "google"
 
 [tool.uv.workspace]
 members = ["django", "scheduler", "translator"]
+
+[dependency-groups]
+dev = [
+    "ruff~=0.14.14",
+]
