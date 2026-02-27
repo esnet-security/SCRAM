@@ -26,17 +26,17 @@ compose.override.yml:
 ## behave-all: runs behave inside the containers against all of your features
 .Phony: behave-all
 behave-all: compose.override.yml
-	@docker compose run --rm django coverage run -a manage.py behave --no-input --simple
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --simple
 
 ## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
 .Phony: behave
 behave: compose.override.yml
-	@docker compose run --rm django python manage.py behave --no-input --simple -i $(FEATURE)
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django python src/manage.py behave --no-input --simple -i $(FEATURE)
 
 ## integration-tests: runs multi-instance system tests against docker compose running containers
 .Phony: integration-tests
 integration-tests: run
-	@docker compose exec -T django coverage run -a manage.py behave --no-input --use-existing-database scram/route_manager/tests/integration
+	@docker compose exec -T -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --use-existing-database src/scram/route_manager/tests/integration
 
 ## behave-translator
 .Phony: behave-translator
@@ -52,8 +52,8 @@ build: compose.override.yml
 
 ## coverage.xml: generate coverage from test runs
 coverage.xml: pytest behave-all integration-tests behave-translator
-	@docker compose run --rm django coverage report
-	@docker compose run --rm django coverage xml
+	@docker compose run --rm -w /app django coverage report
+	@docker compose run --rm -w /app django coverage xml
 
 ## ci-test: runs all tests just like Github CI does
 .Phony: ci-test
@@ -127,7 +127,7 @@ pass-reset: compose.override.yml
 ## pytest: runs pytest inside the containers
 .Phony: pytest
 pytest: compose.override.yml
-	@docker compose run --rm django coverage run -m pytest
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -m pytest
 
 ## pytest-scheduler: runs scheduler package tests with coverage
 .Phony: pytest-scheduler
@@ -152,7 +152,7 @@ tail-log: compose.override.yml
 ## type-check: static type checking
 .Phony: type-check
 type-check: compose.override.yml
-	@docker compose run --rm django mypy scram
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django mypy src/scram
 
 ## docs-build: build the documentation
 .Phony: docs-build

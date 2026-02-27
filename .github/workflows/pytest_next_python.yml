@@ -56,7 +56,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install uv
-          uv pip install --system -r requirements/local.txt --prerelease=allow
+          uv pip install --system -r django/requirements/local.txt --prerelease=allow
           # https://github.com/pytest-dev/pytest-github-actions-annotate-failures/pull/68 isn't yet in a release
           uv pip install --system git+https://github.com/pytest-dev/pytest-github-actions-annotate-failures.git@6e66cd895fe05cd09be8bad58f5d79110a20385f
 
@@ -64,6 +64,7 @@ jobs:
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
         run: |
+          cd django/src
           python manage.py makemigrations --noinput || true
           UNAPPLIED_MIGRATIONS=$(python manage.py showmigrations --plan | grep '\[ \]' | awk '{print $2}')
           if [ -n "$UNAPPLIED_MIGRATIONS" ]; then
@@ -76,6 +77,7 @@ jobs:
 
       - name: Check for duplicate migrations
         run: |
+          cd django/src
           if python manage.py makemigrations --dry-run | grep "No changes detected"; then
             echo "No duplicate migrations detected."
           else
@@ -87,4 +89,4 @@ jobs:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram"
           REDIS_HOST: "localhost"
         run: |
-          pytest || echo "::warning:: Failed on future Python version ${{ matrix.python-version }}."
+          cd django/src && pytest || echo "::warning:: Failed on future Python version ${{ matrix.python-version }}."

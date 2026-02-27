@@ -11,11 +11,11 @@ def asn_is_valid(asn: int) -> bool:
     Args:
         asn (int): The Autonomous System Number that we want to validate
 
-    Raises:
-        ASNError: If the ASN is not between 0 and 4294967295 or is not an integer.
-
     Returns:
         bool: _description_
+
+    Raises:
+        ASNError: If the ASN is not between 0 and 4294967295 or is not an integer.
 
     """
     if not isinstance(asn, int):
