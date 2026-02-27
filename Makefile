@@ -41,7 +41,7 @@ integration-tests: run
 ## behave-translator
 .Phony: behave-translator
 behave-translator: compose.override.yml
-	@docker compose exec -T translator /app/.venv/bin/behave /app/tests/acceptance/features
+	@docker compose exec -T translator behave /app/tests/acceptance/features
 
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build

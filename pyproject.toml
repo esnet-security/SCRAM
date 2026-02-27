@@ -90,5 +90,5 @@ members = ["django", "scheduler", "translator"]
 
 [dependency-groups]
 dev = [
-    "ruff~=0.14.14",
+  "ruff~=0.14.14",
 ]
