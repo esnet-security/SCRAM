@@ -9,13 +9,10 @@ import grpc
 from google.protobuf.any_pb2 import Any
 
 from .exceptions import ASNError
+from .settings import settings
 from .shared import asn_is_valid
 
 _TIMEOUT_SECONDS = 1000
-DEFAULT_ASN = 65400
-DEFAULT_COMMUNITY = 666
-DEFAULT_V4_NEXTHOP = "192.0.2.199"
-DEFAULT_V6_NEXTHOP = "100::1"
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
 IPV6 = 6
@@ -41,8 +38,8 @@ class GoBGP:
         # Grab ASN and Community from our event_data, or use the defaults
         if not event_data:
             event_data = {}
-        asn = event_data.get("asn", DEFAULT_ASN)
-        community = event_data.get("community", DEFAULT_COMMUNITY)
+        asn = event_data.get("asn", settings.default_asn)
+        community = event_data.get("community", settings.default_community)
         ip_version = ip.ip.version
 
         # Set the origin to incomplete (options are IGP, EGP, incomplete)
@@ -69,7 +66,7 @@ class GoBGP:
         next_hop = Any()
         family_afi = self._get_family_afi(ip_version)
         if ip_version == IPV6:
-            next_hops = event_data.get("next_hop", DEFAULT_V6_NEXTHOP)
+            next_hops = event_data.get("next_hop", settings.default_v6_nexthop)
             next_hop.Pack(
                 attribute_pb2.MpReachNLRIAttribute(
                     family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
@@ -78,7 +75,7 @@ class GoBGP:
                 ),
             )
         else:
-            next_hops = event_data.get("next_hop", DEFAULT_V4_NEXTHOP)
+            next_hops = event_data.get("next_hop", settings.default_v4_nexthop)
             next_hop.Pack(
                 attribute_pb2.NextHopAttribute(
                     next_hop=next_hops,
