@@ -1,9 +1,13 @@
 """Application settings loaded from environment variables."""
 
 from enum import StrEnum
+from typing import Annotated
 
 from pydantic import AnyWebsocketUrl, computed_field, field_validator
+from pydantic.fields import Field
 from pydantic_settings import BaseSettings
+
+TCPUDPPort = Annotated[int, Field(ge=1, le=65535)]
 
 
 class DebuggerTypes(StrEnum):
@@ -16,25 +20,12 @@ class DebuggerTypes(StrEnum):
 class Settings(BaseSettings):
     """SCRAM Translator settings."""
 
-    # Logging
     log_level: str = "INFO"
-
-    # GoBGP connection
-    gobgp_host: str = "gobgp"
-    gobgp_port: int = 50051
-
-    # SCRAM connection
-    scram_hostname: str = "scram_hostname_not_set"
-    scram_events_url: str = "ws://django:8000/ws/route_manager/translator_block/"
-
-    # Debug mode
     debug: DebuggerTypes | None = None
 
-    # GoBGP path defaults (fall-through values when event_data doesn't provide them)
-    default_asn: int = 65400
-    default_community: int = 666
-    default_v4_nexthop: str = "192.0.2.199"
-    default_v6_nexthop: str = "100::1"
+    # GoBGP Connection Specifics
+    gobgp_host: str = "gobgp"
+    gobgp_port: TCPUDPPort = 50051
 
     @computed_field
     @property
@@ -42,14 +33,17 @@ class Settings(BaseSettings):
         """Return the composed GoBGP gRPC URL."""
         return f"{self.gobgp_host}:{self.gobgp_port}"
 
-    @field_validator("gobgp_port")
-    @classmethod
-    def _validate_gobgp_port(cls, v: int) -> int:
-        if not 1 <= v <= 65535:  # noqa PLR2004
-            msg = f"gobgp_port must be between 1 and 65535, got {v}"
-            raise ValueError(msg)
-        return v
+    # SCRAM Connection Specifics
+    scram_hostname: str = "scram_hostname_not_set"
+    scram_events_url: str = "ws://django:8000/ws/route_manager/translator_block/"
 
+    # GoBGP ASpath defaults (fallback values when event_data doesn't provide them)
+    default_asn: int = 65400
+    default_community: int = 666
+    default_v4_nexthop: str = "192.0.2.199"
+    default_v6_nexthop: str = "100::1"
+
+    # Custom Validator(s)
     @field_validator("scram_events_url")
     @classmethod
     def _validate_scram_events_url(cls, v: str) -> str:
