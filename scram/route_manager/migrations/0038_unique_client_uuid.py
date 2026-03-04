@@ -7,7 +7,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("route_manager", "0037_client_registered_from_ip"),
+        ("route_manager", "0036_rename_hostname_client_client_name"),
     ]
 
     operations = [
