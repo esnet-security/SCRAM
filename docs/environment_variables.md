@@ -4,16 +4,16 @@ To update, run `make update-env-docs`.
 
 | Variable | Service | Environments | Default | file | Description |
 | --- | --- | --- | --- | --- | --- |
-| `CELERY_BEAT_REPLICAS` | Compose | Common | 0 | [compose.yml](file://compose.yml) | - |
-| `CELERY_WORKER_REPLICAS` | Compose | Common | 0 | [compose.yml](file://compose.yml) | - |
-| `DEBUG` | Compose | Multiple | - | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.yml](file://compose.override.yml) | Here we setup a debugger if this is desired. This obviously should not be run in production |
-| `DJANGO_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
-| `DOCS_PORT` | Compose | Multiple | 8888 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.yml](file://compose.override.yml) | - |
-| `FLOWER_REPLICAS` | Compose | Common | 0 | [compose.yml](file://compose.yml) | - |
-| `GOBGP_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
+| `CELERY_BEAT_REPLICAS` | Compose | Unknown | 0 | [compose.yml](file://compose.yml) | - |
+| `CELERY_WORKER_REPLICAS` | Compose | Unknown | 0 | [compose.yml](file://compose.yml) | - |
+| `DEBUG` | Compose | Local | - | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.yml](file://compose.override.yml) | This can be set to either `debugpy` or `pycharm-pydevd` currently |
+| `DJANGO_REPLICAS` | Compose | Unknown | 1 | [compose.yml](file://compose.yml) | - |
+| `DOCS_PORT` | Compose | Local | 8888 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.yml](file://compose.override.yml) | - |
+| `FLOWER_REPLICAS` | Compose | Unknown | 0 | [compose.yml](file://compose.yml) | - |
+| `GOBGP_REPLICAS` | Compose | Unknown | 1 | [compose.yml](file://compose.yml) | - |
 | `HOSTNAME` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
-| `POSTGRES_ENABLED` | Compose | Common | 1 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.production.yml](file://compose.override.production.yml), [compose.override.yml](file://compose.override.yml), [compose.yml](file://compose.yml) | - |
-| `REDIS_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
+| `POSTGRES_ENABLED` | Compose | Multiple | 1 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.production.yml](file://compose.override.production.yml), [compose.override.yml](file://compose.override.yml), [compose.yml](file://compose.yml) | - |
+| `REDIS_REPLICAS` | Compose | Unknown | 1 | [compose.yml](file://compose.yml) | - |
 | `SCRAM_PEERING_IFACE` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
 | `SCRAM_V4_ADDRESS` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
 | `SCRAM_V4_GATEWAY` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
@@ -21,7 +21,7 @@ To update, run `make update-env-docs`.
 | `SCRAM_V6_ADDRESS` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
 | `SCRAM_V6_GATEWAY` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
 | `SCRAM_V6_SUBNET` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
-| `TRANSLATOR_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
+| `TRANSLATOR_REPLICAS` | Compose | Unknown | 1 | [compose.yml](file://compose.yml) | - |
 | `CONN_MAX_AGE` | Django | Production | 60 | [config/settings/production.py](file://config/settings/production.py) | noqa F405 |
 | `DATABASE_URL` | Django | Common | - | [config/settings/base.py](file://config/settings/base.py), [config/settings/production.py](file://config/settings/production.py) | DATABASES https docs.djangoproject.com/en/dev/ref/settings databases |
 | `DEBUG` | Django | Unknown | - | [config/asgi.py](file://config/asgi.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
@@ -45,6 +45,6 @@ To update, run `make update-env-docs`.
 | `SCRAM_AUTH_METHOD` | Django | Common | "local" | [config/settings/base.py](file://config/settings/base.py) | Are you using local passwords or oidc? |
 | `USE_DOCKER` | Django | Local | "no" | [config/settings/local.py](file://config/settings/local.py) | - |
 | `DJANGO_SETTINGS_MODULE` | Other | Unknown | "config.settings.local" | [manage.py](file://manage.py) | - |
-| `DEBUG` | Translator | Unknown | - | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
-| `SCRAM_EVENTS_URL` | Translator | Unknown | "ws://django:8000/ws/route_manager/translator_block/" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | - |
-| `SCRAM_HOSTNAME` | Translator | Unknown | "scram_hostname_not_set" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Must match the URL in asgi.py, and needs a trailing slash |
+| `DEBUG` | Translator | Production | - | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
+| `SCRAM_EVENTS_URL` | Translator | Production | "ws://django:8000/ws/route_manager/translator_block/" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | - |
+| `SCRAM_HOSTNAME` | Translator | Production | "scram_hostname_not_set" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Must match the URL in asgi.py, and needs a trailing slash |

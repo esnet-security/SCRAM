@@ -6,7 +6,7 @@ import difflib
 import logging
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +46,16 @@ PYTHON_ENV_PATTERNS = [
 
 # var_name, default_value from compose files
 COMPOSE_ENV_PATTERN = r"\$\{([^}:-]+)(?::-([^}]*))?\}"
+
+ENVIRONMENT_MAP = {
+    "test": "Test",
+    "production": "Production",
+    "translator": "Production",
+    "scheduler": "Production",
+    "local": "Local",
+    "shared": "Common",
+    "common": "Common",
+}
 
 
 def extract_comment(lines: list[str], line_index: int) -> str:
@@ -148,15 +158,20 @@ def infer_environment(file_path: Path) -> str:
     Returns:
         str: the type of environment
     """
-    path_str = str(file_path)
-    if "production" in path_str:
-        return "Production"
-    if "local" in path_str:
-        return "Local"
-    if "test" in path_str:
-        return "Test"
-    if "settings/base" in path_str or "shared" in path_str or "common" in path_str or path_str == "compose.yml":
+    p = PurePath(file_path)
+    path_parts = {part.lower() for part in p.parts}
+    filename = p.name.lower()
+
+    for part, env in ENVIRONMENT_MAP.items():
+        if part in path_parts or part in filename:
+            return env
+
+    if "settings" in path_parts and "base" in path_parts:
         return "Common"
+
+    if "base" in filename:
+        return "Common"
+
     return "Unknown"
 
 
@@ -166,7 +181,7 @@ def get_service(file_path: Path) -> str:
     Returns:
         str: the name of the service/app
     """
-    path_parts = Path(file_path).parts
+    path_parts = PurePath(file_path).parts
     if "config" in path_parts:
         return "Django"
     if "translator" in path_parts:
@@ -197,7 +212,29 @@ def parse_existing_docs(output_path: Path) -> dict[tuple[str, str], str]:
     return manual_descs
 
 
-def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:  # noqa: C901
+def _accumulate_vars(
+    all_vars: dict,
+    vars_found: dict,
+    rel_path: Path,
+    service: str,
+) -> None:
+    env = infer_environment(rel_path)
+    for var, info in vars_found.items():
+        key = (var, service)
+        if key not in all_vars:
+            all_vars[key] = {
+                "envs": set(),
+                "default": info["default"],
+                "desc": info["desc"],
+                "file": set(),
+            }
+        all_vars[key]["envs"].add(env)
+        all_vars[key]["file"].update(info["file"])
+        if info["desc"] and not all_vars[key]["desc"]:
+            all_vars[key]["desc"] = info["desc"]
+
+
+def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:
     """Scan the project directory for environment variables.
 
     Returns:
@@ -210,46 +247,17 @@ def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:  # n
         if any(exclude in path.parts or exclude in str(rel_path) for exclude in EXCLUDE_DIRS):
             continue
 
-        if path.suffix == ".py":
-            try:
-                content = path.read_text()
-                vars_found = extract_from_python(content, rel_path)
-                for var, info in vars_found.items():
-                    service = get_service(rel_path)
-                    key = (var, service)
-                    if key not in all_vars:
-                        all_vars[key] = {
-                            "envs": set(),
-                            "default": info["default"],
-                            "desc": info["desc"],
-                            "file": set(),
-                        }
-                    all_vars[key]["envs"].add(infer_environment(rel_path))
-                    all_vars[key]["file"].update(info["file"])
-                    if info["desc"] and not all_vars[key]["desc"]:
-                        all_vars[key]["desc"] = info["desc"]
-            except Exception:
-                logger.exception("Error reading %s", path)
+        try:
+            if path.suffix == ".py":
+                vars_found = extract_from_python(path.read_text(), rel_path)
+                _accumulate_vars(all_vars, vars_found, rel_path, get_service(rel_path))
 
-        elif path.suffix in {".yml", ".yaml"} and "compose" in path.name:
-            try:
-                content = path.read_text()
-                vars_found = extract_from_compose(content, rel_path)
-                for var, info in vars_found.items():
-                    key = (var, "Compose")
-                    if key not in all_vars:
-                        all_vars[key] = {
-                            "envs": set(),
-                            "default": info["default"],
-                            "desc": info["desc"],
-                            "file": set(),
-                        }
-                    all_vars[key]["envs"].add(infer_environment(rel_path))
-                    all_vars[key]["file"].update(info["file"])
-                    if info["desc"] and not all_vars[key]["desc"]:
-                        all_vars[key]["desc"] = info["desc"]
-            except Exception:
-                logger.exception("Error reading %s", path)
+            elif path.suffix in {".yml", ".yaml"} and "compose" in path.name:
+                vars_found = extract_from_compose(path.read_text(), rel_path)
+                _accumulate_vars(all_vars, vars_found, rel_path, "Compose")
+
+        except Exception:
+            logger.exception("Error reading %s", path)
 
     return all_vars
 
@@ -282,19 +290,18 @@ def generate_markdown_content(all_vars: dict[tuple[str, str], dict[str, Any]], m
     ]
 
     for (var_name, service), data in sorted_vars:
+        real_envs = data["envs"] - {"Unknown"}
+
         if "Common" in data["envs"]:
             envs = "Common"
-        elif len(data["envs"]) > 1:
+        elif len(real_envs) > 1:
             envs = "Multiple"
         else:
-            envs = ", ".join(sorted(data["envs"]))
+            envs = real_envs.pop() if real_envs else "Unknown"
 
-        # Grab the default value or fall back to "-"
         default = data["default"] if data["default"] else "-"
-        # Used to create a link to the file
         file = ", ".join(f"[{f}](file://{f})" for f in sorted(data["file"]))
 
-        # Use manual description if available, otherwise use code comments
         description = manual_descs.get((var_name, service), data["desc"])
         if not description:
             description = "-"
