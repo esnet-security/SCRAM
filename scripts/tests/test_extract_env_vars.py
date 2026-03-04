@@ -60,7 +60,7 @@ def test_extract_from_python() -> None:
     assert "STRICT_VAR" in result
 
     assert "DJANGO_VAR" in result
-    assert result["DJANGO_VAR"]["default"] is None
+    assert result["DJANGO_VAR"]["default"] == '"django_def"'
 
 
 def test_extract_from_compose() -> None:

@@ -36,7 +36,7 @@ PYTHON_ENV_PATTERNS = [
     (
         r'env(?:\.\w+)?\(\s*["\']([^"\']+)["\'](?:,\s*default=(?:get_random_secret_key\(\)|'
         r'get_random_string\(50, allowed_chars="abcdefghijklmnopqrstuvwxyz0123456789"\)|'
-        r"[^,\)]+))?\s*\)"
+        r"([^,\)]+)))?\s*\)"
     ),
     r'os\.getenv\(\s*["\']([^"\']+)["\'](?:,\s*([^,\)]+))?\s*\)',
     r'os\.environ\.get\(\s*["\']([^"\']+)["\'](?:,\s*([^,\)]+))?\s*\)',
