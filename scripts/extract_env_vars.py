@@ -1,6 +1,6 @@
+# !/usr/bin/env uv run
 """Script to extract environment variables."""
 
-# !/usr/bin/env uv run
 import argparse
 import difflib
 import logging
@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 # Exclusion patterns for directories
 EXCLUDE_DIRS = {
     "venv",
+    "scripts/tests",
+    "scram/route_manager/tests",
+    "translator/tests",
+    "scheduler/tests",
     ".venv",
     ".git",
     ".idea",
