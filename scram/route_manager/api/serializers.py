@@ -51,8 +51,7 @@ class ClientSerializer(serializers.ModelSerializer):
         """Maps to the Client model, and specifies the fields exposed by the API."""
 
         model = Client
-        fields = ["client_name", "uuid", "registered_from_ip"]
-        read_only_fields = ["registered_from_ip"]
+        fields = ["client_name", "uuid"]
 
 
 class IsActiveSerializer(serializers.ModelSerializer):

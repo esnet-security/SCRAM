@@ -64,7 +64,7 @@ class EntryAdmin(SimpleHistoryAdmin):
 class ClientAdmin(admin.ModelAdmin):
     """Configure the Client and how it shows up in the Admin site."""
 
-    list_display = ("client_name", "uuid", "registered_from_ip")
+    list_display = ("client_name", "uuid")
     readonly_fields = ("uuid",)
 
 

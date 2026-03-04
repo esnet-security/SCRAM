@@ -15,8 +15,6 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from simple_history.utils import update_change_reason
 
-from scram.shared.shared_code import get_client_ip
-
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
 from .serializers import (
@@ -92,11 +90,6 @@ class ClientViewSet(viewsets.ModelViewSet):
     serializer_class = ClientSerializer
     lookup_field = "client_name"
     http_method_names = ["post"]
-
-    def perform_create(self, serializer):
-        """Create a new Client, capturing the IP address it was created from."""
-        ip = get_client_ip(self.request)
-        serializer.save(registered_from_ip=ip)
 
     def create(self, request, *args, **kwargs):
         """Create a new Client while avoiding information leaks hopefully."""
