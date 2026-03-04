@@ -36,7 +36,7 @@ To update, run `make update-env-docs`.
 | `DJANGO_SECURE_HSTS_PRELOAD` | Django | Production | - | [config/settings/production.py](file://config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings secure-hsts-preload |
 | `DJANGO_SECURE_SSL_REDIRECT` | Django | Production | - | [config/settings/production.py](file://config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings secure-ssl-redirect |
 | `DJANGO_SERVER_EMAIL` | Django | Production | - | [config/settings/production.py](file://config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings server-email |
-| `DJANGO_SETTINGS_MODULE` | Django | Unknown | - | [config/wsgi.py](file://config/wsgi.py) | os.environ DJANGO_SETTINGS_MODULE = "config.settings.production" # noqa ERA001 |
+| `DJANGO_SETTINGS_MODULE` | Django | Unknown | "config.settings.local" | [config/asgi.py](file://config/asgi.py), [config/wsgi.py](file://config/wsgi.py) | If DJANGO_SETTINGS_MODULE is unset, default to the local settings |
 | `OIDC_RP_CLIENT_ID` | Django | Common | - | [config/settings/base.py](file://config/settings/base.py) | - |
 | `OIDC_RP_CLIENT_SECRET` | Django | Common | - | [config/settings/base.py](file://config/settings/base.py) | - |
 | `POSTGRES_SSL` | Django | Production | - | [config/settings/production.py](file://config/settings/production.py) | - |
@@ -44,17 +44,7 @@ To update, run `make update-env-docs`.
 | `REDIS_URL` | Django | Production | - | [config/settings/production.py](file://config/settings/production.py) | - |
 | `SCRAM_AUTH_METHOD` | Django | Common | "local" | [config/settings/base.py](file://config/settings/base.py) | Are you using local passwords or oidc? |
 | `USE_DOCKER` | Django | Local | - | [config/settings/local.py](file://config/settings/local.py) | - |
-| `BAR` | Other | Test | - | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | A useful comment " VAR = os.getenv FOO # Same line comment " VAR2 = os.getenv BAR |
-| `DEFAULT_VAR` | Other | Test | 'my_default' | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | Has default |
-| `DJANGO_VAR` | Other | Test | - | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | - |
-| `ENV_VAR` | Other | Test | "env_def" | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | - |
-| `FOO` | Other | Test | - | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | A useful comment " VAR = os.getenv FOO # Same line comment " VAR2 = os.getenv BAR |
-| `STANDARD_VAR` | Other | Test | - | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | This is standard |
-| `STRICT_VAR` | Other | Test | - | [scripts/tests/test_extract_env_vars.py](file://scripts/tests/test_extract_env_vars.py) | - |
-| `CELERY_BROKER_URL` | Scheduler | Test | - | [scheduler/tests/test_settings.py](file://scheduler/tests/test_settings.py) | - |
-| `CELERY_RESULT_BACKEND` | Scheduler | Test | - | [scheduler/tests/test_settings.py](file://scheduler/tests/test_settings.py) | - |
-| `DISABLE_PROCESS_UPDATES` | Scheduler | Test | - | [scheduler/tests/test_app.py](file://scheduler/tests/test_app.py) | Set the disable env var and then reload settings, then the app |
-| `SCRAM_API_URL` | Scheduler | Test | - | [scheduler/tests/test_settings.py](file://scheduler/tests/test_settings.py) | - |
+| `DJANGO_SETTINGS_MODULE` | Other | Unknown | "config.settings.local" | [manage.py](file://manage.py) | - |
 | `DEBUG` | Translator | Unknown | - | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Here we setup a debugger if this is desired. This obviously should not be run in production |
 | `SCRAM_EVENTS_URL` | Translator | Unknown | "ws://django:8000/ws/route_manager/translator_block/" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | - |
 | `SCRAM_HOSTNAME` | Translator | Unknown | "scram_hostname_not_set" | [translator/src/translator/translator.py](file://translator/src/translator/translator.py) | Must match the URL in asgi.py, and needs a trailing slash |

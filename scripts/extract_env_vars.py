@@ -40,6 +40,7 @@ PYTHON_ENV_PATTERNS = [
     ),
     r'os\.getenv\(\s*["\']([^"\']+)["\'](?:,\s*([^,\)]+))?\s*\)',
     r'os\.environ\.get\(\s*["\']([^"\']+)["\'](?:,\s*([^,\)]+))?\s*\)',
+    r'os\.environ\.setdefault\(\s*["\']([^"\']+)["\'](?:,\s*([^,\)]+))?\s*\)',
     r'os\.environ\[\s*["\']([^"\']+)["\']\s*\]',
 ]
 
@@ -99,6 +100,9 @@ def extract_from_python(content: str, file_path: Path) -> dict[str, dict[str, An
     vars_found: dict[str, dict[str, Any]] = {}
     lines = content.splitlines()
     for i, line in enumerate(lines):
+        # Skip pure comment lines (commented-out code can match patterns but isn't real usage)
+        if line.strip().startswith("#"):
+            continue
         for pattern in PYTHON_ENV_PATTERNS:
             # finditer so that we have loop over the matches as dicts
             # (match.group(1) is the var name, match.group(2) is the default value)
@@ -174,22 +178,22 @@ def get_service(file_path: Path) -> str:
     return "Other"
 
 
-def parse_existing_docs(output_path: Path) -> dict[str, str]:
+def parse_existing_docs(output_path: Path) -> dict[tuple[str, str], str]:
     """Parse existing documentation to preserve manual descriptions.
 
     Returns:
         dict: a dictionary with existing descriptions
     """
-    manual_descs: dict[str, str] = {}
+    manual_descs: dict[tuple[str, str], str] = {}
     if not output_path.exists():
         return manual_descs
 
     content = output_path.read_text(encoding="utf-8")
-    rows = re.findall(r"\| `([^`]+)` \| [^|]+ \| [^|]+ \| [^|]+ \| [^|]+ \| ([^|]*)\|", content)
-    for var, desc in rows:
+    rows = re.findall(r"\| `([^`]+)` \| ([^|]+) \| [^|]+ \| [^|]+ \| [^|]+ \| ([^|]*)\|", content)
+    for var, service, desc in rows:
         clean_desc = clean_comment(desc.strip())
         if clean_desc and clean_desc not in {"-", "Manually added description"}:
-            manual_descs[var] = clean_desc
+            manual_descs[var, service.strip()] = clean_desc
     return manual_descs
 
 
@@ -202,10 +206,9 @@ def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:  # n
     all_vars: dict[tuple[str, str], dict[str, Any]] = {}
 
     for path in root_dir.rglob("*"):
-        if any(exclude in path.parts for exclude in EXCLUDE_DIRS):
-            continue
-
         rel_path = path.relative_to(root_dir)
+        if any(exclude in path.parts or exclude in str(rel_path) for exclude in EXCLUDE_DIRS):
+            continue
 
         if path.suffix == ".py":
             try:
@@ -292,7 +295,7 @@ def generate_markdown_content(all_vars: dict[tuple[str, str], dict[str, Any]], m
         file = ", ".join(f"[{f}](file://{f})" for f in sorted(data["file"]))
 
         # Use manual description if available, otherwise use code comments
-        description = manual_descs.get(var_name, data["desc"])
+        description = manual_descs.get((var_name, service), data["desc"])
         if not description:
             description = "-"
 
