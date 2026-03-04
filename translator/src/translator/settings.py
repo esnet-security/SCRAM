@@ -5,7 +5,7 @@ from typing import Annotated
 
 from pydantic import AnyWebsocketUrl, computed_field, field_validator
 from pydantic.fields import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 TCPUDPPort = Annotated[int, Field(ge=1, le=65535)]
 
@@ -19,6 +19,9 @@ class DebuggerTypes(StrEnum):
 
 class Settings(BaseSettings):
     """SCRAM Translator settings."""
+
+    # make sure that empty strings are not considered as having provided a value.
+    model_config = SettingsConfigDict(env_ignore_empty=True)
 
     log_level: str = "INFO"
     debug: DebuggerTypes | None = None
