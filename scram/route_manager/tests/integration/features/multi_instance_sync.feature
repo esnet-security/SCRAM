@@ -51,3 +51,37 @@ Feature: Multi-Instance Synchronization
     When secondary instance runs process_updates
     Then the entry 2001:db8::30/128 is inactive on secondary instance
     And secondary announces 2001:db8::30/128 removal to block translators
+
+  Scenario: IPv4 entry expiring on primary instance is reprocessed by primary
+    Given a block actiontype is defined
+    When we create entry 192.168.100.4/32 with 3 second expiration on primary instance
+    And we wait for database commit
+    And we wait 4 seconds for expiration
+    When primary instance runs process_updates to expire entries
+    Then primary announces 192.168.100.4/32 removal to block translators
+
+  Scenario: IPv6 entry expiring on primary instance is reprocessed by primary
+    Given a block actiontype is defined
+    When we create entry 2001:db8::4/128 with 3 second expiration on primary instance
+    And we wait for database commit
+    And we wait 4 seconds for expiration
+    When primary instance runs process_updates to expire entries
+    Then primary announces 2001:db8::4/128 removal to block translators
+
+  Scenario: IPv4 entry deactivated on primary instance is reprocessed by primary
+    Given a block actiontype is defined
+    When we create an entry 192.168.100.5/32 on primary instance
+    And we wait for database commit
+    When we deactivate entry 192.168.100.5/32 on primary instance
+    And we wait for database commit
+    When primary instance runs process_updates to expire entries
+    Then primary announces 192.168.100.5/32 removal to block translators
+
+  Scenario: IPv6 entry deactivated on primary instance is reprocessed by primary
+    Given a block actiontype is defined
+    When we create an entry 2001:db8::5/128 on primary instance
+    And we wait for database commit
+    When we deactivate entry 2001:db8::5/128 on primary instance
+    And we wait for database commit
+    When primary instance runs process_updates to expire entries
+    Then primary announces 2001:db8::5/128 removal to block translators

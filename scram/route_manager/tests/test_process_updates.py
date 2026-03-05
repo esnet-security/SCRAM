@@ -76,14 +76,15 @@ class TestGetEntriesToProcess:
         assert len(result) == 1
         assert result[0].id == entry.id
 
-    def test_excludes_current_instance_entries(self, actiontype, current_instance):
-        """Does not return entries from the current SCRAM instance."""
-        create_entry(actiontype, "192.0.2.2/32", current_instance)
+    def test_includes_current_instance_entries(self, actiontype, current_instance):
+        """Processes entries from the current SCRAM instance."""
+        entry = create_entry(actiontype, "192.0.2.2/32", current_instance)
         cutoff = datetime.now(UTC) - timedelta(minutes=2)
 
         result = get_entries_to_process(cutoff)
 
-        assert result == []
+        assert len(result) == 1
+        assert result[0].id == entry.id
 
     def test_finds_modified_entries(self, actiontype, other_instance):
         """Finds entries modified after creation (uses history tracking)."""
@@ -175,6 +176,17 @@ class TestGetEntriesToProcess:
         assert len(result) == 1
         assert result[0].id == entry.id
 
+    def test_processes_entries_from_current_instance(self, actiontype, current_instance):
+        """Verifies that entries from the current instance are processed (PR #193 fix)."""
+        entry = create_entry(actiontype, "192.0.2.60/32", current_instance)
+        cutoff = datetime.now(UTC) - timedelta(minutes=2)
+
+        result = get_entries_to_process(cutoff)
+
+        assert len(result) == 1
+        assert result[0].id == entry.id
+        assert result[0].originating_scram_instance == current_instance
+
 
 class TestCheckForOrphanedHistory:
     """Tests for check_for_orphaned_history()."""
@@ -197,14 +209,5 @@ class TestCheckForOrphanedHistory:
         entry = create_entry(actiontype, "10.1.0.2/32", other_instance)
 
         check_for_orphaned_history({entry.id}, [entry])
-
-        assert len(caplog.records) == 0
-
-    def test_accounts_for_local_entries(self, caplog, actiontype, current_instance):
-        """Local entries excluded from processing are not flagged as orphans."""
-        local_entry = create_entry(actiontype, "10.1.0.3/32", current_instance)
-
-        # Entry exists but was excluded from entries_to_process because it's local
-        check_for_orphaned_history({local_entry.id}, [])
 
         assert len(caplog.records) == 0

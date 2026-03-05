@@ -44,7 +44,7 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/translator",
+                    "localRoot": "${workspaceFolder}/translator/src/translator",
                     "remoteRoot": "/app"
                 }
             ]
@@ -59,7 +59,7 @@
           },
           "pathMappings": [
               {
-                  "localRoot": "${workspaceFolder}/translator",
+                  "localRoot": "${workspaceFolder}/translator/src/translator",
                   "remoteRoot": "/app"
               }
           ]

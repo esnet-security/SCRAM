@@ -41,7 +41,7 @@ integration-tests: run
 ## behave-translator
 .Phony: behave-translator
 behave-translator: compose.override.yml
-	@docker compose exec -T translator /usr/local/bin/behave /app/tests/acceptance/features
+	@docker compose exec -T translator behave /app/tests/acceptance/features
 
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
@@ -128,6 +128,11 @@ pass-reset: compose.override.yml
 .Phony: pytest
 pytest: compose.override.yml
 	@docker compose run --rm django coverage run -m pytest
+
+## pytest-scheduler: runs scheduler package tests with coverage
+.Phony: pytest-scheduler
+pytest-scheduler:
+	@cd scheduler && uv run pytest
 
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run

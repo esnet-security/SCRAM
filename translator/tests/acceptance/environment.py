@@ -1,6 +1,6 @@
 """Configure the test environment before executing acceptance tests."""
 
-from gobgp import GoBGP
+from translator.gobgp import GoBGP
 
 
 def before_all(context):

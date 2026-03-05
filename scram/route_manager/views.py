@@ -1,7 +1,6 @@
 """Define the Views that will handle the HTTP requests."""
 
 import ipaddress
-import json
 import logging
 from datetime import timedelta
 
@@ -15,10 +14,10 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, ListView
 
 from scram.route_manager.models import WebSocketSequenceElement
@@ -148,10 +147,10 @@ def add_entry(request):
 
 
 def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
-    """Return entries that have been recently modified by another SCRAM instance.
+    """Return entries that have been recently modified by any SCRAM instance.
 
     Queries the Entry history (simple history) table to find any entries modified
-    since the cutoff time, then filters to only those originating from other SCRAM instances.
+    since the cutoff time.
 
     Args:
         cutoff_time(timedelta): Only consider entries modified after this time.
@@ -159,7 +158,7 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
     Returns:
         List of Entry objects that need to be reprocessed.
     """
-    logger.debug("Looking for entries modified by other SCRAM instances")
+    logger.debug("Looking for entries modified by any SCRAM instance")
 
     # Grab (only, via values_list) the Entry IDs that have had their history records touched since the cutoff time.
     recently_touched_ids = set(Entry.history.filter(history_date__gt=cutoff_time).values_list("id", flat=True))
@@ -170,17 +169,12 @@ def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
 
     logger.debug("Found recently touched entry IDs: %s", recently_touched_ids)
 
-    # Using the ID's from above, fetch all matching entries and associated models excluding entries from this instance.
-    entries_to_process = list(
-        Entry.objects
-        .filter(id__in=recently_touched_ids)
-        .exclude(originating_scram_instance=settings.SCRAM_HOSTNAME)
-        .select_related("actiontype", "route")
-    )
+    # Using the ID's from above, fetch all matching entries and associated models.
+    entries_to_process = list(Entry.objects.filter(id__in=recently_touched_ids).select_related("actiontype", "route"))
 
     check_for_orphaned_history(recently_touched_ids, entries_to_process)
 
-    logger.debug("Found %d entries to process from other instances", len(entries_to_process))
+    logger.debug("Found %d entries to process", len(entries_to_process))
     return entries_to_process
 
 
@@ -192,18 +186,12 @@ def check_for_orphaned_history(recently_touched_ids: set[int], entries_to_proces
 
     Args:
         recently_touched_ids(set): Set of Entry IDs that have recent history records.
-        entries_to_process(list): Entry objects fetched from the database (excludes local instance).
+        entries_to_process(list): Entry objects fetched from the database.
     """
-    # IDs of entries that currently exist in the DB (excluding local instance entries)
+    # IDs of entries that currently exist in the DB
     found_ids = {entry.id for entry in entries_to_process}
-    # Account for entries filtered out cuz they're from this instance
-    local_ids = set(
-        Entry.objects.filter(
-            id__in=recently_touched_ids, originating_scram_instance=settings.SCRAM_HOSTNAME
-        ).values_list("id", flat=True)
-    )
     # IDs with history but no corresponding Entry row = orphaned (hard-deleted outside of Entry.delete())
-    orphaned_ids = recently_touched_ids - found_ids - local_ids
+    orphaned_ids = recently_touched_ids - found_ids
     if orphaned_ids:
         logger.warning("Found history records with no corresponding Entry: %s", orphaned_ids)
 
@@ -270,17 +258,18 @@ def process_updates(request):
     else:
         logger.info("No new entries to process")
 
-    return HttpResponse(
-        json.dumps(
-            {
-                "entries_deleted": entries_start - entries_end,
-                "active_entries": entries_end,
-                "entries_reprocessed": len(entries_to_process),
-                "entries_reprocessed_list": entries_reprocessed_list,
-            },
-        ),
-        content_type="application/json",
-    )
+    return JsonResponse({
+        "entries_deleted": entries_start - entries_end,
+        "active_entries": entries_end,
+        "entries_reprocessed": len(entries_to_process),
+        "entries_reprocessed_list": entries_reprocessed_list,
+    })
+
+
+@require_GET
+def health(request):
+    """Return a simple health check endpoint."""
+    return JsonResponse({"status": "ok"})
 
 
 class EntryListView(ListView):

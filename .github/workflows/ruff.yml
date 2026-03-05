@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: pip install ruff==0.14.10
+        run: pip install ruff==0.14.14
 
       - name: Fail if we have any style errors
         run: ruff check --output-format=github
