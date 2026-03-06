@@ -48,13 +48,13 @@ PYTHON_ENV_PATTERNS = [
 COMPOSE_ENV_PATTERN = r"\$\{([^}:-]+)(?::-([^}]*))?\}"
 
 ENVIRONMENT_MAP = {
+    "shared": "Common",
+    "common": "Common",
     "test": "Test",
     "production": "Production",
     "translator": "Production",
     "scheduler": "Production",
     "local": "Local",
-    "shared": "Common",
-    "common": "Common",
 }
 
 
