@@ -21,3 +21,4 @@ repos:
     hooks:
       - id: uv-lock
         args: [--check]
+        files: (^|/)pyproject\.toml$|^(uv\.lock|uv\.toml)$
