@@ -214,7 +214,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def check_client_authorization(self, actiontype):
-        """Ensure that a given client is authorized to use a given actiontype and IP address."""
+        """Ensure that a given client is authorized to use a given actiontype."""
         uuid = self.request.data.get("uuid")
         if uuid:
             try:
@@ -234,19 +234,6 @@ class EntryViewSet(viewsets.ModelViewSet):
                 )
                 logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
-
-            # Check if the client's IP address is allow listed
-            if client.registered_from_ip:
-                request_ip = self.get_client_ip()
-                if client.registered_from_ip != request_ip:
-                    logger.warning(
-                        "Client %s attempted to authorize from unauthorized IP %s (expected %s)",
-                        uuid,
-                        request_ip,
-                        client.registered_from_ip,
-                    )
-                    msg = "Request from unauthorized IP address %s"
-                    raise PermissionDenied(msg)
 
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied

@@ -171,8 +171,6 @@ class Client(models.Model):
 
     client_name = models.CharField(max_length=50, unique=True)
     uuid = models.UUIDField(default=uuid_lib.uuid4, editable=False, unique=True)
-    registered_from_ip = models.GenericIPAddressField(null=True, blank=True)
-
     is_authorized = models.BooleanField(null=True, blank=True, default=False)
     authorized_actiontypes = models.ManyToManyField(ActionType)
 

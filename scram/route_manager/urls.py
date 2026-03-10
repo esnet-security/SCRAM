@@ -3,6 +3,7 @@
 from django.urls import path
 
 from . import views
+from .api import views as api_views
 
 app_name = "route_manager"
 
@@ -14,5 +15,5 @@ urlpatterns = [
     path(route="<int:pk>/", view=views.EntryDetailView.as_view(), name="detail"),
     path("entries/", views.EntryListView.as_view(), name="entry-list"),
     path("add/", views.add_entry, name="add"),
-    path("health/", views.health, name="health"),
+    path("health/", api_views.HealthCheckView.as_view(), name="health"),
 ]

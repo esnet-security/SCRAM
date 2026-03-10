@@ -9,6 +9,7 @@ import logging
 import os
 from os import getenv
 
+import gobgp_pb2
 import websockets
 from grpc import RpcError
 
@@ -99,13 +100,50 @@ async def websocket_loop():
             continue
 
 
+async def heartbeat(websocket, g):
+    """Periodically send health status/route counts to Django."""
+    logger.info("Heartbeat task started for %s", hostname)
+    while True:
+        try:
+            v4_count = g.get_route_count(gobgp_pb2.Family.AFI_IP)
+            v6_count = g.get_route_count(gobgp_pb2.Family.AFI_IP6)
+            logger.info("Sending heartbeat: v4=%s, v6=%s", v4_count, v6_count)
+            await websocket.send(
+                json.dumps({
+                    "type": "translator_heartbeat",
+                    "message": {
+                        "hostname": hostname,
+                        "v4_count": v4_count,
+                        "v6_count": v6_count,
+                    },
+                })
+            )
+        except Exception:
+            logger.exception("Heartbeat failed")
+        await asyncio.sleep(30)
+
+
 async def main():
     """Connect to the websocket and start listening for messages."""
     while True:
         try:
-            await websocket_loop()
+            logger.info("connecting to gobgp at %s", GOBGP_URL)
+            g = GoBGP(GOBGP_URL)
+            async for websocket in websockets.connect(url):
+                heartbeat_task = asyncio.create_task(heartbeat(websocket, g))
+                try:
+                    async for message in websocket:
+                        await process(message, websocket, g)
+                except websockets.ConnectionClosed:
+                    heartbeat_task.cancel()
+                    continue
+                finally:
+                    heartbeat_task.cancel()
         except RpcError as e:
             logger.warning("Encountered an error connecting to gobgp, retrying in 10s, error is: %s", e)
+            await asyncio.sleep(10)
+        except Exception:
+            logger.exception("Unexpected error in main loop, retrying in 10s")
             await asyncio.sleep(10)
 
 
