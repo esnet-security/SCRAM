@@ -61,7 +61,7 @@ async def process(message, websocket, g):
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])
-        except:  # noqa E722
+        except (ValueError, KeyError):
             logger.exception("Error parsing message: %s", message)
             return
 
@@ -90,7 +90,6 @@ async def websocket_loop():
 
 async def heartbeat(websocket, g):
     """Periodically send health status/route counts to Django."""
-    logger.info("Heartbeat task started for %s", hostname)
     while True:
         try:
             v4_count = g.get_route_count(gobgp_pb2.Family.AFI_IP)
@@ -98,9 +97,8 @@ async def heartbeat(websocket, g):
             logger.info("Sending heartbeat: v4=%s, v6=%s", v4_count, v6_count)
             await websocket.send(
                 json.dumps({
-                    "type": "translator_heartbeat",
                     "message": {
-                        "hostname": hostname,
+                        "hostname": settings.translator_hostname,
                         "v4_count": v4_count,
                         "v6_count": v6_count,
                     },
@@ -115,9 +113,9 @@ async def main():
     """Connect to the websocket and start listening for messages."""
     while True:
         try:
-            logger.info("connecting to gobgp at %s", GOBGP_URL)
-            g = GoBGP(GOBGP_URL)
-            async for websocket in websockets.connect(url):
+            logger.info("connecting to gobgp at %s", settings.gobgp_url)
+            g = GoBGP(settings.gobgp_url)
+            async for websocket in websockets.connect(settings.scram_events_url):
                 heartbeat_task = asyncio.create_task(heartbeat(websocket, g))
                 try:
                     async for message in websocket:
@@ -127,12 +125,9 @@ async def main():
                     continue
                 finally:
                     heartbeat_task.cancel()
-        except RpcError as e:
-            logger.warning("Encountered an error connecting to gobgp, retrying in 10s, error is: %s", e)
-            await asyncio.sleep(10)
-        except Exception:
-            logger.exception("Unexpected error in main loop, retrying in 10s")
-            await asyncio.sleep(10)
+        except RpcError:
+            logger.exception("Heartbeat failed: could not reach GoBGP")
+        await asyncio.sleep(10)
 
 
 if __name__ == "__main__":
