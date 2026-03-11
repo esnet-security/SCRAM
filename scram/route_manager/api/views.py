@@ -394,7 +394,7 @@ class HealthCheckView(APIView):
 
     @staticmethod
     def _check_cache() -> tuple[str, str]:
-        """Returns (status_key, result_value)."""
+        """Check the redis cache."""
         try:
             cache.set("health_check", "ok", timeout=5)
             value = cache.get("health_check")

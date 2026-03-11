@@ -75,18 +75,6 @@ async def process(message, websocket, g):
             await websocket.send(json.dumps(json_message))
 
 
-async def websocket_loop():
-    """Connect to the websocket and start listening for messages for Gobgp."""
-    logger.info("connecting to gobgp at %s", settings.gobgp_url)
-    g = GoBGP(settings.gobgp_url)
-    async for websocket in websockets.connect(settings.scram_events_url):
-        try:
-            async for message in websocket:
-                await process(message, websocket, g)
-        except websockets.ConnectionClosed:
-            continue
-
-
 async def heartbeat(websocket, g):
     """Periodically send health status/route counts to Django."""
     while True:
