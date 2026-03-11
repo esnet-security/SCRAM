@@ -2,18 +2,26 @@
 
 import ipaddress
 import logging
+import time
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
+from django.core.cache import InvalidCacheBackendError, cache
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db import OperationalError, connection
+from django.db.models import Count, Q
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
+from redis.exceptions import RedisError
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from simple_history.utils import update_change_reason
+
+from scram import __version__ as scram_version
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
@@ -362,3 +370,104 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    description="API endpoint for health data",
+    responses={200},
+)
+class HealthCheckView(APIView):
+    """API endpoint for health check."""
+
+    authentication_classes = []
+    permission_classes = []
+
+    @staticmethod
+    def _check_db() -> tuple[str, str]:
+        """Check for database connectivity."""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+        except OperationalError as e:
+            return "database", f"error: {e!s}"
+        return "database", "ok"
+
+    @staticmethod
+    def _check_cache() -> tuple[str, str]:
+        """Returns (status_key, result_value)."""
+        try:
+            cache.set("health_check", "ok", timeout=5)
+            value = cache.get("health_check")
+        except (RedisError, InvalidCacheBackendError) as e:
+            return "cache", f"error: {e!s}"
+        if value != "ok":
+            return "cache", "error: Cache read/write mismatch"
+        return "cache", "ok"
+
+    @staticmethod
+    def _get_translator_stats() -> tuple[int, int]:
+        """Check for translator stats."""
+        translator_heartbeat_timeout = 90
+        translator_stats = {}
+        try:
+            for at in ActionType.objects.filter(available=True):
+                count = cache.get(f"translator_count:{at.name}", 0)
+                # Fetch GoBGP stats from heartbeats
+                bgp_stats = cache.get(f"translator_stats:{at.name}")
+                # Filter out stale heartbeats (e.g., > 90s)
+                now = time.time()
+                active_bgp_stat = None
+                if bgp_stats and now - bgp_stats["last_seen"] < translator_heartbeat_timeout:
+                    active_bgp_stat = {"v4": bgp_stats["v4_count"], "v6": bgp_stats["v6_count"]}
+                translator_stats[at.name] = {
+                    "count": count,
+                    "gobgp_routes": active_bgp_stat,
+                }
+        except (OperationalError, RedisError) as e:
+            translator_stats["error"] = str(e)
+        return translator_stats
+
+    @staticmethod
+    def _get_entries_stats() -> tuple[int, int]:
+        """Check for entries stats."""
+        entries_stats = {}
+        try:
+            counts = (
+                Entry.objects
+                .filter(is_active=True)
+                .values("actiontype__name")
+                .annotate(count=Count("id"))
+                .order_by("actiontype__name")
+            )
+            return {entry["actiontype__name"]: entry["count"] for entry in counts}
+        except OperationalError as e:
+            entries_stats["error"] = str(e)
+
+    @staticmethod
+    def get(request):
+        """Collect information for the health check."""
+        checks = {}
+        overall_status = "healthy"
+
+        for key, value in [
+            HealthCheckView._check_db(),
+            HealthCheckView._check_cache(),
+        ]:
+            checks[key] = value
+            if "error" in value:
+                overall_status = "unhealthy"
+
+        http_status = status.HTTP_200_OK if overall_status == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+
+        return Response(
+            {
+                "status": overall_status,
+                "version": scram_version,
+                "active_entries": HealthCheckView._get_entries_stats(),
+                "connected_translators": HealthCheckView._get_translator_stats(),
+                "checks": checks,
+                "timestamp": time.time(),
+                "datetime": timezone.now().strftime("%Y-%m-%d %H:%M UTC"),
+            },
+            status=http_status,
+        )

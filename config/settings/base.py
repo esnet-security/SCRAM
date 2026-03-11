@@ -327,10 +327,12 @@ if AUTH_METHOD == "oidc":
 
     # Need to point somewhere otherwise /oidc/logout/ redirects to /oidc/logout/None which 404s
     # https://github.com/mozilla/mozilla-django-oidc/issues/118
+    # As of 3/6/2026 this is still an issue the issue says fixed, but it was a docs only change
     LOGIN_REDIRECT_URL = "/"
 
     # Using `/` because named urls don't work for this package
     # https://github.com/mozilla/mozilla-django-oidc/issues/434
+    # As of 3/6/2026 this is still an issue
     LOGOUT_REDIRECT_URL = "/"
 
     OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
