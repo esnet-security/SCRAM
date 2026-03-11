@@ -72,7 +72,6 @@ async def process(message, websocket, g):
         elif event_type == "translator_check":
             json_message["type"] = "translator_check_resp"
             json_message["message"]["is_blocked"] = g.is_blocked(ip)
-            json_message["message"]["translator_name"] = settings.scram_hostname
             await websocket.send(json.dumps(json_message))
 
 
@@ -94,16 +93,15 @@ async def heartbeat(websocket, g):
         try:
             v4_count = g.get_route_count(gobgp_pb2.Family.AFI_IP)
             v6_count = g.get_route_count(gobgp_pb2.Family.AFI_IP6)
-            logger.info("Sending heartbeat: v4=%s, v6=%s", v4_count, v6_count)
-            await websocket.send(
-                json.dumps({
-                    "message": {
-                        "hostname": settings.translator_hostname,
-                        "v4_count": v4_count,
-                        "v6_count": v6_count,
-                    },
-                })
-            )
+            payload = {
+                "type": "translator_heartbeat",
+                "message": {
+                    "v4_count": v4_count,
+                    "v6_count": v6_count,
+                },
+            }
+            logger.info("Sending heartbeat: %s", json.dumps(payload))
+            await websocket.send(json.dumps(payload))
         except Exception:
             logger.exception("Heartbeat failed")
         await asyncio.sleep(30)
@@ -125,9 +123,12 @@ async def main():
                     continue
                 finally:
                     heartbeat_task.cancel()
-        except RpcError:
-            logger.exception("Heartbeat failed: could not reach GoBGP")
-        await asyncio.sleep(10)
+        except RpcError as e:
+            logger.warning("Encountered an error connecting to gobgp, retrying in 10s, error is: %s", e)
+            await asyncio.sleep(10)
+        except (OSError, websockets.InvalidURI) as e:
+            logger.warning("Could not connect to SCRAM websocket, retrying in 10s, error is: %s", e)
+            await asyncio.sleep(10)
 
 
 if __name__ == "__main__":

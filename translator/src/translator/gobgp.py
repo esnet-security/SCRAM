@@ -175,14 +175,17 @@ class GoBGP:
     def get_route_count(self, family_afi):
         """Return the number of routes in the global RIB for a given AFI."""
         try:
-            result = self.stub.ListPath(
-                gobgp_pb2.ListPathRequest(
-                    table_type=gobgp_pb2.GLOBAL,
-                    family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
-                ),
-                _TIMEOUT_SECONDS,
+            result = list(
+                self.stub.ListPath(
+                    gobgp_pb2.ListPathRequest(
+                        table_type=gobgp_pb2.GLOBAL,
+                        family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                    ),
+                    _TIMEOUT_SECONDS,
+                )
             )
-            return len(list(result))
+            logger.info("GoBGP returned %d routes for family %s", len(result), family_afi)
+            return len(result)
         except Exception:
             logger.exception("Failed to get route count for AFI %s", family_afi)
             return 0

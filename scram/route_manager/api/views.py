@@ -405,7 +405,7 @@ class HealthCheckView(APIView):
         return "cache", "ok"
 
     @staticmethod
-    def _get_translator_stats() -> tuple[int, int]:
+    def _get_translator_stats() -> dict[str, dict]:
         """Check for translator stats."""
         translator_heartbeat_timeout = 90
         translator_stats = {}
@@ -414,17 +414,20 @@ class HealthCheckView(APIView):
                 count = cache.get(f"translator_count:{at.name}", 0)
                 # Fetch GoBGP stats from heartbeats
                 bgp_stats = cache.get(f"translator_stats:{at.name}")
+
                 # Filter out stale heartbeats (e.g., > 90s)
                 now = time.time()
-                active_bgp_stat = None
+                active_bgp_stat = {"v4": 0, "v6": 0}
                 if bgp_stats and now - bgp_stats["last_seen"] < translator_heartbeat_timeout:
                     active_bgp_stat = {"v4": bgp_stats["v4_count"], "v6": bgp_stats["v6_count"]}
+
                 translator_stats[at.name] = {
                     "count": count,
                     "gobgp_routes": active_bgp_stat,
                 }
-        except (OperationalError, RedisError) as e:
+        except (OperationalError, RedisError, TypeError) as e:
             translator_stats["error"] = str(e)
+            logger.exception("Failed to get translator stats")
         return translator_stats
 
     @staticmethod
