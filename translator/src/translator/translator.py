@@ -7,6 +7,7 @@ import ipaddress
 import json
 import logging
 
+import gobgp_pb2
 import websockets
 from grpc import RpcError
 
@@ -60,7 +61,7 @@ async def process(message, websocket, g):
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])
-        except:  # noqa E722
+        except (ValueError, KeyError):
             logger.exception("Error parsing message: %s", message)
             return
 
@@ -71,29 +72,50 @@ async def process(message, websocket, g):
         elif event_type == "translator_check":
             json_message["type"] = "translator_check_resp"
             json_message["message"]["is_blocked"] = g.is_blocked(ip)
-            json_message["message"]["translator_name"] = settings.scram_hostname
             await websocket.send(json.dumps(json_message))
 
 
-async def websocket_loop():
-    """Connect to the websocket and start listening for messages for Gobgp."""
-    logger.info("connecting to gobgp at %s", settings.gobgp_url)
-    g = GoBGP(settings.gobgp_url)
-    async for websocket in websockets.connect(settings.scram_events_url):
+async def heartbeat(websocket, g):
+    """Periodically send health status/route counts to Django."""
+    while True:
         try:
-            async for message in websocket:
-                await process(message, websocket, g)
-        except websockets.ConnectionClosed:
-            continue
+            v4_count = g.get_route_count(gobgp_pb2.Family.AFI_IP)
+            v6_count = g.get_route_count(gobgp_pb2.Family.AFI_IP6)
+            payload = {
+                "type": "translator_heartbeat",
+                "message": {
+                    "v4_count": v4_count,
+                    "v6_count": v6_count,
+                },
+            }
+            logger.info("Sending heartbeat: %s", json.dumps(payload))
+            await websocket.send(json.dumps(payload))
+        except Exception:
+            logger.exception("Heartbeat failed")
+        await asyncio.sleep(30)
 
 
 async def main():
     """Connect to the websocket and start listening for messages."""
     while True:
         try:
-            await websocket_loop()
+            logger.info("connecting to gobgp at %s", settings.gobgp_url)
+            g = GoBGP(settings.gobgp_url)
+            async for websocket in websockets.connect(settings.scram_events_url):
+                heartbeat_task = asyncio.create_task(heartbeat(websocket, g))
+                try:
+                    async for message in websocket:
+                        await process(message, websocket, g)
+                except websockets.ConnectionClosed:
+                    heartbeat_task.cancel()
+                    continue
+                finally:
+                    heartbeat_task.cancel()
         except RpcError as e:
             logger.warning("Encountered an error connecting to gobgp, retrying in 10s, error is: %s", e)
+            await asyncio.sleep(10)
+        except (OSError, websockets.InvalidURI) as e:
+            logger.warning("Could not connect to SCRAM websocket, retrying in 10s, error is: %s", e)
             await asyncio.sleep(10)
 
 
