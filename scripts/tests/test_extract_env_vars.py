@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from scripts.extract_env_vars import (
+from scripts.src.scripts.extract_env_vars import (
     clean_comment,
     extract_comment,
     extract_from_compose,
@@ -14,7 +14,11 @@ from scripts.extract_env_vars import (
 
 def test_extract_comment() -> None:
     """Test extracting comments from adjacent or identical lines."""
-    lines = ["    # A useful comment", "    VAR = os.getenv('FOO') # Same line comment", "    VAR2 = os.getenv('BAR')"]
+    lines = [
+        "    # A useful comment",
+        "    VAR = os.getenv('FOO') # Same line comment",
+        "    VAR2 = os.getenv('BAR')",
+    ]
 
     assert extract_comment(lines, 1) == "Same line comment"
     assert not extract_comment(lines, 2)

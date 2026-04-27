@@ -139,6 +139,11 @@ pytest-scheduler:
 run: compose.override.yml
 	@docker compose up -d
 
+## pytest-scheduler: runs scheduler package tests with coverage
+.Phony: pytest-scripts
+pytest-scripts:
+	@cd scripts && uv run pytest tests/
+
 ## stop: turns off running containers
 .Phony: stop
 stop: compose.override.yml
@@ -181,7 +186,7 @@ copy-libs:
 .Phony: update-env-docs
 update-env-docs:
 ifeq ($(CHECK),true)
-	@uv run scripts/extract_env_vars.py --check
+	@uv run scripts/src/scripts/extract_env_vars.py --check
 else
-	@uv run scripts/extract_env_vars.py
+	@uv run scripts/src/scripts/extract_env_vars.py
 endif

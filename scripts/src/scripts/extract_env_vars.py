@@ -55,6 +55,7 @@ ENVIRONMENT_MAP = {
     "translator": "Production",
     "scheduler": "Production",
     "local": "Local",
+    "compose": "Common",
 }
 
 
@@ -123,7 +124,11 @@ def extract_from_python(content: str, file_path: Path) -> dict[str, dict[str, An
                 comment = clean_comment(extract_comment(lines, i))
 
                 if var_name not in vars_found:
-                    vars_found[var_name] = {"default": default_value, "desc": comment, "file": {str(file_path)}}
+                    vars_found[var_name] = {
+                        "default": default_value,
+                        "desc": comment,
+                        "file": {str(file_path)},
+                    }
                 # update comment if there wasnt one in previous findings of the var
                 elif comment and not vars_found[var_name]["desc"]:
                     vars_found[var_name]["desc"] = comment
@@ -146,7 +151,11 @@ def extract_from_compose(content: str, file_path: Path) -> dict[str, dict[str, A
             comment = clean_comment(extract_comment(lines, i))
 
             if var_name not in vars_found:
-                vars_found[var_name] = {"default": default_value, "desc": comment, "file": {str(file_path)}}
+                vars_found[var_name] = {
+                    "default": default_value,
+                    "desc": comment,
+                    "file": {str(file_path)},
+                }
             elif comment and not vars_found[var_name]["desc"]:
                 vars_found[var_name]["desc"] = comment
     return vars_found
@@ -204,7 +213,9 @@ def parse_existing_docs(output_path: Path) -> dict[tuple[str, str], str]:
         return manual_descs
 
     content = output_path.read_text(encoding="utf-8")
-    rows = re.findall(r"\| `([^`]+)` \| ([^|]+) \| [^|]+ \| [^|]+ \| [^|]+ \| ([^|]*)\|", content)
+    rows = re.findall(
+        r"\| `([^`]+)` \| ([^|]+) \| [^|]+ \| [^|]+ \| [^|]+ \| ([^|]*)\|", content
+    )
     for var, service, desc in rows:
         clean_desc = clean_comment(desc.strip())
         if clean_desc and clean_desc not in {"-", "Manually added description"}:
@@ -244,7 +255,10 @@ def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:
 
     for path in root_dir.rglob("*"):
         rel_path = path.relative_to(root_dir)
-        if any(exclude in path.parts or exclude in str(rel_path) for exclude in EXCLUDE_DIRS):
+        if any(
+            exclude in path.parts or exclude in str(rel_path)
+            for exclude in EXCLUDE_DIRS
+        ):
             continue
 
         try:
@@ -262,7 +276,9 @@ def find_env_vars(root_dir: Path) -> dict[tuple[str, str], dict[str, Any]]:
     return all_vars
 
 
-def sort_by_service_and_name(item: tuple[tuple[str, str], dict[str, Any]]) -> tuple[str, str]:
+def sort_by_service_and_name(
+    item: tuple[tuple[str, str], dict[str, Any]],
+) -> tuple[str, str]:
     """Sort by Service Name first, then Variable Name.
 
     Returns:
@@ -272,7 +288,9 @@ def sort_by_service_and_name(item: tuple[tuple[str, str], dict[str, Any]]) -> tu
     return service, var_name
 
 
-def generate_markdown_content(all_vars: dict[tuple[str, str], dict[str, Any]], manual_descs: dict[str, str]) -> str:
+def generate_markdown_content(
+    all_vars: dict[tuple[str, str], dict[str, Any]], manual_descs: dict[str, str]
+) -> str:
     """Generate the markdown content for the environment variables documentation.
 
     Returns:
@@ -306,15 +324,21 @@ def generate_markdown_content(all_vars: dict[tuple[str, str], dict[str, Any]], m
         if not description:
             description = "-"
 
-        lines.append(f"| `{var_name}` | {service} | {envs} | {default} | {file} | {description} |")
+        lines.append(
+            f"| `{var_name}` | {service} | {envs} | {default} | {file} | {description} |"
+        )
 
     return "\n".join(lines) + "\n"
 
 
 def main() -> None:
     """Main function to parse arguments and orchestrate the extraction."""
-    parser = argparse.ArgumentParser(description="Extract environment variables from SCRAM project.")
-    parser.add_argument("--check", action="store_true", help="Check if documentation is up to date.")
+    parser = argparse.ArgumentParser(
+        description="Extract environment variables from SCRAM project."
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Check if documentation is up to date."
+    )
     args = parser.parse_args()
 
     root_dir = Path(__file__).resolve().parent.parent
@@ -341,7 +365,9 @@ def main() -> None:
             logger.warning("\n".join(diff))
             sys.exit(1)
         else:
-            logger.warning("Documentation file docs/environment_variables.md does not exist!")
+            logger.warning(
+                "Documentation file docs/environment_variables.md does not exist!"
+            )
             sys.exit(1)
     elif output_path.exists() and output_path.read_text() == new_content:
         logger.info("Documentation is already up to date. No changes made.")
