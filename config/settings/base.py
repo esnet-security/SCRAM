@@ -290,6 +290,7 @@ REST_FRAMEWORK = {
 CORS_URLS_REGEX = r"^/api/.*$"
 # Your stuff...
 # ------------------------------------------------------------------------------
+
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 

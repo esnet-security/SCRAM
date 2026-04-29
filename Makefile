@@ -139,6 +139,11 @@ pytest-scheduler:
 run: compose.override.yml
 	@docker compose up -d
 
+## pytest-scheduler: runs scheduler package tests with coverage
+.Phony: pytest-scripts
+pytest-scripts:
+	@cd scripts && uv run pytest tests/
+
 ## stop: turns off running containers
 .Phony: stop
 stop: compose.override.yml
@@ -176,3 +181,12 @@ copy-libs:
 	@docker compose cp translator:/app/capability_pb2.py translator/
 	@docker compose cp translator:/app/capability_pb2.pyi translator/
 	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
+
+## update-env-docs: update environment variable documentation append CHECK=true to get a diff if not up to date
+.Phony: update-env-docs
+update-env-docs:
+ifeq ($(CHECK),true)
+	@uv run scripts/src/scripts/extract_env_vars.py --check
+else
+	@uv run scripts/src/scripts/extract_env_vars.py
+endif
