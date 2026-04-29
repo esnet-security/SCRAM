@@ -6,7 +6,6 @@ volumes:
 
 services:
   django:
-    platform: linux/amd64
     build:
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
@@ -18,7 +17,7 @@ services:
       - ./.envs/.local/.django-primary
       - ./.envs/.local/.postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django:8000/process_updates/"]
+      test: [ "CMD", "curl", "-f", "http://django:8000/process_updates/" ]
       interval: 120s
     ports:
       - "8000"
@@ -28,7 +27,6 @@ services:
       - DEBUG=${DEBUG:-}
 
   django-secondary:
-    platform: linux/amd64
     build:
       dockerfile: ./compose/local/django/Dockerfile
     image: scram_local_django
@@ -40,7 +38,7 @@ services:
       - ./.envs/.local/.django-secondary
       - ./.envs/.local/.postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://django-secondary:8000/process_updates/"]
+      test: [ "CMD", "curl", "-f", "http://django-secondary:8000/process_updates/" ]
       interval: 120s
     ports:
       - "8000"
@@ -58,7 +56,7 @@ services:
     env_file:
       - ./.envs/.local/.postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d scram -U debug"]
+      test: [ "CMD-SHELL", "pg_isready -d scram -U debug" ]
     deploy:
       replicas: ${POSTGRES_ENABLED:-1}
     ports:
@@ -94,7 +92,6 @@ services:
     deploy:
       replicas: 1
 
-
   gobgp-secondary:
     volumes:
       - $CI_PROJECT_DIR/gobgp_config:/config:z
@@ -110,6 +107,7 @@ services:
       dockerfile: ./compose/local/translator/Dockerfile
     volumes:
       - ./translator/tests/:/app/tests/
+      - ./translator/src:/app/translator/src:z
     env_file:
       - ./.envs/.local/.translator
       - ./.envs/.local/.translator-primary
@@ -125,6 +123,7 @@ services:
       dockerfile: ./compose/local/translator/Dockerfile
     volumes:
       - ./translator/tests/:/app/tests/
+      - ./translator/src:/app/translator/src:z
     env_file:
       - ./.envs/.local/.translator
       - ./.envs/.local/.translator-secondary
@@ -153,8 +152,7 @@ services:
       replicas: 1
 
   celery-beat:
-    command:
-      ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
+    command: [ "celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info" ]
     env_file:
       - ./.envs/.local/.celery
       - ./.envs/.local/.celery-primary
@@ -162,8 +160,7 @@ services:
       - DISABLE_PROCESS_UPDATES=False
 
   celery-beat-secondary:
-    command:
-      ["celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info"]
+    command: [ "celery", "-A", "scheduler.app:scram_api_scheduler", "beat", "--loglevel=info" ]
     env_file:
       - ./.envs/.local/.celery
       - ./.envs/.local/.celery-secondary
@@ -176,8 +173,7 @@ services:
     env_file:
       - ./.envs/.local/.celery
       - ./.envs/.local/.celery-primary
-    command:
-      ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
+    command: [ "celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555" ]
     ports:
       - "5555:5555"
 
@@ -185,13 +181,11 @@ services:
     env_file:
       - ./.envs/.local/.celery
       - ./.envs/.local/.celery-secondary
-    command:
-      ["celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555"]
+    command: [ "celery", "-A", "scheduler.app:scram_api_scheduler", "flower", "--port=5555" ]
     ports:
       - "5556:5555"
     deploy:
       replicas: 1
-
 
 networks:
   default:
