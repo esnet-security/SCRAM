@@ -12,7 +12,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from config.routing import websocket_urlpatterns
-from scram.route_manager.models import ActionType, Client, WebSocketMessage, WebSocketSequenceElement
+from scram.route_manager.models import (
+    ActionType,
+    Client,
+    WebSocketMessage,
+    WebSocketSequenceElement,
+)
 
 
 @asynccontextmanager
@@ -61,7 +66,7 @@ class TestTranslatorBaseCase(TestCase):
         self.actiontype.save()
 
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.example.net",
+            client_name="authorized_client.example.net",
             uuid=self.uuid,
             is_authorized=True,
         )
@@ -77,7 +82,12 @@ class TestTranslatorBaseCase(TestCase):
         # Set some defaults; some child classes override this
         self.actiontypes = ["block"] * 3
         self.should_match = [True] * 3
-        self.generate_add_msgs = [lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}}]
+        self.generate_add_msgs = [
+            lambda ip, mask: {
+                "type": "translator_add",
+                "message": {"route": f"{ip}/{mask}"},
+            }
+        ]
 
         # Now we run any local setup actions by the child classes
         self.local_setup()
@@ -180,9 +190,18 @@ class TranslatorSequenceTestCase(TestTranslatorBaseCase):
         )
 
         self.generate_add_msgs = [
-            lambda ip, mask: {"type": "translator_add", "message": {"route": f"{ip}/{mask}"}},  # order_num=0
-            lambda ip, mask: {"type": "translator_add", "message": {"bar": f"{ip}/{mask}"}},  # order_num=2
-            lambda ip, mask: {"type": "translator_add", "message": {"foo": f"{ip}/{mask}"}},  # order_num=20
+            lambda ip, mask: {
+                "type": "translator_add",
+                "message": {"route": f"{ip}/{mask}"},
+            },  # order_num=0
+            lambda ip, mask: {
+                "type": "translator_add",
+                "message": {"bar": f"{ip}/{mask}"},
+            },  # order_num=2
+            lambda ip, mask: {
+                "type": "translator_add",
+                "message": {"foo": f"{ip}/{mask}"},
+            },  # order_num=20
         ]
 
 
@@ -192,7 +211,11 @@ class TranslatorParametersTestCase(TestTranslatorBaseCase):
     def local_setup(self):
         """Define the message we want to send."""
         wsm = WebSocketMessage.objects.get(msg_type="translator_add", msg_data_route_field="route")
-        wsm.msg_data = {"asn": 65550, "community": 100, "route": "Ensure this gets overwritten."}
+        wsm.msg_data = {
+            "asn": 65550,
+            "community": 100,
+            "route": "Ensure this gets overwritten.",
+        }
         wsm.save()
 
         self.generate_add_msgs = [
@@ -202,6 +225,10 @@ class TranslatorParametersTestCase(TestTranslatorBaseCase):
             },
             lambda ip, mask: {
                 "type": "translator_add",
-                "message": {"asn": 64496, "community": 4294967295, "route": f"{ip}/{mask}"},
+                "message": {
+                    "asn": 64496,
+                    "community": 4294967295,
+                    "route": f"{ip}/{mask}",
+                },
             },
         ]

@@ -2,18 +2,26 @@
 
 import ipaddress
 import logging
+import time
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
+from django.core.cache import InvalidCacheBackendError, cache
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from django.db import OperationalError, connection
+from django.db.models import Count, Q
+from django.utils import timezone
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from redis.exceptions import RedisError
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from simple_history.utils import update_change_reason
+
+from scram import __version__ as scram_version
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, WebSocketSequenceElement
 from .exceptions import ActiontypeNotAllowed, IgnoredRoute, NoActiveEntryFound, PrefixTooLarge
@@ -30,11 +38,15 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(
-    description="API endpoint for actiontypes",
-    responses={200: ActionTypeSerializer},
+    description="API endpoint for actiontypes.",
+    responses={
+        200: OpenApiResponse(response=ActionTypeSerializer, description="Successful retrieval of actiontype(s)."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested actiontype does not exist."),
+    },
 )
 class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    """Lookup ActionTypes by name when authenticated, and bind to the serializer."""
+    """Lookup ActionTypes by name, and bind to the serializer."""
 
     queryset = ActionType.objects.all()
     permission_classes = (IsAuthenticated,)
@@ -43,8 +55,17 @@ class ActionTypeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for ignore entries",
-    responses={200: IgnoreEntrySerializer},
+    description="API endpoint for ignore entries.",
+    responses={
+        200: OpenApiResponse(
+            response=IgnoreEntrySerializer, description="Successful retrieval or update of an ignore entry."
+        ),
+        201: OpenApiResponse(response=IgnoreEntrySerializer, description="Ignore entry successfully created."),
+        204: OpenApiResponse(description="Ignore entry successfully deleted."),
+        400: OpenApiResponse(description="Invalid data provided."),
+        403: OpenApiResponse(description="Authentication credentials were not provided."),
+        404: OpenApiResponse(description="The requested ignore entry does not exist."),
+    },
 )
 class IgnoreEntryViewSet(viewsets.ModelViewSet):
     """Lookup IgnoreEntries by route when authenticated, and bind to the serializer."""
@@ -56,20 +77,75 @@ class IgnoreEntryViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for clients",
-    responses={200: ClientSerializer},
+    description="API endpoint for clients.",
+    responses={
+        200: OpenApiResponse(
+            response=ClientSerializer,
+            description="Client already existed and was retrieved successfully.",
+        ),
+        201: OpenApiResponse(response=ClientSerializer, description="Client successfully created."),
+        400: OpenApiResponse(
+            description="Client with this name already exists with a different UUID, or client_name was not provided."
+        ),
+    },
 )
 class ClientViewSet(viewsets.ModelViewSet):
-    """Lookup Client by hostname on POSTs regardless of authentication, and bind to the serializer."""
+    """Lookup Client by client_name on POSTs regardless of authentication, and bind to the serializer."""
 
     queryset = Client.objects.all()
     # We want to allow a client to be registered from anywhere
     permission_classes = (AllowAny,)
     serializer_class = ClientSerializer
-    lookup_field = "hostname"
+    lookup_field = "client_name"
     http_method_names = ["post"]
 
+    def create(self, request, *args, **kwargs):
+        """Create a new Client while avoiding information leaks hopefully."""
+        client_name = request.data.get("client_name")
+        request_uuid = request.data.get("uuid")
 
+        if not client_name:
+            return Response({"detail": "client_name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        existing_client = self.queryset.filter(client_name=client_name).first()
+
+        if existing_client:
+            if request_uuid and str(existing_client.uuid) == request_uuid:
+                # Idempotent success
+                serializer = self.get_serializer(existing_client)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Log the conflict without leaking client_names to the user
+            logger.warning(
+                "Client named %s already exists with a different UUID",
+                client_name,
+            )
+            return Response(
+                {"detail": "Invalid client registration request."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return super().create(request, *args, **kwargs)
+
+
+@extend_schema(
+    description="API endpoint to check if a route is active.",
+    parameters=[
+        {
+            "name": "cidr",
+            "required": True,
+            "type": "string",
+            "description": "The CIDR network to check (e.g., 192.0.2.0/24).",
+            "in": "query",
+        }
+    ],
+    responses={
+        200: OpenApiResponse(
+            response=IsActiveSerializer, description="The 'is_active' field indicates the status of the route."
+        ),
+        400: OpenApiResponse(description="The 'cidr' parameter is missing or invalid."),
+    },
+)
 class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
     """Look up a route to see if SCRAM considers it active or deactivated."""
 
@@ -116,8 +192,15 @@ class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    description="API endpoint for entries",
-    responses={200: EntrySerializer},
+    description="API endpoint for entries.",
+    responses={
+        200: OpenApiResponse(response=EntrySerializer, description="Successful retrieval of an entry/entries."),
+        201: OpenApiResponse(response=EntrySerializer, description="Entry successfully created."),
+        204: OpenApiResponse(description="Entry successfully deleted."),
+        400: OpenApiResponse(description="The route is likely on the ignore list or the prefix is too large."),
+        403: OpenApiResponse(description="The client is not authorized for this action."),
+        404: OpenApiResponse(description="The requested entry does not exist."),
+    },
 )
 class EntryViewSet(viewsets.ModelViewSet):
     """Lookup Entry when authenticated, and bind to the serializer."""
@@ -142,15 +225,24 @@ class EntryViewSet(viewsets.ModelViewSet):
         """Ensure that a given client is authorized to use a given actiontype."""
         uuid = self.request.data.get("uuid")
         if uuid:
-            authorized_actiontypes = Client.objects.filter(uuid=uuid).values_list(
-                "authorized_actiontypes__name",
-                flat=True,
-            )
-            authorized_client = Client.objects.filter(uuid=uuid).values("is_authorized")
-            if not authorized_client or actiontype not in authorized_actiontypes:
-                logger.debug("Client: %s, actiontypes: %s", uuid, authorized_actiontypes)
+            try:
+                client = Client.objects.get(uuid=uuid)
+            except Client.DoesNotExist as client_dne:
+                msg = "Client does not exist"
+                raise PermissionDenied(msg) from client_dne
+
+            # Check if client is authorized for the action type
+            if not client.is_authorized or actiontype not in client.authorized_actiontypes.values_list(
+                "name", flat=True
+            ):
+                logger.debug(
+                    "Client: %s, actiontypes: %s",
+                    uuid,
+                    list(client.authorized_actiontypes.values_list("name", flat=True)),
+                )
                 logger.info("%s is not allowed to add an entry to the %s list.", uuid, actiontype)
                 raise ActiontypeNotAllowed
+
         elif not self.request.user.has_perm("route_manager.can_add_entry"):
             raise PermissionDenied
 
@@ -278,3 +370,107 @@ class EntryViewSet(viewsets.ModelViewSet):
             entry.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    description="API endpoint for health data",
+    responses={200},
+)
+class HealthCheckView(APIView):
+    """API endpoint for health check."""
+
+    authentication_classes = []
+    permission_classes = []
+
+    @staticmethod
+    def _check_db() -> tuple[str, str]:
+        """Check for database connectivity."""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+        except OperationalError as e:
+            return "database", f"error: {e!s}"
+        return "database", "ok"
+
+    @staticmethod
+    def _check_cache() -> tuple[str, str]:
+        """Check the redis cache."""
+        try:
+            cache.set("health_check", "ok", timeout=5)
+            value = cache.get("health_check")
+        except (RedisError, InvalidCacheBackendError) as e:
+            return "cache", f"error: {e!s}"
+        if value != "ok":
+            return "cache", "error: Cache read/write mismatch"
+        return "cache", "ok"
+
+    @staticmethod
+    def _get_translator_stats() -> dict[str, dict]:
+        """Check for translator stats."""
+        translator_heartbeat_timeout = 90
+        translator_stats = {}
+        try:
+            for at in ActionType.objects.filter(available=True):
+                count = cache.get(f"translator_count:{at.name}", 0)
+                # Fetch GoBGP stats from heartbeats
+                bgp_stats = cache.get(f"translator_stats:{at.name}")
+
+                # Filter out stale heartbeats (e.g., > 90s)
+                now = time.time()
+                active_bgp_stat = {"v4": 0, "v6": 0}
+                if bgp_stats and now - bgp_stats["last_seen"] < translator_heartbeat_timeout:
+                    active_bgp_stat = {"v4": bgp_stats["v4_count"], "v6": bgp_stats["v6_count"]}
+
+                translator_stats[at.name] = {
+                    "count": count,
+                    "gobgp_routes": active_bgp_stat,
+                }
+        except (OperationalError, RedisError, TypeError) as e:
+            translator_stats["error"] = str(e)
+            logger.exception("Failed to get translator stats")
+        return translator_stats
+
+    @staticmethod
+    def _get_entries_stats() -> tuple[int, int]:
+        """Check for entries stats."""
+        entries_stats = {}
+        try:
+            counts = (
+                Entry.objects
+                .filter(is_active=True)
+                .values("actiontype__name")
+                .annotate(count=Count("id"))
+                .order_by("actiontype__name")
+            )
+            return {entry["actiontype__name"]: entry["count"] for entry in counts}
+        except OperationalError as e:
+            entries_stats["error"] = str(e)
+
+    @staticmethod
+    def get(request):
+        """Collect information for the health check."""
+        checks = {}
+        overall_status = "healthy"
+
+        for key, value in [
+            HealthCheckView._check_db(),
+            HealthCheckView._check_cache(),
+        ]:
+            checks[key] = value
+            if "error" in value:
+                overall_status = "unhealthy"
+
+        http_status = status.HTTP_200_OK if overall_status == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+
+        return Response(
+            {
+                "status": overall_status,
+                "version": scram_version,
+                "active_entries": HealthCheckView._get_entries_stats(),
+                "connected_translators": HealthCheckView._get_translator_stats(),
+                "checks": checks,
+                "timestamp": time.time(),
+                "datetime": timezone.now().strftime("%Y-%m-%d %H:%M UTC"),
+            },
+            status=http_status,
+        )

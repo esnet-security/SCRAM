@@ -1112,6 +1112,7 @@ dependencies = [
     { name = "behave" },
     { name = "coverage" },
     { name = "grpcio-tools" },
+    { name = "pydantic-settings" },
     { name = "websockets" },
 ]
 
@@ -1127,6 +1128,7 @@ requires-dist = [
     { name = "behave", specifier = "~=1.2.6" },
     { name = "coverage", specifier = "==5.5" },
     { name = "grpcio-tools", specifier = "==1.69.0" },
+    { name = "pydantic-settings", specifier = ">=2.13.1" },
     { name = "websockets", specifier = "==10.3" },
 ]
 

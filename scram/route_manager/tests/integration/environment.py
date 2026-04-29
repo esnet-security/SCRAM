@@ -43,7 +43,7 @@ def before_feature(context, feature):
     client, _ = DjangoClient.objects.update_or_create(
         uuid=TEST_CLIENT_UUID,
         defaults={
-            "hostname": TEST_CLIENT_HOSTNAME,
+            "client_name": TEST_CLIENT_HOSTNAME,
             "is_authorized": True,
         },
     )
