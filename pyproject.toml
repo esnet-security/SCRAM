@@ -1,12 +1,12 @@
 [project]
 name = "SCRAM"
 version = "1.5.1"
+requires-python = ">=3.12"
 
 # ==== pytest ====
 [tool.pytest.ini_options]
 addopts = [
   "--ds=config.settings.test",
-  "--reuse-db",
   "--ignore=scheduler"
 ]
 minversion = "6.0"

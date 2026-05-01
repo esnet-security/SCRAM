@@ -72,7 +72,6 @@ THIRD_PARTY_APPS = [
     "channels",
     "corsheaders",
     "crispy_forms",
-    "django_celery_beat",
     "django_eventstream",
     "netfields",
     "simple_history",
@@ -290,6 +289,7 @@ REST_FRAMEWORK = {
 CORS_URLS_REGEX = r"^/api/.*$"
 # Your stuff...
 # ------------------------------------------------------------------------------
+
 # Are you using local passwords or oidc?
 AUTH_METHOD = os.environ.get("SCRAM_AUTH_METHOD", "local").lower()
 

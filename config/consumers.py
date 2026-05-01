@@ -3,7 +3,7 @@
 import logging
 import time
 
-from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.core.cache import cache
 
@@ -29,10 +29,10 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             cache.get_or_set(f"translator_count:{self.actiontype}", 0)
             cache.incr(f"translator_count:{self.actiontype}")
 
-        await sync_to_async(update_connect_cache)()
+        await database_sync_to_async(update_connect_cache)()
 
         # Filter WebSocketSequenceElements by actiontype
-        elements = await sync_to_async(list)(
+        elements = await database_sync_to_async(list)(
             WebSocketSequenceElement.objects.filter(action_type__name=self.actiontype).order_by("order_num"),
         )
         if not elements:
@@ -40,11 +40,13 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             return
 
         # Avoid lazy evaluation
-        routes = await sync_to_async(list)(Entry.objects.filter(is_active=True).values_list("route__route", flat=True))
+        routes = await database_sync_to_async(list)(
+            Entry.objects.filter(is_active=True).values_list("route__route", flat=True)
+        )
 
         for route in routes:
             for element in elements:
-                msg = await sync_to_async(lambda e: e.websocketmessage)(element)
+                msg = await database_sync_to_async(lambda e: e.websocketmessage)(element)
                 msg.msg_data[msg.msg_data_route_field] = str(route)
                 await self.send_json({"type": msg.msg_type, "message": msg.msg_data})
 
@@ -61,7 +63,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             except (ValueError, TypeError):
                 cache.set(f"translator_count:{self.actiontype}", 0)
 
-        await sync_to_async(update_disconnect_cache)()
+        await database_sync_to_async(update_disconnect_cache)()
 
     async def receive_json(self, content):
         """Handle a WebSocket message."""
@@ -75,7 +77,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             }
             cache_key = f"translator_stats:{self.actiontype}"
             logger.info("Received heartbeat for %s: %s (Key: %s)", self.actiontype, stats, cache_key)
-            await sync_to_async(cache.set)(cache_key, stats, timeout=300)
+            await database_sync_to_async(cache.set)(cache_key, stats, timeout=300)
         elif content["type"] == "translator_check_resp":
             # We received a check response from a translator, forward to web UI.
             channel = content.pop("channel")
