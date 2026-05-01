@@ -60,8 +60,15 @@ class EntryAdmin(SimpleHistoryAdmin):
     search_fields = ["route", "comment"]
 
 
+@admin.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    """Configure the Client and how it shows up in the Admin site."""
+
+    list_display = ("client_name", "uuid")
+    readonly_fields = ("uuid",)
+
+
 admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
-admin.site.register(Client)
 admin.site.register(WebSocketMessage)
 admin.site.register(WebSocketSequenceElement)

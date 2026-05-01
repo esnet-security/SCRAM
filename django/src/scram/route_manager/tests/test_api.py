@@ -19,7 +19,7 @@ class TestAddRemoveIP(APITestCase):
         )
         self.client.login(username="admin", password="admintestpassword")
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )
@@ -112,7 +112,6 @@ class TestUnauthenticatedAccess(APITestCase):
                 "route": "192.0.2.4",
                 "comment": "test",
                 "uuid": "0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
-                "who": "person",
             },
             format="json",
         )
@@ -138,7 +137,7 @@ class TestIsActive(APITestCase):
         """Set up test data."""
         self.url = reverse("api:v1:is_active-list")
         self.authorized_client = Client.objects.create(
-            hostname="authorized_client.es.net",
+            client_name="authorized_client.es.net",
             uuid="0e7e1cbd-7d73-4968-bc4b-ce3265dc2fd3",
             is_authorized=True,
         )

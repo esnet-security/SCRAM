@@ -16,10 +16,10 @@ class UserChangeForm(admin_forms.UserChangeForm):
         model = User
 
 
-class UserCreationForm(admin_forms.UserCreationForm):
+class UserCreationForm(admin_forms.AdminUserCreationForm):
     """Define a form to create a User."""
 
-    class Meta(admin_forms.UserCreationForm.Meta):
+    class Meta(admin_forms.AdminUserCreationForm.Meta):
         """Map to the User model and provide custom error messages."""
 
         model = User

@@ -42,7 +42,7 @@ class WhoFilterTest(TestCase):
     def test_who_filter_queryset_with_value(self):
         """Test that the queryset is filtered correctly when a user is selected."""
         who_filter = WhoFilter(
-            request=None, params={"who": "admin"}, model=Entry, model_admin=EntryAdmin
+            request=None, params={"who": ["admin"]}, model=Entry, model_admin=EntryAdmin
         )
 
         queryset = Entry.objects.all()
