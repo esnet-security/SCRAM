@@ -72,7 +72,6 @@ THIRD_PARTY_APPS = [
     "channels",
     "corsheaders",
     "crispy_forms",
-    "django_celery_beat",
     "django_eventstream",
     "netfields",
     "simple_history",
