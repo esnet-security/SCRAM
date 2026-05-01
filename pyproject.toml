@@ -6,7 +6,6 @@ version = "1.5.1"
 [tool.pytest.ini_options]
 addopts = [
   "--ds=config.settings.test",
-  "--reuse-db",
   "--ignore=scheduler"
 ]
 minversion = "6.0"
