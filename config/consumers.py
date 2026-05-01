@@ -29,7 +29,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             cache.get_or_set(f"translator_count:{self.actiontype}", 0)
             cache.incr(f"translator_count:{self.actiontype}")
 
-        await sync_to_async(update_connect_cache)()
+        await database_sync_to_async(update_connect_cache)()
 
         # Filter WebSocketSequenceElements by actiontype
         elements = await database_sync_to_async(list)(
@@ -63,7 +63,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             except (ValueError, TypeError):
                 cache.set(f"translator_count:{self.actiontype}", 0)
 
-        await sync_to_async(update_disconnect_cache)()
+        await database_sync_to_async(update_disconnect_cache)()
 
     async def receive_json(self, content):
         """Handle a WebSocket message."""
@@ -77,7 +77,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             }
             cache_key = f"translator_stats:{self.actiontype}"
             logger.info("Received heartbeat for %s: %s (Key: %s)", self.actiontype, stats, cache_key)
-            await sync_to_async(cache.set)(cache_key, stats, timeout=300)
+            await database_sync_to_async(cache.set)(cache_key, stats, timeout=300)
         elif content["type"] == "translator_check_resp":
             # We received a check response from a translator, forward to web UI.
             channel = content.pop("channel")
