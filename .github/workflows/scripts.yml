@@ -4,11 +4,10 @@ name: Run Scripts Tests
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
     branches:
-      - main
-      - develop
+      - '**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -19,6 +18,8 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
+  checks: write
 
 jobs:
   scripts:
@@ -34,3 +35,18 @@ jobs:
 
       - name: Run Scripts Tests
         run: make test-scripts
+
+      - name: Upload Coverage to Coveralls
+        if: ${{ !env.ACT }}
+        uses: coverallsapp/github-action@v2
+        with:
+          file: ./scripts/coverage.xml
+          fail-on-error: false
+
+      - name: Display Scripts Coverage Metrics
+        if: ${{ !env.ACT }}
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          report_name: "Scripts Coverage"
+          path: ./scripts/coverage.xml
+          minimum_coverage: "50"
