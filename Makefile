@@ -19,7 +19,7 @@ behave-django-feature: compose.override.yml
 ## behave-translator: runs translator behave tests with coverage
 .Phony: behave-translator
 behave-translator: compose.override.yml
-	@docker compose exec -T translator coverage run --source=/app/src -m behave /app/tests/acceptance/features
+	@docker compose exec -T translator coverage run --source=translator -m behave /app/tests/acceptance/features
 	@docker compose exec -T translator coverage xml -o /app/coverage.xml
 
 ## behave-translator-feature: runs a single translator behave feature (append FEATURE=feature_name_here)
