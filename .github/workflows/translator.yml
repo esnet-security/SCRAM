@@ -18,6 +18,8 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: write
+  checks: write
 jobs:
   translator:
     name: Run Translator Tests
@@ -55,9 +57,27 @@ jobs:
       - name: Run Translator Behave Tests
         run: make behave-translator
 
+      - name: Copy Coverage Report
+        run: docker compose cp translator:/app/coverage.xml ./translator/coverage.xml
+
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
+
+      - name: Upload Coverage to Coveralls
+        if: ${{ !env.ACT }}
+        uses: coverallsapp/github-action@v2
+        with:
+          file: ./translator/coverage.xml
+          fail-on-error: false
+
+      - name: Display Translator Coverage Metrics
+        if: ${{ !env.ACT }}
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          report_name: "Translator Coverage"
+          path: ./translator/coverage.xml
+          minimum_coverage: "80"
 
       - name: Check Docker state (post-test)
         if: always()

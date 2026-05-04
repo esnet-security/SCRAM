@@ -61,19 +61,19 @@ jobs:
         env:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
-        run: make pytest
+        run: make pytest-django
 
       - name: Run Django Behave (Acceptance Tests)
         env:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
-        run: make behave-all
+        run: make behave-django
 
-      - name: Run Integration Tests
+      - name: Run Django Integration Tests
         env:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
-        run: make integration-tests
+        run: make integration-tests-django
 
       - name: Generate Coverage Report
         run: |
@@ -101,7 +101,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: 5monkeys/cobertura-action@v14
         with:
-          minimum_coverage: "50"
+          minimum_coverage: "80"
           report_name: "Django Coverage"
           path: django/coverage.xml
 
