@@ -22,6 +22,11 @@ behave-translator: compose.override.yml
 	@docker compose exec -T translator coverage run --source=/app/src -m behave /app/tests/acceptance/features
 	@docker compose exec -T translator coverage xml -o /app/coverage.xml
 
+## behave-translator-feature: runs a single translator behave feature (append FEATURE=feature_name_here)
+.Phony: behave-translator-feature
+behave-translator-feature: compose.override.yml
+	@docker compose exec -T translator python -m behave /app/tests/acceptance/features -i $(FEATURE)
+
 ## build: rebuilds all your containers or a single one if CONTAINER is specified
 .Phony: build
 build: compose.override.yml
