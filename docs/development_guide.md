@@ -58,6 +58,7 @@ You will need to create and authorize a client before you can make any API calls
 
     ```python
     import uuid
+
     print(str(uuid.uuid4()))
     ```
 
