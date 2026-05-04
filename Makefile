@@ -2,6 +2,8 @@
 PYTHON_IMAGE_VER ?= 3.12
 POSTGRES_IMAGE_VER ?= 18
 
+ACT := act --rm --container-options "--privileged -u root" --container-architecture linux/amd64 --platform ubuntu-latest=catthehacker/ubuntu:act-latest
+
 .DEFAULT_GOAL := help
 
 ## toggle-prod: configure make to use the production stack
@@ -50,14 +52,42 @@ build: compose.override.yml
 	@docker compose up -d --no-deps $(CONTAINER)
 	@docker compose restart $(CONTAINER)
 
-## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all integration-tests behave-translator
+## coverage.xml: create coverage files per-project (CI does this differently!)
+coverage.xml: pytest behave-all integration-tests test-scheduler
 	@docker compose run --rm -w /app django coverage report
 	@docker compose run --rm -w /app django coverage xml
 
-## ci-test: runs all tests just like Github CI does
+## test-django: start everything and then run all django tests (pytest + behave + integration) generating coverage.
+.Phony: test-django
+test-django: toggle-local build migrate run coverage.xml
+
+## test-scheduler: runs scheduler package tests with coverage
+.Phony: test-scheduler
+test-scheduler:
+	@cd scheduler && uv run pytest
+
+## test-translator: start everything and run translator behave tests locally
+.Phony: test-translator
+test-translator: toggle-local build migrate run behave-translator
+
+## test-scripts: runs scripts package tests
+.Phony: test-scripts
+test-scripts:
+	@cd scripts && uv run pytest tests/
+
+## test: start everything and run all tests (django + translator + scheduler)
+.Phony: test
+test: test-django test-translator test-scheduler test-scripts
+
+## ci-test: runs all CI workflows locally via act; requires act (`brew install act`)
 .Phony: ci-test
-ci-test: | toggle-local build migrate run coverage.xml
+ci-test:
+	@$(ACT) push --workflows .github/workflows/ruff.yml
+	@$(ACT) push --workflows .github/workflows/scripts.yml
+	@$(ACT) push --workflows .github/workflows/scheduler.yml
+	@$(ACT) push --workflows .github/workflows/translator.yml
+	@$(ACT) push --workflows .github/workflows/django.yml
+# 	@$(ACT) push --workflows .github/workflows/type-check.yml
 
 ## clean: remove local containers and volumes
 .Phony: clean
@@ -129,20 +159,11 @@ pass-reset: compose.override.yml
 pytest: compose.override.yml
 	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -m pytest
 
-## pytest-scheduler: runs scheduler package tests with coverage
-.Phony: pytest-scheduler
-pytest-scheduler:
-	@cd scheduler && uv run pytest
-
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run
 run: compose.override.yml
 	@docker compose up -d
 
-## pytest-scheduler: runs scheduler package tests with coverage
-.Phony: pytest-scripts
-pytest-scripts:
-	@cd scripts && uv run pytest tests/
 
 ## stop: turns off running containers
 .Phony: stop

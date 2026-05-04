@@ -1,10 +1,10 @@
 ---
-name: Run ruff
+name: Run Scripts Tests
 
 on:
   push:
     branches:
-      - '**'
+      - "**"
   pull_request:
     branches:
       - main
@@ -18,20 +18,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ruff:
+  scripts:
+    name: Run Scripts Tests
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Check out the code
         uses: actions/checkout@v4
 
-      - name: Run ruff check
-        uses: astral-sh/ruff-action@v3
-        with:
-          version: "0.15.12"
-          args: check --output-format=github
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: Run ruff format check
-        uses: astral-sh/ruff-action@v3
-        with:
-          version: "0.15.12"
-          args: format --diff
+      - name: Run Scripts Tests
+        run: make pytest-scripts

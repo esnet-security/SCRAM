@@ -1,0 +1,47 @@
+---
+name: Run Scheduler Tests
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scheduler:
+    name: Run Scheduler Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run Scheduler Tests
+        run: make test-scheduler
+
+      - name: Upload Coverage to Coveralls
+        if: ${{ !env.ACT }}
+        uses: coverallsapp/github-action@v2
+        with:
+          file: ./scheduler/coverage.xml
+
+      - name: Display Scheduler Coverage Metrics
+        if: ${{ !env.ACT }}
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          report_name: "Scheduler Coverage"
+          path: ./scheduler/coverage.xml
+          minimum_coverage: "80"
