@@ -73,7 +73,7 @@ jobs:
         env:
           POSTGRES_USER: scram
           POSTGRES_DB: test_scram
-        run: make integration-tests-django
+        run: make integration-django
 
       - name: Generate Coverage Report
         run: |
