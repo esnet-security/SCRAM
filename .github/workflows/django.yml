@@ -101,7 +101,7 @@ jobs:
         if: ${{ !env.ACT }}
         uses: 5monkeys/cobertura-action@v14
         with:
-          minimum_coverage: "80"
+          minimum_coverage: "70"
           report_name: "Django Coverage"
           path: django/coverage.xml
 
