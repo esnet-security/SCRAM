@@ -42,7 +42,7 @@ jobs:
         run: make build CONTAINER=django
 
       - name: Run Type Check
-        run: make type-check || true
+        run: make type-check
 
       - name: Dump docker logs on failure
         if: failure()

@@ -3,6 +3,7 @@
 import ipaddress
 import logging
 import time
+from typing import Any
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -214,7 +215,7 @@ class IsActiveViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset()
 
         if not queryset.exists() and hasattr(self, "normalized_cidr_for_response"):
-            response_data = {
+            response_data: dict[str, Any] = {
                 "results": [
                     {
                         "is_active": False,
@@ -445,8 +446,8 @@ class EntryViewSet(viewsets.ModelViewSet):
 class HealthCheckView(APIView):
     """API endpoint for health check."""
 
-    authentication_classes = []
-    permission_classes = []
+    authentication_classes: list = []
+    permission_classes: list = []
 
     @staticmethod
     def _check_db() -> tuple[str, str]:
@@ -474,7 +475,7 @@ class HealthCheckView(APIView):
     def _get_translator_stats() -> dict[str, dict]:
         """Check for translator stats."""
         translator_heartbeat_timeout = 90
-        translator_stats = {}
+        translator_stats: dict[str, Any] = {}
         try:
             for at in ActionType.objects.filter(available=True):
                 count = cache.get(f"translator_count:{at.name}", 0)
@@ -503,9 +504,9 @@ class HealthCheckView(APIView):
         return translator_stats
 
     @staticmethod
-    def _get_entries_stats() -> tuple[int, int]:
+    def _get_entries_stats() -> dict[str, int | str]:
         """Check for entries stats."""
-        entries_stats = {}
+        entries_stats: dict[str, int | str] = {}
         try:
             counts = (
                 Entry.objects.filter(is_active=True)
@@ -516,6 +517,7 @@ class HealthCheckView(APIView):
             return {entry["actiontype__name"]: entry["count"] for entry in counts}
         except OperationalError as e:
             entries_stats["error"] = str(e)
+        return entries_stats
 
     @staticmethod
     def get(request):

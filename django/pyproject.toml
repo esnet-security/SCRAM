@@ -54,7 +54,7 @@ exclude = ["migrations"]
 # ==== mypy ====
 [tool.mypy]
 check_untyped_defs = true
-exclude = ["src/scram/route_manager/tests"]
+exclude = ["src/scram/.*/tests", "src/scram/conftest.py"]
 ignore_missing_imports = true
 plugins = [
   "mypy_django_plugin.main",
