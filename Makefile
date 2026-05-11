@@ -42,7 +42,7 @@ ci-test:
 	@$(ACT) push --workflows .github/workflows/scheduler.yml
 	@$(ACT) push --workflows .github/workflows/translator.yml
 	@$(ACT) push --workflows .github/workflows/django.yml
-# 	@$(ACT) push --workflows .github/workflows/type-check.yml
+	@$(ACT) push --workflows .github/workflows/type-check.yml
 
 ## clean: remove local containers and volumes
 .Phony: clean
