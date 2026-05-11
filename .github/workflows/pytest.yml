@@ -61,25 +61,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install uv pytest-github-actions-annotate-failures
-          uv pip install --system -r requirements/local.txt --prerelease=allow
+          uv pip install --system -r django/requirements/local.txt --prerelease=allow
 
       - name: Apply migrations
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
         run: |
+          cd django/src
           python manage.py makemigrations --noinput
           python manage.py migrate --noinput
 
       - name: Check for missing migrations
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
-        run: python manage.py makemigrations --check
+        run: cd django/src && python manage.py makemigrations --check
 
       - name: Run Pytest
         env:
           DATABASE_URL: "postgres://scram:@localhost:5432/test_scram_${{ matrix.python-version }}"
           REDIS_HOST: "localhost"
-        run: pytest
+        run: cd django/src && pytest
 
       - name: Install Scheduler Dependencies
         run: |

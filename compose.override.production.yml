@@ -21,7 +21,7 @@ services:
       - path: '/etc/vault.d/secrets/kv_root_security.env'
         required: false
     volumes:
-      - ./staticfiles:/staticfiles
+      - ./django/staticfiles:/staticfiles
     healthcheck:
       test: ["CMD", "curl", "-f", "http://django:5000/process_updates/"]
 
@@ -58,7 +58,7 @@ services:
       - ./compose/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt/live/${HOSTNAME}/fullchain.pem:/etc/ssl/server.crt
       - /etc/letsencrypt/live/${HOSTNAME}/privkey.pem:/etc/ssl/server.key
-      - ./staticfiles:/staticfiles
+      - ./django/staticfiles:/staticfiles
     ports:
       - "443:443"
       - "80:80"

@@ -4,13 +4,13 @@ fail_fast: true
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.15.12
     hooks:
       - id: ruff-format
       - id: ruff-check
@@ -26,7 +26,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.10.7
+    rev: 0.11.8
     hooks:
       - id: uv-lock
         args: [--check]
