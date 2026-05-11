@@ -157,8 +157,7 @@ class Entry(models.Model):
         Returns:
            str: The most recent change reason
         """
-        hist_mgr = getattr(self, self._meta.simple_history_manager_attribute)
-        return hist_mgr.order_by("-history_date").first().history_change_reason
+        return self.history.order_by("-history_date").first().history_change_reason
 
 
 class IgnoreEntry(models.Model):

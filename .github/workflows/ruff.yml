@@ -1,17 +1,23 @@
+---
 name: Run ruff
 
 on:
   push:
     branches:
-      - '**'
+      - main
   pull_request:
     branches:
-      - main
-      - develop
+      - '**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 jobs:
   ruff:
     runs-on: ubuntu-latest
@@ -19,11 +25,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: pip install ruff==0.14.14
+      - name: Run ruff check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.15.12"
+          args: check --output-format=github
 
-      - name: Fail if we have any style errors
-        run: ruff check --output-format=github
-
-      - name: Fail if the code is not formatted correctly (like Black)
-        run: ruff format --diff
+      - name: Run ruff format check
+        uses: astral-sh/ruff-action@v3
+        with:
+          version: "0.15.12"
+          args: format --diff

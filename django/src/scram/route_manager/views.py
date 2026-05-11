@@ -2,7 +2,8 @@
 
 import ipaddress
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import Any
 
 import rest_framework.utils.serializer_helpers
 from asgiref.sync import async_to_sync
@@ -60,7 +61,7 @@ def home_page(request, prefilter=None):
         readwrite = True
     else:
         readwrite = False
-    context = {"entries": {}, "readwrite": readwrite}
+    context: dict[str, Any] = {"entries": {}, "readwrite": readwrite}
     for at in ActionType.objects.all():
         queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by(
             "-pk"
@@ -138,7 +139,7 @@ def add_entry(request):
             "Entry successfully added",
         )
     elif res.status_code == 400:  # noqa: PLR2004
-        errors = []
+        errors: list[str] = []
         if isinstance(res.data, rest_framework.utils.serializer_helpers.ReturnDict):
             for k, v in res.data.items():
                 errors.extend(f"'{k}' error: {error!s}" for error in v)
@@ -154,14 +155,14 @@ def add_entry(request):
     return redirect("route_manager:home")
 
 
-def get_entries_to_process(cutoff_time: timedelta) -> list[Entry]:
+def get_entries_to_process(cutoff_time: datetime) -> list[Entry]:
     """Return entries that have been recently modified by any SCRAM instance.
 
     Queries the Entry history (simple history) table to find any entries modified
     since the cutoff time.
 
     Args:
-        cutoff_time(timedelta): Only consider entries modified after this time.
+        cutoff_time(datetime): Only consider entries modified after this time.
 
     Returns:
         List of Entry objects that need to be reprocessed.

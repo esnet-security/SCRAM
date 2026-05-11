@@ -2,17 +2,58 @@
 PYTHON_IMAGE_VER ?= 3.12
 POSTGRES_IMAGE_VER ?= 18
 
+ACT := act --rm --container-options "--privileged -u root" --container-architecture linux/amd64 --platform ubuntu-latest=catthehacker/ubuntu:act-latest
+
 .DEFAULT_GOAL := help
 
-## toggle-prod: configure make to use the production stack
-.Phony: toggle-prod
-toggle-prod:
-	@ln -sf compose.override.production.yml compose.override.yml
+## behave-django: runs behave inside the django containers against all of your features.
+.Phony: behave-django
+behave-django: compose.override.yml
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --simple
 
-## toggle-local: configure make to use the local stack
-.Phony: toggle-local
-toggle-local:
-	@ln -sf compose.override.local.yml compose.override.yml
+## behave-django-feature: runs a single django behave feature (append FEATURE=feature_name_here)
+.Phony: behave-django-feature
+behave-django-feature: compose.override.yml
+	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django python src/manage.py behave --no-input --simple -i $(FEATURE)
+
+## behave-translator: runs translator behave tests with coverage
+.Phony: behave-translator
+behave-translator: compose.override.yml
+	@docker compose exec -T translator coverage run --source=translator -m behave /app/tests/acceptance/features
+	@docker compose exec -T translator coverage xml -o /app/coverage.xml
+
+## behave-translator-feature: runs a single translator behave feature (append FEATURE=feature_name_here)
+.Phony: behave-translator-feature
+behave-translator-feature: compose.override.yml
+	@docker compose exec -T translator python -m behave /app/tests/acceptance/features -i $(FEATURE)
+
+## build: rebuilds all your containers or a single one if CONTAINER is specified
+.Phony: build
+build: compose.override.yml
+	@docker compose build --build-arg PYTHON_IMAGE_VER=$(PYTHON_IMAGE_VER) --build-arg POSTGRES_IMAGE_VER=$(POSTGRES_IMAGE_VER) $(CONTAINER)
+	@docker compose up -d --no-deps $(CONTAINER)
+	@docker compose restart $(CONTAINER)
+
+## ci-test: runs all CI workflows locally via act; requires act (`brew install act`)
+.Phony: ci-test
+ci-test:
+	@$(ACT) push --workflows .github/workflows/ruff.yml
+	@$(ACT) push --workflows .github/workflows/scripts.yml
+	@$(ACT) push --workflows .github/workflows/scheduler.yml
+	@$(ACT) push --workflows .github/workflows/translator.yml
+	@$(ACT) push --workflows .github/workflows/django.yml
+	@$(ACT) push --workflows .github/workflows/type-check.yml
+
+## clean: remove local containers and volumes
+.Phony: clean
+clean: compose.override.yml
+	@docker compose rm -f -s
+	@docker volume prune -f
+
+## collectstatic: run collect static admin command
+.Phony: collectstatic
+collectstatic: compose.override.yml
+	@docker compose run --rm django python manage.py collectstatic
 
 # Since toggle-(local|prod) are phony targets, this file is not
 # tracked to compare if its "newer" so running another target with
@@ -23,67 +64,43 @@ toggle-local:
 compose.override.yml:
 	@ln -sf compose.override.local.yml compose.override.yml
 
-## behave-all: runs behave inside the containers against all of your features
-.Phony: behave-all
-behave-all: compose.override.yml
-	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --simple
-
-## behave: runs behave inside the containers against a specific feature (append FEATURE=feature_name_here)
-.Phony: behave
-behave: compose.override.yml
-	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django python src/manage.py behave --no-input --simple -i $(FEATURE)
-
-## integration-tests: runs multi-instance system tests against docker compose running containers
-.Phony: integration-tests
-integration-tests: run
-	@docker compose exec -T -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --use-existing-database src/scram/route_manager/tests/integration
-
-## behave-translator
-.Phony: behave-translator
-behave-translator: compose.override.yml
-	@docker compose exec -T translator behave /app/tests/acceptance/features
-
-## build: rebuilds all your containers or a single one if CONTAINER is specified
-.Phony: build
-build: compose.override.yml
-	@docker compose build --build-arg PYTHON_IMAGE_VER=$(PYTHON_IMAGE_VER) --build-arg POSTGRES_IMAGE_VER=$(POSTGRES_IMAGE_VER) $(CONTAINER)
-	@docker compose up -d --no-deps $(CONTAINER)
-	@docker compose restart $(CONTAINER)
-
-## coverage.xml: generate coverage from test runs
-coverage.xml: pytest behave-all integration-tests behave-translator
-	@docker compose run --rm -w /app django coverage report
-	@docker compose run --rm -w /app django coverage xml
-
-## ci-test: runs all tests just like Github CI does
-.Phony: ci-test
-ci-test: | toggle-local build migrate run coverage.xml
-
-## clean: remove local containers and volumes
-.Phony: clean
-clean: compose.override.yml
-	@docker compose rm -f -s
-	@docker volume prune -f
-
-## collect-static: run collect static admin command
-.Phony: collectstatic
-collectstatic: compose.override.yml
-	@docker compose run --rm django python manage.py collectstatic
+## copy-libs: copy the translator autogenerated libraries into the translator directory
+.Phony: copy-libs
+copy-libs:
+	@docker compose cp translator:/app/gobgp_pb2.py translator/
+	@docker compose cp translator:/app/gobgp_pb2.pyi translator/
+	@docker compose cp translator:/app/gobgp_pb2_grpc.py translator/
+	@docker compose cp translator:/app/attribute_pb2.py translator/
+	@docker compose cp translator:/app/attribute_pb2.pyi translator/
+	@docker compose cp translator:/app/attribute_pb2_grpc.py translator/
+	@docker compose cp translator:/app/capability_pb2.py translator/
+	@docker compose cp translator:/app/capability_pb2.pyi translator/
+	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
 
 ## django-addr: get the IP and ephemeral port assigned to docker:8000
 .Phony: django-addr
 django-addr: compose.override.yml
 	@docker compose port django 8000
 
+## django-open: open a browser for http://$(make django-addr)
+.Phony: django-open
+django-open: compose.override.yml
+	@open http://$$(make django-addr)
+
 ## django-url: get the URL based on http://$(make django-addr)
 .Phony: django-url
 django-url: compose.override.yml
 	@echo http://$$(make django-addr)
 
-## django-open: open a browser for http://$(make django-addr)
-.Phony: django-open
-django-open: compose.override.yml
-	@open http://$$(make django-addr)
+## docs-build: build the documentation
+.Phony: docs-build
+docs-build:
+	@docker compose run --rm docs mkdocs build
+
+## docs-serve: build and run a server with the documentation
+.Phony: docs-serve
+docs-serve:
+	@docker compose run --rm docs mkdocs serve -a 0.0.0.0:8888
 
 ## down: turn down docker compose stack
 .Phony: down
@@ -106,7 +123,12 @@ gobgp-neighbor: compose.override.yml
 help: Makefile
 	@sed -n 's/^##//p' $<
 
-# TODO: When we move to flowspec this -a flag with change
+## integration-django: runs multi-instance system tests against docker compose running containers
+.Phony: integration-django
+integration-django: run
+	@docker compose exec -T -w /app -e PYTHONPATH=/app/src django coverage run -a src/manage.py behave --no-input --use-existing-database src/scram/route_manager/tests/integration
+
+# TODO: When we move to flowspec this -a flag will change
 ## list-routes: list gobgp routes
 .Phony: list-routes
 list-routes: compose.override.yml
@@ -124,25 +146,15 @@ migrate: compose.override.yml
 pass-reset: compose.override.yml
 	@docker compose run --rm django python manage.py changepassword admin
 
-## pytest: runs pytest inside the containers
-.Phony: pytest
-pytest: compose.override.yml
+## pytest-django: runs pytest inside the django container
+.Phony: pytest-django
+pytest-django: compose.override.yml
 	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django coverage run -m pytest
-
-## pytest-scheduler: runs scheduler package tests with coverage
-.Phony: pytest-scheduler
-pytest-scheduler:
-	@cd scheduler && uv run pytest
 
 ## run: brings up the containers as described in compose.override.yml
 .Phony: run
 run: compose.override.yml
 	@docker compose up -d
-
-## pytest-scheduler: runs scheduler package tests with coverage
-.Phony: pytest-scripts
-pytest-scripts:
-	@cd scripts && uv run pytest tests/
 
 ## stop: turns off running containers
 .Phony: stop
@@ -154,33 +166,44 @@ stop: compose.override.yml
 tail-log: compose.override.yml
 	@docker compose logs -f $(CONTAINER)
 
+## test: run all tests (django + translator + scheduler + scripts)
+.Phony: test
+test: test-django test-translator test-scheduler test-scripts
+
+## test-django: start everything and then run all django tests (pytest + behave + integration) generating coverage
+.Phony: test-django
+test-django: toggle-local build migrate run pytest-django behave-django integration-django
+	@docker compose run --rm -w /app django coverage report
+	@docker compose run --rm -w /app django coverage xml
+
+## test-scheduler: runs scheduler package tests with coverage
+.Phony: test-scheduler
+test-scheduler:
+	@cd scheduler && uv run pytest
+
+## test-scripts: runs scripts package tests with coverage
+.Phony: test-scripts
+test-scripts:
+	@cd scripts && uv run pytest tests/
+
+## test-translator: start everything and run translator behave tests with coverage
+.Phony: test-translator
+test-translator: toggle-local build migrate run behave-translator
+
+## toggle-local: configure make to use the local stack
+.Phony: toggle-local
+toggle-local:
+	@ln -sf compose.override.local.yml compose.override.yml
+
+## toggle-prod: configure make to use the production stack
+.Phony: toggle-prod
+toggle-prod:
+	@ln -sf compose.override.production.yml compose.override.yml
+
 ## type-check: static type checking
 .Phony: type-check
 type-check: compose.override.yml
 	@docker compose run --rm -w /app -e PYTHONPATH=/app/src django mypy src/scram
-
-## docs-build: build the documentation
-.Phony: docs-build
-docs-build:
-	@docker compose run --rm docs mkdocs build
-
-## docs-serve: build and run a server with the documentation
-.Phony: docs-serve
-docs-serve:
-	@docker compose run --rm docs mkdocs serve -a 0.0.0.0:8888
-
-## copy-libs: copy the translator autogenerated libraries into the translator directory
-.Phony: copy-libs
-copy-libs:
-	@docker compose cp translator:/app/gobgp_pb2.py translator/
-	@docker compose cp translator:/app/gobgp_pb2.pyi translator/
-	@docker compose cp translator:/app/gobgp_pb2_grpc.py translator/
-	@docker compose cp translator:/app/attribute_pb2.py translator/
-	@docker compose cp translator:/app/attribute_pb2.pyi translator/
-	@docker compose cp translator:/app/attribute_pb2_grpc.py translator/
-	@docker compose cp translator:/app/capability_pb2.py translator/
-	@docker compose cp translator:/app/capability_pb2.pyi translator/
-	@docker compose cp translator:/app/capability_pb2_grpc.py translator/
 
 ## update-env-docs: update environment variable documentation append CHECK=true to get a diff if not up to date
 .Phony: update-env-docs
