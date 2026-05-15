@@ -40,7 +40,7 @@ services:
       replicas: ${POSTGRES_ENABLED:-0}
 
   nginx:
-    image: nginx:1.19
+    image: nginx:1.31.1
     logging:
       driver: journald
       options:
