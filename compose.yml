@@ -65,7 +65,7 @@ services:
       replicas: ${POSTGRES_ENABLED:-0}
 
   redis:
-    image: redis:8.2.2
+    image: redis:8.6
     networks:
       default: {}
     sysctls:
@@ -87,7 +87,7 @@ services:
       replicas: ${GOBGP_REPLICAS:-1}
 
   gobgp-secondary:
-    image: jauderho/gobgp:v3.33.0
+    image: jauderho/gobgp:v3.37.0
     networks:
       default: {}
     sysctls:
