@@ -2,11 +2,8 @@
 
 import logging
 
-import attribute_pb2
-import gobgp_pb2
-import gobgp_pb2_grpc
 import grpc
-from google.protobuf.any_pb2 import Any
+from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
 
 from .exceptions import ASNError
 from .settings import settings
@@ -15,6 +12,7 @@ from .shared import asn_is_valid
 _TIMEOUT_SECONDS = 1000
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
+IPV4 = 4
 IPV6 = 6
 
 logger = logging.getLogger(__name__)
@@ -26,13 +24,12 @@ class GoBGP:
     def __init__(self, url):
         """Configure the channel used for communication."""
         channel = grpc.insecure_channel(url)
-        self.stub = gobgp_pb2_grpc.GobgpApiStub(channel)
+        self.stub = gobgp_pb2_grpc.GoBgpServiceStub(channel)
 
     @staticmethod
-    def _get_family_afi(ip_version):
-        if ip_version == IPV6:
-            return gobgp_pb2.Family.AFI_IP6
-        return gobgp_pb2.Family.AFI_IP
+    def _family(ip_version):
+        afi = common_pb2.Family.AFI_IP6 if ip_version == IPV6 else common_pb2.Family.AFI_IP
+        return common_pb2.Family(afi=afi, safi=common_pb2.Family.SAFI_UNICAST)
 
     def _build_path(self, ip, event_data=None):  # noqa: PLR0914
         # Grab ASN and Community from our event_data, or use the defaults
@@ -41,67 +38,56 @@ class GoBGP:
         asn = event_data.get("asn", settings.default_asn)
         community = event_data.get("community", settings.default_community)
         ip_version = ip.ip.version
+        family = self._family(ip_version)
+
+        # Make sure our asn is an acceptable value.
+        asn_is_valid(asn)
 
         # Set the origin to incomplete (options are IGP, EGP, incomplete)
         # Incomplete means that BGP is unsure of exactly how the prefix was injected into the topology.
         # The most common scenario here is that the prefix was redistributed into Border Gateway Protocol
         # from some other protocol, typically an IGP. - https://www.kwtrain.com/blog/bgp-pt2
-        origin = Any()
-        origin.Pack(
-            attribute_pb2.OriginAttribute(
-                origin=2,
-            ),
-        )
+        origin = attribute_pb2.Attribute(origin=attribute_pb2.OriginAttribute(origin=2))
 
         # IP prefix and its associated length
-        nlri = Any()
-        nlri.Pack(
-            attribute_pb2.IPAddressPrefix(
-                prefix_len=ip.network.prefixlen,
-                prefix=str(ip.ip),
-            ),
+        nlri = nlri_pb2.NLRI(
+            prefix=nlri_pb2.IPAddressPrefix(prefix_len=ip.network.prefixlen, prefix=str(ip.ip)),
         )
 
         # Set the next hop to the correct value depending on IP family
-        next_hop = Any()
-        family_afi = self._get_family_afi(ip_version)
         if ip_version == IPV6:
             next_hops = event_data.get("next_hop", settings.default_v6_nexthop)
-            next_hop.Pack(
-                attribute_pb2.MpReachNLRIAttribute(
-                    family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+            next_hop = attribute_pb2.Attribute(
+                mp_reach=attribute_pb2.MpReachNLRIAttribute(
+                    family=family,
                     next_hops=[next_hops],
                     nlris=[nlri],
                 ),
             )
         else:
             next_hops = event_data.get("next_hop", settings.default_v4_nexthop)
-            next_hop.Pack(
-                attribute_pb2.NextHopAttribute(
+            next_hop = attribute_pb2.Attribute(
+                next_hop=attribute_pb2.NextHopAttribute(
                     next_hop=next_hops,
                 ),
             )
 
         # Set our AS Path
-        as_path = Any()
-        as_segment = None
-
-        # Make sure our asn is an acceptable value.
-        asn_is_valid(asn)
-        as_segment = [attribute_pb2.AsSegment(numbers=[asn])]
+        as_segment = [attribute_pb2.AsSegment(type=attribute_pb2.AsSegment.TYPE_AS_SEQUENCE, numbers=[asn])]
         as_segments = attribute_pb2.AsPathAttribute(segments=as_segment)
-        as_path.Pack(as_segments)
+        as_path = attribute_pb2.Attribute(as_path=as_segments)
 
         # Set our community number
         # The ASN gets packed into the community so we need to be careful about size to not overflow the structure
-        communities = Any()
         # Standard community
         # Since we pack both into the community string we need to make sure they will both fit
         if asn < MAX_SMALL_ASN and community < MAX_SMALL_COMM:
             # We bitshift ASN left by 16 so that there is room to add the community on the end of it. This is because
             # GoBGP wants the community sent as a single integer.
             comm_id = (asn << 16) + community
-            communities.Pack(attribute_pb2.CommunitiesAttribute(communities=[comm_id]))
+            communities = attribute_pb2.Attribute(
+                communities=attribute_pb2.CommunitiesAttribute(communities=[comm_id]),
+            )
         else:
             logger.info("LargeCommunity Used - ASN: %s. Community: %s", asn, community)
             global_admin = asn
@@ -113,14 +99,16 @@ class GoBGP:
                 local_data1=local_data1,
                 local_data2=local_data2,
             )
-            communities.Pack(attribute_pb2.LargeCommunitiesAttribute(communities=[large_community]))
+            communities = attribute_pb2.Attribute(
+                large_communities=attribute_pb2.LargeCommunitiesAttribute(communities=[large_community]),
+            )
 
         attributes = [origin, next_hop, as_path, communities]
 
         return gobgp_pb2.Path(
             nlri=nlri,
             pattrs=attributes,
-            family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+            family=family,
         )
 
     def add_path(self, ip, event_data):
@@ -130,7 +118,7 @@ class GoBGP:
             path = self._build_path(ip, event_data)
 
             self.stub.AddPath(
-                gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
@@ -140,7 +128,12 @@ class GoBGP:
         """Remove all routes from being announced."""
         logger.warning("Withdrawing ALL routes")
 
-        self.stub.DeletePath(gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL), _TIMEOUT_SECONDS)
+        # GoBGP v4 needs an address family set to be able to delete all prefixes for that family.
+        for ip_version in (IPV4, IPV6):
+            self.stub.DeletePath(
+                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, family=self._family(ip_version)),
+                _TIMEOUT_SECONDS,
+            )
 
     def del_path(self, ip, event_data):
         """Remove a single route from being announced."""
@@ -148,7 +141,7 @@ class GoBGP:
         try:
             path = self._build_path(ip, event_data)
             self.stub.DeletePath(
-                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.GLOBAL, path=path),
+                gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
                 _TIMEOUT_SECONDS,
             )
         except ASNError as e:
@@ -161,33 +154,32 @@ class GoBGP:
             list: The routes that overlap with the prefix and are currently announced.
         """
         prefixes = [gobgp_pb2.TableLookupPrefix(prefix=str(ip.ip))]
-        family_afi = self._get_family_afi(ip.ip.version)
         result = self.stub.ListPath(
             gobgp_pb2.ListPathRequest(
-                table_type=gobgp_pb2.GLOBAL,
+                table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
                 prefixes=prefixes,
-                family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                family=self._family(ip.ip.version),
             ),
             _TIMEOUT_SECONDS,
         )
         return list(result)
 
-    def get_route_count(self, family_afi):
-        """Return the number of routes in the global RIB for a given AFI."""
+    def get_route_count(self, ip_version):
+        """Return the number of routes in the global RIB for a given IP version."""
         try:
             result = list(
                 self.stub.ListPath(
                     gobgp_pb2.ListPathRequest(
-                        table_type=gobgp_pb2.GLOBAL,
-                        family=gobgp_pb2.Family(afi=family_afi, safi=gobgp_pb2.Family.SAFI_UNICAST),
+                        table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
+                        family=self._family(ip_version),
                     ),
                     _TIMEOUT_SECONDS,
                 )
             )
-            logger.info("GoBGP returned %d routes for family %s", len(result), family_afi)
+            logger.info("GoBGP returned %d routes for IPv%s", len(result), ip_version)
             return len(result)
         except Exception:
-            logger.exception("Failed to get route count for AFI %s", family_afi)
+            logger.exception("Failed to get route count for IPv%s", ip_version)
             return 0
 
     def is_blocked(self, ip):
