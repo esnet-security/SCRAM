@@ -7,11 +7,10 @@ import ipaddress
 import json
 import logging
 
-import gobgp_pb2
 import websockets
 from grpc import RpcError
 
-from .gobgp import GoBGP
+from .gobgp import IPV4, IPV6, GoBGP
 from .settings import DebuggerTypes, settings
 
 logging.basicConfig(level=settings.log_level)
@@ -79,8 +78,8 @@ async def heartbeat(websocket, g):
     """Periodically send health status/route counts to Django."""
     while True:
         try:
-            v4_count = g.get_route_count(gobgp_pb2.Family.AFI_IP)
-            v6_count = g.get_route_count(gobgp_pb2.Family.AFI_IP6)
+            v4_count = g.get_route_count(IPV4)
+            v6_count = g.get_route_count(IPV6)
             payload = {
                 "type": "translator_heartbeat",
                 "message": {

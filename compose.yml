@@ -76,7 +76,7 @@ services:
       replicas: ${REDIS_REPLICAS:-1}
 
   gobgp:
-    image: jauderho/gobgp:v3.37.0
+    image: jauderho/gobgp:${GOBGP_VERSION:-v4.8.0}
     networks:
       default: {}
     sysctls:
@@ -87,7 +87,7 @@ services:
       replicas: ${GOBGP_REPLICAS:-1}
 
   gobgp-secondary:
-    image: jauderho/gobgp:v3.37.0
+    image: jauderho/gobgp:${GOBGP_VERSION:-v4.8.0}
     networks:
       default: {}
     sysctls:
