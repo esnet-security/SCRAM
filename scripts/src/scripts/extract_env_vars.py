@@ -341,11 +341,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    root_dir = Path(__file__).resolve().parent.parent
-    output_path = root_dir / "docs/environment_variables.md"
+    try:
+        project_root = next(
+            p for p in Path(__file__).parents if (p / ".rootdir").exists()
+        )
+    except StopIteration:
+        raise RuntimeError("Could not find project root (.rootdir marker missing)")
+
+    output_path = project_root / "docs/environment_variables.md"
 
     manual_descs = parse_existing_docs(output_path)
-    all_vars = find_env_vars(root_dir)
+    all_vars = find_env_vars(project_root)
     new_content = generate_markdown_content(all_vars, manual_descs)
 
     if args.check:
@@ -358,23 +364,21 @@ def main() -> None:
             diff = difflib.unified_diff(
                 current_content.splitlines(),
                 new_content.splitlines(),
-                fromfile="docs/environment_variables.md (Current)",
-                tofile="docs/environment_variables.md (Generated)",
+                fromfile=f"{output_path} (Current)",
+                tofile=f"{output_path} (Generated)",
                 lineterm="",
             )
             logger.warning("\n".join(diff))
             sys.exit(1)
         else:
-            logger.warning(
-                "Documentation file docs/environment_variables.md does not exist!"
-            )
+            logger.warning("Documentation file %s does not exist!", output_path)
             sys.exit(1)
     elif output_path.exists() and output_path.read_text() == new_content:
         logger.info("Documentation is already up to date. No changes made.")
     else:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(new_content)
-        logger.info("Updated docs/environment_variables.md")
+        logger.info("Updated %s", output_path)
 
 
 if __name__ == "__main__":
