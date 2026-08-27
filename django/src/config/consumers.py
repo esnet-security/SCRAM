@@ -133,6 +133,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
         else:
             await super().dispatch(message)
 
+    translator_add_flowspec = _send_event
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Web UI."""
