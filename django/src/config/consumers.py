@@ -105,6 +105,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
     # Send a query to all translators if a route is announced.
     translator_check = _send_event
 
+    translator_add_flowspec = _send_event
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Web UI."""

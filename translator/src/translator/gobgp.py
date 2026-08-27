@@ -3,7 +3,7 @@
 import logging
 
 import grpc
-from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
+from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2, extcom_pb2
 
 from .exceptions import ASNError
 from .settings import settings
@@ -16,6 +16,9 @@ IPV4 = 4
 IPV6 = 6
 
 logger = logging.getLogger(__name__)
+
+# Temporary list to keep track of active flowspec rules.
+_active_rules = []
 
 
 class GoBGP:
@@ -123,6 +126,161 @@ class GoBGP:
             )
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
+
+    def _build_flowspec_path(self, source_ip, dest_ip, data: dict):
+        """Constructs a Flowspec path based on dictionary matches and returns it."""
+        rules = []
+
+        _OP_EQ = 0x01
+        _OP_END = 0x80
+
+        if dest_ip is not None:
+            rules.append(nlri_pb2.FlowSpecRule(
+                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                    type=1, # TYPE_DST_PREFIX
+                    prefix_len=dest_ip.network.prefixlen,
+                    prefix=dest_ip.network.network_address.exploded,
+                )
+            ))
+
+        if source_ip is not None:
+            rules.append(nlri_pb2.FlowSpecRule(
+                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                    type=2, # TYPE_SRC_PREFIX
+                    prefix_len=source_ip.network.prefixlen,
+                    prefix=source_ip.network.network_address.exploded,
+                )
+            ))
+
+        if "protocol" in data:
+            rules.append(nlri_pb2.FlowSpecRule(
+                component=nlri_pb2.FlowSpecComponent(
+                    type=3, # TYPE_PROTOCOL
+                    items=[nlri_pb2.FlowSpecComponentItem(
+                        op=_OP_END | _OP_EQ,
+                        value=int(data["protocol"]),
+                    )],
+                )
+            ))
+
+        if "source-port" in data:
+            rules.append(nlri_pb2.FlowSpecRule(
+                component=nlri_pb2.FlowSpecComponent(
+                    type=6, # TYPE_SRC_PORT
+                    items=[nlri_pb2.FlowSpecComponentItem(
+                        op=_OP_END | _OP_EQ,
+                        value=int(data["source-port"]),
+                    )],
+                )
+            ))
+
+        if "destination-port" in data:
+            rules.append(nlri_pb2.FlowSpecRule(
+                component=nlri_pb2.FlowSpecComponent(
+                    type=5, # TYPE_DST_PORT
+                    items=[nlri_pb2.FlowSpecComponentItem(
+                        op=_OP_END | _OP_EQ,
+                        value=int(data["destination-port"]),
+                    )],
+                )
+            ))
+
+        # Build FlowSpec NLRI
+        nlri = nlri_pb2.NLRI(
+            flow_spec=nlri_pb2.FlowSpecNLRI(rules=rules)
+        )
+
+        attributes = [
+            attribute_pb2.Attribute(
+                origin=attribute_pb2.OriginAttribute(origin=0)
+            )
+        ]
+
+        # Build action
+        action = data.get("action")
+        action_community = None
+
+        if action == "discard":
+            action_community = extcom_pb2.ExtendedCommunity(
+                traffic_rate=extcom_pb2.TrafficRateExtended(rate=0.0)
+            )
+        elif action == "rate-limit":
+            rate = float(data.get("rate", 0.0))
+            action_community = extcom_pb2.ExtendedCommunity(
+                traffic_rate=extcom_pb2.TrafficRateExtended(rate=rate)
+            )
+
+        if action_community is not None:
+            attributes.append(
+                attribute_pb2.Attribute(
+                    extended_communities=attribute_pb2.ExtendedCommunitiesAttribute(
+                        communities=[action_community]
+                    )
+                )
+            )
+
+        if (source_ip and source_ip.version == 6) or (dest_ip and dest_ip.version == 6):
+            family_afi = common_pb2.Family.AFI_IP6
+        else:
+            family_afi = common_pb2.Family.AFI_IP
+
+        # Append mandatory NextHop
+        next_hop_ip = "0.0.0.0"
+        attributes.append(
+            attribute_pb2.Attribute(
+                next_hop=attribute_pb2.NextHopAttribute(next_hop=next_hop_ip)
+            )
+        )
+
+        family = common_pb2.Family(
+            afi=family_afi,
+            safi=common_pb2.Family.SAFI_FLOW_SPEC_UNICAST,
+        )
+
+        path = gobgp_pb2.Path(
+            nlri=nlri,
+            pattrs=attributes,
+            family=family,
+        )
+
+        return path
+
+    def add_flowspec(self, source_ip, dest_ip, data: dict):
+        """Adds a FlowSpec path to the GoBGP Rib."""
+        path = self._build_flowspec_path(source_ip, dest_ip, data)
+        serialized_path = path.SerializeToString(deterministic=True)
+
+        response = self.stub.AddPath(
+            gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
+            _TIMEOUT_SECONDS
+        )
+
+        _active_rules.append(serialized_path)
+
+        return response.uuid.hex()
+
+    def check_flowspec(self, source_ip, dest_ip, data: dict):
+        """Checks if a FlowSpec path is currently active in the GoBGP Rib."""
+        path = self._build_flowspec_path(source_ip, dest_ip, data)
+        serialized_path = path.SerializeToString(deterministic=True)
+
+        return serialized_path in _active_rules
+
+    def del_flowspec(self, source_ip, dest_ip, data: dict):
+        """Deletes a FlowSpec path from the GoBGP Rib."""
+        path = self._build_flowspec_path(source_ip, dest_ip, data)
+        serialized_path = path.SerializeToString(deterministic=True)
+
+        if serialized_path not in _active_rules:
+            logger.warning("Attempted to delete a FlowSpec path that is not active: %s", serialized_path)
+            return None
+
+        response = self.stub.DeletePath(
+            gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
+            _TIMEOUT_SECONDS
+        )
+
+        _active_rules.remove(serialized_path)
 
     def del_all_paths(self):
         """Remove all routes from being announced."""

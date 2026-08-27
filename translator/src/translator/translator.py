@@ -7,6 +7,7 @@ import ipaddress
 import json
 import logging
 
+from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
 import websockets
 from grpc import RpcError
 
@@ -21,6 +22,10 @@ KNOWN_MESSAGES = {
     "translator_remove",
     "translator_remove_all",
     "translator_check",
+    "translator_add_flowspec",
+    "translator_remove_flowspec",
+    "translator_check_flowspec",
+    "translator_all_flowspec", # TODO: Remove this testing piece when we have a better way of testing flowspec...
 }
 
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
@@ -51,12 +56,51 @@ async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
     event_type = json_message.get("type")
+
     event_data = json_message.get("message")
     if event_type not in KNOWN_MESSAGES:
         logger.error("Unknown event type received: %s", event_type)
     # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         g.del_all_paths()
+        
+    # --- FLOWSPEC MESSAGE HANDLING ---
+    elif event_type in ("translator_add_flowspec", "translator_remove_flowspec", "translator_check_flowspec", "translator_all_flowspec"):
+        try:
+            # Validate IPs if they are provided in the flowspec payload
+            try:
+                if event_data.get("destination"):
+                    dest_ip = ipaddress.ip_interface(event_data.pop("destination"))
+                if event_data.get("source"):
+                    source_ip = ipaddress.ip_interface(event_data.pop("source"))
+            except ValueError as e:
+                logger.exception("Error parsing Flowspec IPs in message: %s", message)
+                return
+            
+            # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
+            # Expected fields inside event_data: destination, source, source-port, 
+            # destination-port, protocol, action (e.g., "discard", "rate-limit")
+            if event_type == "translator_add_flowspec":
+                g.add_flowspec(source_ip, dest_ip, event_data)
+            elif event_type == "translator_remove_flowspec":
+                g.del_flowspec(source_ip, dest_ip, event_data)
+            elif event_type == "translator_check_flowspec":
+                g.check_flowspec(source_ip, dest_ip, event_data)
+            elif event_type == "translator_all_flowspec": # TODO: Remove this testing piece when we have a better way of testing flowspec...
+                print(g.check_flowspec(source_ip, dest_ip, event_data))
+                g.add_flowspec(source_ip, dest_ip, event_data)
+                print(g.check_flowspec(source_ip, dest_ip, event_data))
+                g.del_flowspec(source_ip, dest_ip, event_data)
+                print(g.check_flowspec(source_ip, dest_ip, event_data))
+
+        except ValueError:
+            logger.exception("Error parsing Flowspec IPs in message: %s", message)
+            return
+        except Exception:
+            logger.exception("Error processing flowspec message: %s", message)
+            return
+            
+    # --- STANDARD BGP ROUTE HANDLING ---
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])

@@ -17,7 +17,7 @@ services:
       - ./.envs/.local/.django-primary
       - ./.envs/.local/.postgres
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://django:8000/process_updates/" ]
+      test: [ "CMD", "curl", "-f", "http://django:8000/health/" ]
       interval: 120s
     ports:
       - "8000"
@@ -38,7 +38,7 @@ services:
       - ./.envs/.local/.django-secondary
       - ./.envs/.local/.postgres
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://django-secondary:8000/process_updates/" ]
+      test: [ "CMD", "curl", "-f", "http://django-secondary:8000/health/" ]
       interval: 120s
     ports:
       - "8000"
