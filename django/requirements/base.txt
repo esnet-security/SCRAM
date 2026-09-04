@@ -1,4 +1,4 @@
-setuptools<82 # until we modernize everything, we need this.
+setuptools<85 # until we modernize everything, we need this.
 
 argon2-cffi  # https://github.com/hynek/argon2_cffi
 autobahn<25.10.1  # Pin to avoid v25.10.1 that is giving build troubles.
