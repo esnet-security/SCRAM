@@ -9,6 +9,8 @@ from .exceptions import ASNError
 from .settings import settings
 from .shared import asn_is_valid
 
+import socket
+
 _TIMEOUT_SECONDS = 1000
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
@@ -153,12 +155,22 @@ class GoBGP:
             ))
 
         if "protocol" in data:
+            protocol = data["protocol"]
+
+            if type(protocol) is str:
+                protocolId = socket.getprotobyname(protocol.lower())
+            elif type(protocol) is int:
+                socket.getprotobynumber(protocol) # Validate
+                protocolId = protocol
+            else:
+                raise ValueError("Invalid protocol value. Must be valid int or str: https://www.iana.org/assignments/protocol-numbers")
+
             rules.append(nlri_pb2.FlowSpecRule(
                 component=nlri_pb2.FlowSpecComponent(
                     type=3, # TYPE_PROTOCOL
                     items=[nlri_pb2.FlowSpecComponentItem(
                         op=_OP_END | _OP_EQ,
-                        value=int(data["protocol"]),
+                        value=protocolId,
                     )],
                 )
             ))
