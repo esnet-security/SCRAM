@@ -118,9 +118,6 @@ convention = "google"
 
 [tool.uv.workspace]
 members = ["django", "scheduler", "translator"]
-# Without this you have to specify the package or --all-packages when doing a uv sync
-# or it deletes any package not in the root pyproject.toml
-default-members = ["django", "scheduler", "translator"]
 
 [dependency-groups]
 dev = [
