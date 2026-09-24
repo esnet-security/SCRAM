@@ -2,6 +2,66 @@
 name = "scram-django"
 version = "1.5.1"
 
+requires-python = ">=3.12"
+dependencies = [
+  # Core & Server
+  "gunicorn",
+  "uvicorn[standard]",
+  "whitenoise",
+  "psycopg2-binary",
+  "argon2-cffi",
+  "autobahn<25.10.1",
+  "python-slugify",
+  "websockets",
+  "flower",
+  "setuptools<82",
+
+    # Django & Extensions
+  "django~=5.2",
+  "channels_redis",
+  "crispy-bootstrap5",
+  "django-allauth",
+  "django-anymail",
+  "django-cors-headers",
+  "django-crispy-forms",
+  "django-environ",
+  "django-eventstream",
+  "django-model-utils",
+  "django-netfields",
+  "django-redis",
+  "django-simple-history",
+
+  # DRF & Specs
+  "djangorestframework",
+  "drf-spectacular",
+
+  # Auth
+  "mozilla-django-oidc",
+]
+
+[dependency-groups]
+dev = [
+  # Server & Reloading
+  "Werkzeug[watchdog]",
+  "ipdb",
+  "watchgod",
+  "daphne",
+  "django-debug-toolbar",
+  "django-extensions",
+
+  # Testing
+  "pytest-django",
+  "pytest-sugar",
+  "factory-boy",
+  "behave-django",
+  "django-coverage-plugin",
+  "django-stubs[compatible-mypy]",
+
+  # Remote Debugging
+  "debugpy",
+  "pydevd-pycharm",
+]
+
 # ==== pytest ====
 [tool.pytest.ini_options]
 addopts = [
