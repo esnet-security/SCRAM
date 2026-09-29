@@ -8,7 +8,7 @@ from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Client, Entry, IgnoreEntry, Route
+from ..models import ActionType, Client, Entry, IgnoreEntry, Route, FlowspecRoute
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,28 @@ class RouteSerializer(serializers.ModelSerializer):
         model = Route
         fields = [
             "route",
+        ]
+
+
+class FlowspecRouteSerializer(serializers.ModelSerializer):
+    """Maps to the FlowspecRoute model."""
+
+    source = CustomCidrAddressField()
+    source_port = serializers.IntegerField()
+    destination = CustomCidrAddressField()
+    destination_port = serializers.IntegerField()
+    protocol = serializers.IntegerField()
+
+    class Meta:
+        """Maps to the FlowspecRoute model, and specifies the fields exposed by the API."""
+
+        model = FlowspecRoute
+        fields = [
+            "source",
+            "source_port",
+            "destination",
+            "destination_port",
+            "protocol",
         ]
 
 
@@ -74,7 +96,8 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         lookup_url_kwarg="pk",
         lookup_field="route",
     )
-    route = CustomCidrAddressField()
+    route = CustomCidrAddressField(required=False, allow_null=True)
+    #flowspec_route = FlowspecRouteSerializer(required=False)
     actiontype = serializers.CharField(default="block")
     if CurrentUserDefault():
         # This is set if we are calling this serializer from WUI
@@ -92,6 +115,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         super().__init__(*args, **kwargs)
         if self.instance is not None:
             self.fields["route"].read_only = True
+            self.fields["flowspec_route"].read_only = True
             self.fields["actiontype"].read_only = True
             self.fields["who"].read_only = True
 
@@ -101,6 +125,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         model = Entry
         fields = [
             "route",
+            #"flowspec_route",
             "actiontype",
             "url",
             "comment",
@@ -109,18 +134,32 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             "originating_scram_instance",
             "is_active",
         ]
+        extra_kwargs = {
+            'route': {'required': False, 'allow_blank': True},
+            'flowspec_route': {'required': False, 'allow_null': True}
+        }
 
     # This needs to be an instance method since thats expected by DRF
     # ruff: noqa: PLR6301
     def create(self, validated_data):
         """Create or update an Entry, handling duplicates gracefully."""
-        route_data = validated_data.pop("route")
+        route_data = validated_data.pop("route", None)
+        flowspec_data = validated_data.pop("flowspec_route", None)
         actiontype_name = validated_data.pop("actiontype")
         comment = validated_data.get("comment", "")
 
-        entry, created = Entry.objects.get_or_create(
-            route=route_data, actiontype=actiontype_name, defaults=validated_data
-        )
+        if route_data:
+            entry, created = Entry.objects.get_or_create(
+                route=route_data,
+                actiontype=actiontype_name,
+                defaults=validated_data,
+            )
+        else:
+            entry, created = Entry.objects.get_or_create(
+                flowspec_route=flowspec_data,
+                actiontype=actiontype_name,
+                defaults=validated_data,
+            )
 
         if not created:
             for key, value in validated_data.items():

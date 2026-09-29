@@ -266,7 +266,14 @@ CHANNEL_LAYERS = {
             "group_expiry": 86400
             * 365
             * 10,  # effectively disable removing from a group (default 1d)
-            "hosts": [(os.environ.get("REDIS_HOST", "redis"), 6379)],
+            "hosts": [
+                {
+                    "host": os.environ.get("REDIS_HOST", "redis"),
+                    "port": 6379,
+                    # Make this longer than channels_redis's 5s blocking read, or idle consumers time out and drop.
+                    "socket_timeout": 10,
+                }
+            ],
         },
     },
 }

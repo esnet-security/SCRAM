@@ -32,6 +32,7 @@ from ..models import (
     IgnoreEntry,
     Route,
     WebSocketSequenceElement,
+    FlowspecRoute,
 )
 from .exceptions import (
     ActiontypeNotAllowed,
@@ -317,12 +318,26 @@ class EntryViewSet(viewsets.ModelViewSet):
             )
             raise IgnoredRoute
 
+    def create(self, request, *args, **kwargs):
+        """Override the create method to handle duplicates gracefully."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def perform_create(self, serializer):
         """Create a new Entry, causing that route to receive the actiontype (i.e. block)."""
         actiontype = serializer.validated_data["actiontype"]
-        route = serializer.validated_data["route"]
 
-        route_instance, _ = Route.objects.get_or_create(route=route)
+        if serializer.validated_data["route"]:
+            route = serializer.validated_data["route"]
+
+            route_instance, _ = Route.objects.get_or_create(route=route)
+        else:
+            route = serializer.validated_data["flowspec_route"]
+            route_instance, _ = FlowspecRoute.objects.get_or_create(source=route["source"], destination=route["destination"], protocol=route["protocol"], source_port=route["source_port"], destination_port=route["destination_port"])
+        
         actiontype_instance = ActionType.objects.get(name=actiontype)
 
         if serializer.validated_data.get("who"):
@@ -334,12 +349,14 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         comment = serializer.validated_data["comment"]
 
-        min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
-        if route.prefixlen < min_prefix:
-            raise PrefixTooLarge
+        #min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
+        #if route.prefixlen < min_prefix:
+        #    raise PrefixTooLarge
 
         self.check_client_authorization(actiontype)
-        self.check_ignore_list(route_instance)
+
+        if serializer.validated_data.get("route"): # TODO: hacky fix, clarify how to handle flowspec routes
+            self.check_ignore_list(route_instance)
 
         elements = WebSocketSequenceElement.objects.filter(
             action_type__name=actiontype
@@ -357,7 +374,8 @@ class EntryViewSet(viewsets.ModelViewSet):
             )
 
         serializer.save(
-            route=route_instance,
+            route=route_instance if serializer.validated_data.get("route") else None,
+            flowspec_route=route_instance if serializer.validated_data.get("flowspec_route") else None,
             actiontype=actiontype_instance,
             who=who,
             is_active=True,

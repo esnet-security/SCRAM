@@ -29,6 +29,24 @@ class Route(models.Model):
         """Ensure we use UUID on the API side instead."""
         return reverse("")
 
+class FlowspecRoute(models.Model):
+    """Define a flowspec route as a CIDR route and a UUID."""
+
+    source = CidrAddressField(unique=True)
+    source_port = models.PositiveIntegerField()
+    destination = CidrAddressField(unique=True)
+    destination_port = models.PositiveIntegerField()
+    protocol = models.PositiveIntegerField() # At what point in the stack should we convert "TCP" to 6, "UDP" to 17, etc.? (Support is in gobgp.py but not in models.py) TODO: make enum
+    uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
+
+    def __str__(self):
+        return f"src {self.source}:{self.source_port} -> dst {self.destination}:{self.destination_port} (proto {self.protocol})"
+
+    @staticmethod
+    def get_absolute_url():
+        """Ensure we use UUID on the API side instead."""
+        return reverse("")
+
 
 class ActionType(models.Model):
     """Define a type of action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
@@ -96,7 +114,8 @@ class WebSocketSequenceElement(models.Model):
 class Entry(models.Model):
     """An instance of an action taken on a route."""
 
-    route = models.ForeignKey("Route", on_delete=models.PROTECT)
+    route = models.ForeignKey("Route", on_delete=models.PROTECT, blank=True, null=True)
+    flowspec_route = models.ForeignKey("FlowspecRoute", on_delete=models.PROTECT, blank=True, null=True)
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
     comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)

@@ -15,11 +15,33 @@
     <form class="w-100" action="{% url 'route_manager:add' %}" method="post">
       {% csrf_token %}
       <div class="form-row align-items-center justify-content-center">
-        <div class="col-auto mb-2">
+        <!-- Standard CIDR Field -->
+        <div id="default-fields" class="col-auto mb-2">
           <input class="form-control" name="route" placeholder="cidr" type="text">
         </div>
+
+        <!-- Flowspec Block Fields (Hidden by default) -->
+        <div id="flowspec-fields" class="form-row align-items-center justify-content-center" style="display: none;">
+          <div class="col-auto mb-2">
+            <input class="form-control" name="destination" placeholder="destination" type="text">
+          </div>
+          <div class="col-auto mb-2">
+            <input class="form-control" name="destination_port" placeholder="destination port" type="text">
+          </div>
+          <div class="col-auto mb-2">
+            <input class="form-control" name="source" placeholder="source" type="text">
+          </div>
+          <div class="col-auto mb-2">
+            <input class="form-control" name="source_port" placeholder="source port" type="text">
+          </div>
+          <div class="col-auto mb-2">
+            <input class="form-control" name="protocol" placeholder="protocol" type="text">
+          </div>
+        </div>
+
+        <!-- Actiontype Dropdown -->
         <div class="col-auto mb-2">
-          <select class="form-control" name="actiontype">
+          <select class="form-control" id="actiontype-select" name="actiontype">
             {% for at in entries.keys %}
               {% if at.available %}
                 <option>{{ at }}</option>
@@ -27,6 +49,7 @@
             {% endfor %}
           </select>
         </div>
+
         <div class="col-auto mb-2">
           <input class="form-control" name="comment" placeholder="comment" type="text">
         </div>
@@ -58,4 +81,30 @@
       </div>
     {% endfor %}
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const actionTypeSelect = document.getElementById('actiontype-select');
+      const defaultFields = document.getElementById('default-fields');
+      const flowspecFields = document.getElementById('flowspec-fields');
+
+      function toggleFields() {
+        const selectedValue = actionTypeSelect.value.trim().toLowerCase();
+        if (selectedValue === 'flowspec_block' || selectedValue === 'flowspec block') {
+          defaultFields.style.display = 'none';
+          flowspecFields.style.display = 'flex';
+          defaultFields.querySelectorAll('input').forEach(el => el.disabled = true);
+          flowspecFields.querySelectorAll('input').forEach(el => el.disabled = false);
+        } else {
+          defaultFields.style.display = 'block';
+          flowspecFields.style.display = 'none';
+          defaultFields.querySelectorAll('input').forEach(el => el.disabled = false);
+          flowspecFields.querySelectorAll('input').forEach(el => el.disabled = true);
+        }
+      }
+
+      actionTypeSelect.addEventListener('change', toggleFields);
+      toggleFields(); // Initial run on page load
+    });
+  </script>
 {% endblock %}

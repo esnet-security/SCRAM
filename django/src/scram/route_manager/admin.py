@@ -11,6 +11,7 @@ from .models import (
     Route,
     WebSocketMessage,
     WebSocketSequenceElement,
+    FlowspecRoute,
 )
 
 
@@ -72,3 +73,4 @@ admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
 admin.site.register(WebSocketMessage)
 admin.site.register(WebSocketSequenceElement)
+admin.site.register(FlowspecRoute)
