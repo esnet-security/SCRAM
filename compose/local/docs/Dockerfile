@@ -23,10 +23,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Only re-run the pip install if these files have changed
-COPY django/requirements/base.txt django/requirements/local.txt django/requirements/production.txt /app/requirements/
-RUN pip install uv
-RUN uv pip install --system -r /app/requirements/local.txt -r /app/requirements/production.txt --prerelease=allow
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --system --frozen --only-group docs
 
 COPY . /app/
 

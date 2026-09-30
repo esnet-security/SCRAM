@@ -2,6 +2,8 @@ ARG PYTHON_IMAGE_VER=3.12
 
 FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 ENV PIP_ROOT_USER_ACTION ignore
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -20,8 +22,10 @@ RUN apt-get update \
 # Requirements are installed here to ensure they will be cached.
 COPY ./django/requirements /requirements
 RUN pip install uv
-RUN uv pip install --system -r /requirements/local.txt --prerelease=allow
-
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=django/pyproject.toml,target=django/pyproject.toml \
+    uv sync --system --frozen --all-groups --no-install-project --package scram-django
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
