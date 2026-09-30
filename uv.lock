@@ -3184,6 +3184,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "behave-django" },
+    { name = "coverage", extra = ["toml"] },
     { name = "daphne" },
     { name = "debugpy" },
     { name = "django-coverage-plugin" },
@@ -3232,6 +3233,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "behave-django" },
+    { name = "coverage", extras = ["toml"] },
     { name = "daphne" },
     { name = "debugpy" },
     { name = "django-coverage-plugin" },

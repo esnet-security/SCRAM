@@ -56,6 +56,7 @@ dev = [
   "behave-django",
   "django-coverage-plugin",
   "django-stubs[compatible-mypy]",
+  "coverage[toml]",
 
   # Remote Debugging
   "debugpy",
