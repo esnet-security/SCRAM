@@ -24,7 +24,7 @@ WORKDIR /app
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=django/pyproject.toml,target=django/pyproject.toml \
-    uv sync --frozen --all-groups --no-install-project --package scram-django \
+    uv sync --frozen --all-groups --no-install-project --package scram-django
 
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint

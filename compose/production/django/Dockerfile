@@ -1,6 +1,5 @@
 ARG PYTHON_IMAGE_VER=3.12
 
-
 FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
