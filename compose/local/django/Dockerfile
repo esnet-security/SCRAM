@@ -20,7 +20,6 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Requirements are installed here to ensure they will be cached.
-COPY ./django/requirements /requirements
 RUN pip install uv
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
