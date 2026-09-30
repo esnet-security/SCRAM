@@ -7,6 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV PIP_ROOT_USER_ACTION ignore
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV PATH="/app/.venv/bin:$PATH"
 
 RUN apt-get update \
     # dependencies for building Python packages
@@ -25,9 +26,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
+WORKDIR /app
 RUN --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --system --frozen --only-group docs
+    uv sync --frozen --only-group docs
 
 COPY . /app/
 
