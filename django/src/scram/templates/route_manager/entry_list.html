@@ -44,20 +44,28 @@
     }
     wss_uri += "//" + loc.host;
 
-    {# Open connection to the websocket #}
-    let socket = new WebSocket(wss_uri + "/ws/route_manager/webui_block/")
+    {# Setup one websocket per actiontype#}
+    const sockets = {}
+    function getSocket(actiontype) {
+      if (!(actiontype in sockets)) {
+        sockets[actiontype] = new WebSocket(wss_uri + "/ws/route_manager/webui_" + actiontype + "/")
+        sockets[actiontype].onmessage = handleStatus
+      }
+      return sockets[actiontype]
+    }
 
     {# Send status request message #}
-    function getStatus(route, pk) {
+    function getStatus(actiontype, route, pk) {
       let data = {"type": "wui_check_req", "message": {"route": route, "row": pk}};
-      sendMessage(socket, JSON.stringify(data))
+      sendMessage(getSocket(actiontype), JSON.stringify(data))
     }
 
     // Handle the response message and change icons based on status
     // the bullhorn lets us know it is announced (and tool tip shows by which translator)
     // the bug lets us know SCRAM is trying to announce the route, but gobgp is reporting it is not currently announced
-    // this failure scenario means something is wrong internal to the SCRAM system
-    socket.onmessage = function(msg) {
+    // this failure scenario means something is wrong internal to the SCRAM system. This doesn't do a good job of
+    // handling multiple translator types but that can be fixed in the future.
+    function handleStatus(msg) {
       var resp_data = JSON.parse(msg.data).message;
       var elem = document.getElementById("entry_status_" + resp_data.row);
 
@@ -87,7 +95,7 @@
         <a class="link" href="{% url 'route_manager:detail' entry.id %}">
           {{ entry.route }} - Expires: {{ entry.expiration }}</a>
         <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i>
-        <script>getStatus("{{ entry.route }}", "{{ entry.pk }}");</script>
+        <script>getStatus("{{ actiontype.name }}", "{{ entry.route }}", "{{ entry.pk }}");</script>
       </li>
     {% endfor %}
 
