@@ -83,6 +83,32 @@ class TranslatorType(models.Model):
         return f"/ws/route_manager/{self.group}/"
 
 
+class TranslatorType(models.Model):
+    """A type of translator (for example, gobgp). Each translator type has one websocket group."""
+
+    name = models.CharField(
+        help_text="One-word name, e.g. gobgp",
+        max_length=30,
+        unique=True,
+        validators=[word_only],
+    )
+    history = HistoricalRecords()
+
+    def __str__(self) -> str:
+        """Only display the name."""
+        return self.name
+
+    @property
+    def group(self) -> str:
+        """The channel layer group that translators of this type listen on."""
+        return f"translator_{self.name}"
+
+    @property
+    def url(self) -> str:
+        """The websocket path translators of this type connect to."""
+        return f"/ws/route_manager/{self.group}/"
+
+
 class ActionType(models.Model):
     """Define a type of action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
 
