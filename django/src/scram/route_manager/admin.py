@@ -38,7 +38,7 @@ class WhoFilter(admin.SimpleListFilter):
         return queryset
 
 
-class NameLockedAfterCreate:
+class NameLockedAfterCreate(admin.ModelAdmin):
     """Mixin to make the name field read-only once saved."""
 
     def get_readonly_fields(self, request, obj=None) -> list[str]:
