@@ -1,10 +1,11 @@
 ARG PYTHON_IMAGE_VER=3.12
 
-
 FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONUNBUFFERED 1
+ENV PATH="/app/.venv/bin:$PATH"
 
 RUN apt-get update \
   # dependencies for building Python packages and Docker healthcheck
@@ -20,11 +21,12 @@ RUN apt-get update \
 RUN addgroup --system django \
     && adduser --system --ingroup django django
 
-# Requirements are installed here to ensure they will be cached.
-COPY ./django/requirements/ /requirements
-RUN pip install uv
-RUN uv pip install --system --no-cache-dir -r /requirements/production.txt \
-    && rm -rf /requirements
+# Install dependencies using uv workspace caching
+WORKDIR /app
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=django/pyproject.toml,target=django/pyproject.toml \
+    uv sync --frozen --no-dev --no-install-project --package scram-django
 
 COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint

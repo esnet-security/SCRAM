@@ -2,9 +2,13 @@ ARG PYTHON_IMAGE_VER=3.12
 
 FROM python:${PYTHON_IMAGE_VER}-slim-bookworm
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 ENV PIP_ROOT_USER_ACTION ignore
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ENV UV_PROJECT_ENVIRONMENT="/venv"
+ENV PATH="/venv/bin:$PATH"
 
 RUN apt-get update \
     # dependencies for building Python packages
@@ -23,10 +27,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Only re-run the pip install if these files have changed
-COPY django/requirements/base.txt django/requirements/local.txt django/requirements/production.txt /app/requirements/
-RUN pip install uv
-RUN uv pip install --system -r /app/requirements/local.txt -r /app/requirements/production.txt --prerelease=allow
+WORKDIR /app
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --only-group docs
 
 COPY . /app/
 
