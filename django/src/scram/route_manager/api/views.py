@@ -355,6 +355,8 @@ class EntryViewSet(viewsets.ModelViewSet):
         if serializer.validated_data.get("route"): # TODO: hacky fix, clarify how to handle flowspec routes
             self.check_ignore_list(route_instance)
 
+        route_instance = serializer.validated_data
+
         actiontype_instance.send_to_translators("add", route_instance)
 
         serializer.save(

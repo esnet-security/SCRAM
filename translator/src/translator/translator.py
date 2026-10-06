@@ -23,10 +23,9 @@ KNOWN_MESSAGES = {
     "translator_block_remove",
     "translator_block_check",
     "translator_remove_all",
-    "translator_add_flowspec",
-    "translator_remove_flowspec",
-    "translator_check_flowspec",
-    "translator_all_flowspec", # TODO: Remove this testing piece when we have a better way of testing flowspec...
+    "translator_filter_add",
+    "translator_filter_remove",
+    "translator_filter_check",
 }
 
 # Django closes with this code when no TranslatorType matches our SCRAM_EVENTS_URL; retrying can't fix it.
@@ -69,7 +68,7 @@ async def process(message, websocket, g):
         g.del_all_paths()
         
     # --- FLOWSPEC MESSAGE HANDLING ---
-    elif event_type in ("translator_add_flowspec", "translator_remove_flowspec", "translator_check_flowspec", "translator_all_flowspec"):
+    elif event_type in ("translator_filter_add", "translator_filter_remove", "translator_filter_check"):
         try:
             # Validate IPs if they are provided in the flowspec payload
             try:
@@ -84,18 +83,12 @@ async def process(message, websocket, g):
             # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
             # Expected fields inside event_data: destination, source, source-port, 
             # destination-port, protocol, action (e.g., "discard", "rate-limit")
-            if event_type == "translator_add_flowspec":
+            if event_type == "translator_filter_add":
                 g.add_flowspec(source_ip, dest_ip, event_data)
-            elif event_type == "translator_remove_flowspec":
+            elif event_type == "translator_filter_remove":
                 g.del_flowspec(source_ip, dest_ip, event_data)
-            elif event_type == "translator_check_flowspec":
+            elif event_type == "translator_filter_check":
                 g.check_flowspec(source_ip, dest_ip, event_data)
-            elif event_type == "translator_all_flowspec": # TODO: Remove this testing piece when we have a better way of testing flowspec...
-                print(g.check_flowspec(source_ip, dest_ip, event_data))
-                g.add_flowspec(source_ip, dest_ip, event_data)
-                print(g.check_flowspec(source_ip, dest_ip, event_data))
-                g.del_flowspec(source_ip, dest_ip, event_data)
-                print(g.check_flowspec(source_ip, dest_ip, event_data))
 
         except ValueError:
             logger.exception("Error parsing Flowspec IPs in message: %s", message)
