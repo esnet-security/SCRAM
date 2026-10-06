@@ -96,7 +96,7 @@
 
       function toggleFields() {
         const selectedValue = actionTypeSelect.value.trim().toLowerCase();
-        if (selectedValue === 'flowspec_block' || selectedValue === 'flowspec block') {
+        if (selectedValue === 'filter') {
           defaultFields.style.display = 'none';
           flowspecFields.style.display = 'flex';
           defaultFields.querySelectorAll('input').forEach(el => el.disabled = true);
