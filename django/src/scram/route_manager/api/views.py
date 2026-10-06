@@ -5,8 +5,6 @@ import logging
 import time
 from typing import Any
 
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.cache import InvalidCacheBackendError, cache
 from django.core.exceptions import PermissionDenied
@@ -31,8 +29,8 @@ from ..models import (
     Entry,
     IgnoreEntry,
     Route,
-    WebSocketSequenceElement,
     FlowspecRoute,
+    TranslatorType,
 )
 from .exceptions import (
     ActiontypeNotAllowed,
@@ -48,7 +46,6 @@ from .serializers import (
     IsActiveSerializer,
 )
 
-channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
 
 
@@ -358,20 +355,7 @@ class EntryViewSet(viewsets.ModelViewSet):
         if serializer.validated_data.get("route"): # TODO: hacky fix, clarify how to handle flowspec routes
             self.check_ignore_list(route_instance)
 
-        elements = WebSocketSequenceElement.objects.filter(
-            action_type__name=actiontype
-        ).order_by("order_num")
-        if not elements:
-            logger.warning("No elements found for actiontype: %s", actiontype)
-
-        for element in elements:
-            msg = element.websocketmessage
-            msg.msg_data[msg.msg_data_route_field] = str(route_instance)
-            # Must match a channel name defined in asgi.py
-            async_to_sync(channel_layer.group_send)(
-                f"translator_{actiontype}",
-                {"type": msg.msg_type, "message": msg.msg_data},
-            )
+        actiontype_instance.send_to_translators("add", route_instance)
 
         serializer.save(
             route=route_instance if serializer.validated_data.get("route") else None,
@@ -495,26 +479,23 @@ class HealthCheckView(APIView):
         translator_heartbeat_timeout = 90
         translator_stats: dict[str, Any] = {}
         try:
-            for at in ActionType.objects.filter(available=True):
-                count = cache.get(f"translator_count:{at.name}", 0)
-                # Fetch GoBGP stats from heartbeats
-                bgp_stats = cache.get(f"translator_stats:{at.name}")
+            for translator in TranslatorType.objects.all():
+                count = cache.get(f"translator_count:{translator.name}", 0)
+                # Fetch translator stats from heartbeats
+                stats = cache.get(f"translator_stats:{translator.name}")
 
                 # Filter out stale heartbeats (e.g., > 90s)
                 now = time.time()
-                active_bgp_stat = {"v4": 0, "v6": 0}
-                if (
-                    bgp_stats
-                    and now - bgp_stats["last_seen"] < translator_heartbeat_timeout
-                ):
-                    active_bgp_stat = {
-                        "v4": bgp_stats["v4_count"],
-                        "v6": bgp_stats["v6_count"],
+                routes = {"v4": 0, "v6": 0}
+                if stats and now - stats["last_seen"] < translator_heartbeat_timeout:
+                    routes = {
+                        "v4": stats["v4_count"],
+                        "v6": stats["v6_count"],
                     }
 
-                translator_stats[at.name] = {
+                translator_stats[translator.name] = {
                     "count": count,
-                    "gobgp_routes": active_bgp_stat,
+                    "routes": routes,
                 }
         except (OperationalError, RedisError, TypeError) as e:
             translator_stats["error"] = str(e)
@@ -523,16 +504,19 @@ class HealthCheckView(APIView):
 
     @staticmethod
     def _get_entries_stats() -> dict[str, int | str]:
-        """Check for entries stats."""
+        """Check for entries stats.
+
+        Groups the active entries by their action type.
+        """
         entries_stats: dict[str, int | str] = {}
         try:
-            counts = (
+            counts = dict(
                 Entry.objects.filter(is_active=True)
-                .values("actiontype__name")
+                .values_list("actiontype__name")
                 .annotate(count=Count("id"))
-                .order_by("actiontype__name")
             )
-            return {entry["actiontype__name"]: entry["count"] for entry in counts}
+            names = ActionType.objects.order_by("name").values_list("name", flat=True)
+            return {name: counts.get(name, 0) for name in names}
         except OperationalError as e:
             entries_stats["error"] = str(e)
         return entries_stats

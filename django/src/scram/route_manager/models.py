@@ -2,16 +2,25 @@
 
 import datetime
 import logging
+import re
 import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
 from simple_history.models import HistoricalRecords
 
+from typing import Any
+
 logger = logging.getLogger(__name__)
+
+# ASCII-only because channels rejects non-ASCII group names.
+word_only = RegexValidator(
+    r"^\w+$", "Use only letters, numbers, and underscores.", flags=re.ASCII
+)
 
 
 class Route(models.Model):
@@ -48,16 +57,57 @@ class FlowspecRoute(models.Model):
         return reverse("")
 
 
+class TranslatorType(models.Model):
+    """A type of translator (for example, gobgp). Each translator type has one websocket group."""
+
+    name = models.CharField(
+        help_text="One-word name, e.g. gobgp",
+        max_length=30,
+        unique=True,
+        validators=[word_only],
+    )
+    history = HistoricalRecords()
+
+    def __str__(self) -> str:
+        """Only display the name."""
+        return self.name
+
+    @property
+    def group(self) -> str:
+        """The channel layer group that translators of this type listen on."""
+        return f"translator_{self.name}"
+
+    @property
+    def url(self) -> str:
+        """The websocket path translators of this type connect to."""
+        return f"/ws/route_manager/{self.group}/"
+
+
 class ActionType(models.Model):
     """Define a type of action that can be done with a given route. e.g. Block, shunt, redirect, etc."""
 
+    VERBS = ("add", "remove", "check")
+
     name = models.CharField(
-        help_text="One-word description of the action", max_length=30
+        help_text="One-word description of the action",
+        max_length=30,
+        unique=True,
+        validators=[word_only],
     )
     available = models.BooleanField(
         help_text="Is this a valid choice for new entries?", default=True
     )
-    history = HistoricalRecords()
+    translator_types = models.ManyToManyField(
+        TranslatorType,
+        blank=True,
+        help_text="Which translator types actually perform this action",
+    )
+    payload = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Extra data sent with every message for this action, e.g. {"asn": 65550, "community": 666}',
+    )
+    history = HistoricalRecords(m2m_fields=[translator_types])
 
     def __str__(self):
         """Display clearly whether the action is currently available."""
@@ -65,50 +115,49 @@ class ActionType(models.Model):
             return f"{self.name} (Inactive)"
         return self.name
 
+    def message_type(self, verb) -> str:
+        """The message type translators receive, i.e. translator_block_add."""
+        return f"translator_{self.name}_{verb}"
 
-class WebSocketMessage(models.Model):
-    """Define a single message sent to downstream translators via WebSocket."""
+    def message(self, verb, route) -> dict[str, Any]:
+        """Build the websocket message for a verb and route.
 
-    msg_type = models.CharField("The type of the message", max_length=50)
-    msg_data = models.JSONField(
-        "The JSON payload. See also msg_data_route_field.", default=dict
-    )
-    msg_data_route_field = models.CharField(
-        "The key in the JSON payload whose value will contain the route being acted on.",
-        default="route",
-        max_length=25,
-    )
+        We also make sure here that the route field is not ever overridden by the payload.
+        """
 
-    def __str__(self):
-        """Display clearly what the fields are used for."""
-        return f"{self.msg_type}: {self.msg_data} with the route in key {self.msg_data_route_field}"
+        return {
+            "type": self.message_type(verb),
+            "message": {**self.payload, "route": str(route)},
+        }
 
+    def send_to_translators(self, verb, route, translator_types=None) -> None:
+        """Send this action's message to given or all of the translators that it's linked to.
 
-class WebSocketSequenceElement(models.Model):
-    """In a sequence of messages, define a single element."""
+        By default, we just send messages only to the translator types linked to this action, however, we have to be
+        able to override this behavior and send to specific translator types instead in the cases of adding/removing
+        translator types to the action, so the admin page sends a list of translators to send when that happens.
+        """
 
-    websocketmessage = models.ForeignKey("WebSocketMessage", on_delete=models.CASCADE)
-    order_num = models.SmallIntegerField(
-        "Sequences are sent from the smallest order_num to the highest. "
-        "Messages with the same order_num could be sent in any order",
-        default=0,
-    )
+        # normally we just send to all linked translator_types
+        if translator_types is None:
+            translator_types = self.translator_types.all()
 
-    VERB_CHOICES = [
-        ("A", "Add"),
-        ("C", "Check"),
-        ("R", "Remove"),
-    ]
-    verb = models.CharField(max_length=1, choices=VERB_CHOICES)
+        groups = [translator_type.group for translator_type in translator_types]
+        if not groups:
+            logger.warning(
+                "Actiontype %s has no translator types, not sending %s for %s",
+                self.name,
+                verb,
+                route,
+            )
+        message = self.message(verb, route)
+        for group in groups:
+            async_to_sync(channel_layer.group_send)(group, message)
 
-    action_type = models.ForeignKey("ActionType", on_delete=models.CASCADE)
-
-    def __str__(self):
-        """Summarize the fields into something short and readable."""
-        return (
-            f"{self.websocketmessage} as order={self.order_num} for "
-            f"{self.verb} actions on actiontype={self.action_type}"
-        )
+    def send_active_entries(self, verb, translator_types) -> None:
+        """Send every active entry's message for a verb to the given translator types."""
+        for entry in self.entry_set.filter(is_active=True).select_related("route"):
+            self.send_to_translators(verb, entry.route, translator_types)
 
 
 class Entry(models.Model):
@@ -161,14 +210,7 @@ class Entry(models.Model):
         self.is_active = False
         self.save()
 
-        # Unblock it
-        async_to_sync(channel_layer.group_send)(
-            f"translator_{self.actiontype}",
-            {
-                "type": "translator_remove",
-                "message": {"route": str(self.route)},
-            },
-        )
+        self.actiontype.send_to_translators("remove", self.route)
 
     def get_change_reason(self):
         """Traverse some complex relationships to determine the most recent change reason.

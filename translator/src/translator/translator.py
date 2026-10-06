@@ -17,16 +17,20 @@ from .settings import DebuggerTypes, settings
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
 
+# These are really only messages we *receive*, we sometimes *send* others (translator_heartbeat)
 KNOWN_MESSAGES = {
-    "translator_add",
-    "translator_remove",
+    "translator_block_add",
+    "translator_block_remove",
+    "translator_block_check",
     "translator_remove_all",
-    "translator_check",
     "translator_add_flowspec",
     "translator_remove_flowspec",
     "translator_check_flowspec",
     "translator_all_flowspec", # TODO: Remove this testing piece when we have a better way of testing flowspec...
 }
+
+# Django closes with this code when no TranslatorType matches our SCRAM_EVENTS_URL; retrying can't fix it.
+UNKNOWN_TRANSLATOR_TYPE = 4404
 
 # Here we setup a debugger if this is desired. This obviously should not be run in production.
 if settings.debug:
@@ -108,11 +112,11 @@ async def process(message, websocket, g):
             logger.exception("Error parsing message: %s", message)
             return
 
-        if event_type == "translator_add":
+        if event_type == "translator_block_add":
             g.add_path(ip, event_data)
-        elif event_type == "translator_remove":
+        elif event_type == "translator_block_remove":
             g.del_path(ip, event_data)
-        elif event_type == "translator_check":
+        elif event_type == "translator_block_check":
             json_message["type"] = "translator_check_resp"
             json_message["message"]["is_blocked"] = g.is_blocked(ip)
             await websocket.send(json.dumps(json_message))
@@ -131,11 +135,18 @@ async def heartbeat(websocket, g):
                     "v6_count": v6_count,
                 },
             }
-            logger.info("Sending heartbeat: %s", json.dumps(payload))
+            logger.debug("Sending heartbeat: %s", json.dumps(payload))
             await websocket.send(json.dumps(payload))
         except Exception:
             logger.exception("Heartbeat failed")
         await asyncio.sleep(30)
+
+
+def exit_if_rejected(closed):
+    """Stop instead of reconnecting when SCRAM rejects our translator type."""
+    if closed.rcvd and closed.rcvd.code == UNKNOWN_TRANSLATOR_TYPE:
+        logger.critical("SCRAM rejected this translator: %s", closed.rcvd.reason)
+        raise SystemExit(1) from closed
 
 
 async def main():
@@ -149,8 +160,8 @@ async def main():
                 try:
                     async for message in websocket:
                         await process(message, websocket, g)
-                except websockets.ConnectionClosed:
-                    heartbeat_task.cancel()
+                except websockets.ConnectionClosed as e:
+                    exit_if_rejected(e)
                     continue
                 finally:
                     heartbeat_task.cancel()

@@ -1,9 +1,11 @@
 """Define simple tests for the template-based Views."""
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import resolve, reverse
 
+from scram.route_manager.models import ActionType
 from scram.route_manager.views import home_page
 
 
@@ -45,6 +47,32 @@ class HomePageLogoutTest(TestCase):
         self.assertNotContains(response, b"An admin user was created for you.")
         self.assertNotContains(response, b'type="submit">Logout')
         self.assertNotContains(response, b">Admin</a>")
+
+
+class HomePageUnlinkedActiontypeTest(TestCase):
+    """Ensure homepage warns people about unlinked action types."""
+
+    def setUp(self):
+        """Log in as admin."""
+        self.client.force_login(
+            get_user_model().objects.create_superuser(
+                "admin", "admin@example.net", "password"
+            )
+        )
+
+    def test_warns_about_unlinked(self):
+        """An available actiontype with no translator types shows a warning."""
+        ActionType.objects.create(name="filter")
+        self.assertContains(
+            self.client.get(reverse("route_manager:home")), "<strong>filter</strong>"
+        )
+
+    def test_skips_unavailable(self):
+        """Ensure non-available, unlinked actiontypes don't show a warning."""
+        ActionType.objects.create(name="retired", available=False)
+        self.assertNotContains(
+            self.client.get(reverse("route_manager:home")), "retired"
+        )
 
 
 class NotFoundTest(TestCase):
