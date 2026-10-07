@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
+from rest_framework.validators import UniqueTogetherValidator
 from simple_history.utils import update_change_reason
 
 from ..models import ActionType, Client, Entry, IgnoreEntry, Route, FlowspecRoute
@@ -68,6 +69,14 @@ class FlowspecRouteSerializer(serializers.ModelSerializer):
             "source": {"validators": []},
             "destination": {"validators": []}
         }
+
+    # This is very stupid and should not stick around but we cant use the DRF API viewer HTML form otherwise
+    # It passes emptry strings for fields without anything listed which breaks errythang
+    def get_value(self, dictionary):
+        value = super().get_value(dictionary)
+        if isinstance(value, dict) and not any(value.values()):
+            return serializers.empty
+        return value
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -140,10 +149,9 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             "originating_scram_instance",
             "is_active",
         ]
-        extra_kwargs = {
-            'route': {'required': False, 'allow_null': True},
-            'flowspec_route': {'required': False, 'allow_null': True}
-        }
+        # again, dealing with the unique together in models.py TODO
+        validators = []
+
 
     # This needs to be an instance method since thats expected by DRF
     # ruff: noqa: PLR6301
