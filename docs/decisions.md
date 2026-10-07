@@ -63,14 +63,20 @@ not affect any sort of change. This endpoint is POST only, so nobody should be a
 they can access the admin site. Our main security concern after all this is a DoS by constantly POSTing to this endpoint,
 which can be handled the same way any other DoS would be dealth with (ie likely blocked via SCRAM).
 
+#### Action Types and Translator Types
+
+Each action type (e.g. `block`) is linked in the admin to one or more translator types (e.g. `gobgp`). A translator connects to `/ws/route_manager/translator_<translator type>/` and receives messages for every action type linked to it, typed `translator_<action>_<add|remove|check>` (e.g. `translator_block_add`). The idea here is that you can have multiple translators (as distinct containers) for various functions (we don't have this Yet but could) and you can choose in the admin page where to route the action types to a translator or group of translators. This supports many to many linking of action types to translators and eventually we should figure out how to make translator code more flexible/libraryified to suppot easily making new translators.
+
+New action types need no code changes in Django, only in the translators that handle them (as long as they only do `route` for now...). Django rejects connections for unknown translator types with close code 4404, and the translator exits instead of retrying. These action types and translator types replace the functionality of older WebSocketMessage and WebSocketSequenceElements models and those are removed/upgraded to action type payloads via a database migration.
+
+Linking or unlinking a translator type in the admin by design sends adds or removes for that action's active entries, and deleting a translator type withdraws its routes first. The home page warns about action types with no linked translator types, since their entries go nowhere.
+
 #### Configurable Payloads
-Configurable payloads allows you to override certain data sent to the translator. Currently, this is ASN and BGP community.
-In order to do so, you update the JSON dictionary inside the Web Socket Message entry in the admin page. One thing to note
-is that you must include a "route" key in that dictionary with a string value of any kind. If you decide to change the 
-key in the JSON payload whose value will contain the route being acted on field, you must change the route key in the 
-dictionary to match that field.
+
+Configurable payloads allows you to override certain data sent to the translator. Currently, this is ASN and BGP community. In order to do so, each action type has a JSON `payload` (e.g. `{"asn": 65550, "community": 666}`) that is merged into every message for that action. The `route` key is always set by SCRAM for now and overrides any `route` in the payload.
 
 #### Syncing
+
 If you want two or more instances of SCRAM to share data between themselves we have a few ways of making sure that happens.
 
 1. By depending on postgres, we can use a shared postgres instance to make sure both SCRAM instances have the same data
@@ -85,7 +91,7 @@ We had a bug where entries that had expired or been deleted on one SCRAM instanc
 
 The fix takes advantage of the already existing `django-simple-history` models that track any entry modifications. To sync, we query the history models to see if something has changed in any way, and we just go ahead and re-send that to the translator, ensuring eventual consistency (since translator is idempotent).
 
-We initially tried excluding any entries from the local instance from reprocessing (`originating_scram_instance != settings.SCRAM_HOSTNAME`) because we thought local entries would already be in the right state (i.e. if something blocked the entry on one host, it would then deactivate it on the same host), but this was wrong for expiration. When entries expire, it could be performed from any instance at any time (via the health check), not just the instance that it was originally blocked on, so the originating instance needs to reprocess even its own expired entries to guarantee that we send the `translator_remove` message. We removed the exclusion filter entirely (PR #193), so now all instances reprocess everything that changed. It's a bit redundant and wastes more resources, but it's idempotent and good enough until we re-design syncing from the ground up.
+We initially tried excluding any entries from the local instance from reprocessing (`originating_scram_instance != settings.SCRAM_HOSTNAME`) because we thought local entries would already be in the right state (i.e. if something blocked the entry on one host, it would then deactivate it on the same host), but this was wrong for expiration. When entries expire, it could be performed from any instance at any time (via the health check), not just the instance that it was originally blocked on, so the originating instance needs to reprocess even its own expired entries to guarantee that we send the `translator_block_remove` message. We removed the exclusion filter entirely (PR #193), so now all instances reprocess everything that changed. It's a bit redundant and wastes more resources, but it's idempotent and good enough until we re-design syncing from the ground up.
 
 ##### Future Work
 
