@@ -124,10 +124,23 @@ class ActionType(models.Model):
 
         We also make sure here that the route field is not ever overridden by the payload.
         """
+        if hasattr(route, "destination"):
+            msg_data = {
+                "source": str(route.source),
+                "destination": str(route.destination),
+                "source-port": route.source_port,
+                "destination-port": route.destination_port,
+                "protocol": route.protocol,
+                "action": "discard",
+            }
+        else:
+            msg_data = {
+                "source": str(route),
+            }
 
         return {
             "type": self.message_type(verb),
-            "message": {**self.payload, "route": str(route)},
+            "message": {**self.payload, **msg_data},
         }
 
     def send_to_translators(self, verb, route, translator_types=None) -> None:
