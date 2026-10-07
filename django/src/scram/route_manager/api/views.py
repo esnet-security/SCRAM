@@ -326,15 +326,6 @@ class EntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new Entry, causing that route to receive the actiontype (i.e. block)."""
         actiontype = serializer.validated_data["actiontype"]
-
-        if serializer.validated_data["route"]:
-            route = serializer.validated_data["route"]
-
-            route_instance, _ = Route.objects.get_or_create(route=route)
-        else:
-            route = serializer.validated_data["flowspec_route"]
-            route_instance, _ = FlowspecRoute.objects.get_or_create(source=route["source"], destination=route["destination"], protocol=route["protocol"], source_port=route["source_port"], destination_port=route["destination_port"])
-        
         actiontype_instance = ActionType.objects.get(name=actiontype)
 
         if serializer.validated_data.get("who"):
@@ -352,16 +343,28 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         self.check_client_authorization(actiontype)
 
-        if serializer.validated_data.get("route"): # TODO: hacky fix, clarify how to handle flowspec routes
+        if serializer.validated_data.get("route"):
+            flowspec_instance = None
+            route = serializer.validated_data["route"]
+            route_instance, _ = Route.objects.get_or_create(route=route)
+            # we uhhh currently can only check based on "route" so fixing this is a TODO
             self.check_ignore_list(route_instance)
-
-        route_instance = serializer.validated_data
-
-        actiontype_instance.send_to_translators("add", route_instance)
+            target_instance = route_instance
+        else:
+            route_instance = None
+            f_data = serializer.validated_data["flowspec_route"]
+            flowspec_instance, _ = FlowspecRoute.objects.get_or_create(
+                source=f_data["source"],
+                source_port=f_data["source_port"],
+                destination=f_data["destination"],
+                destination_port=f_data["destination_port"],
+                protocol=f_data["protocol"],
+            )
+            target_instance = flowspec_instance
 
         serializer.save(
-            route=route_instance if serializer.validated_data.get("route") else None,
-            flowspec_route=route_instance if serializer.validated_data.get("flowspec_route") else None,
+            route=route_instance,
+            flowspec_route=flowspec_instance,
             actiontype=actiontype_instance,
             who=who,
             is_active=True,
@@ -370,7 +373,9 @@ class EntryViewSet(viewsets.ModelViewSet):
         )
         entry = serializer.instance
         update_change_reason(entry, comment)
-        logger.info("Created entry %s for route %s", actiontype, route)
+        actiontype_instance.send_to_translators("add", target_instance)
+
+        logger.info("Created entry %s for route %s", actiontype, target_instance)
 
     def perform_update(self, serializer):
         """Update an existing Entry."""
