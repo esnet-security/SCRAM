@@ -176,7 +176,7 @@ class GoBGP:
                     _TIMEOUT_SECONDS,
                 )
             )
-            logger.info("GoBGP returned %d routes for IPv%s", len(result), ip_version)
+            logger.debug("GoBGP returned %d routes for IPv%s", len(result), ip_version)
             return len(result)
         except Exception:
             logger.exception("Failed to get route count for IPv%s", ip_version)

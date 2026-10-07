@@ -12,29 +12,22 @@ from django.urls import reverse
 from scram.route_manager.models import (
     ActionType,
     Client,
-    WebSocketMessage,
-    WebSocketSequenceElement,
+    TranslatorType,
 )
 
 
 @given("a {name} actiontype is defined")
 def create_actiontype(context, name):
-    """Create an actiontype of that name."""
+    """Create an actiontype of that name, carried out by gobgp translators."""
+    gobgp, _ = TranslatorType.objects.get_or_create(name="gobgp")
     context.channel_layer = get_channel_layer()
     async_to_sync(context.channel_layer.group_send)(
-        f"translator_{name}",
+        gobgp.group,
         {"type": "translator_remove_all", "message": {}},
     )
 
     at, _ = ActionType.objects.get_or_create(name=name)
-    wsm, _ = WebSocketMessage.objects.get_or_create(
-        msg_type="translator_add", msg_data_route_field="route"
-    )
-    wsm.save()
-    wsse, _ = WebSocketSequenceElement.objects.get_or_create(
-        websocketmessage=wsm, verb="A", action_type=at
-    )
-    wsse.save()
+    at.translator_types.add(gobgp)
 
 
 @given("a client with {name} authorization")

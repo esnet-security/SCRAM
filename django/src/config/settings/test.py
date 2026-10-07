@@ -33,6 +33,9 @@ TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
 ]
 TEMPLATES[0]["OPTIONS"]["debug"] = True  # noqa F405
 
+# Keeps unit tests off the shared Redis, otherwise running translators receive and answer messages from unit tests.
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
