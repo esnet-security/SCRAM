@@ -62,6 +62,12 @@ class FlowspecRouteSerializer(serializers.ModelSerializer):
             "destination_port",
             "protocol",
         ]
+        # we set unique=True on these fields in the model. i was too lazy to create a migration right now
+        # thats probably the better fix as this will surely bite us at some point
+        extra_kwargs = {
+            "source": {"validators": []},
+            "destination": {"validators": []}
+        }
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -94,10 +100,10 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="api:v1:entry-detail",
         lookup_url_kwarg="pk",
-        lookup_field="route",
+        lookup_field="pk",
     )
     route = CustomCidrAddressField(required=False, allow_null=True)
-    #flowspec_route = FlowspecRouteSerializer(required=False)
+    flowspec_route = FlowspecRouteSerializer(required=False, allow_null=True)
     actiontype = serializers.CharField(default="block")
     if CurrentUserDefault():
         # This is set if we are calling this serializer from WUI
@@ -125,7 +131,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         model = Entry
         fields = [
             "route",
-            #"flowspec_route",
+            "flowspec_route",
             "actiontype",
             "url",
             "comment",
@@ -135,7 +141,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             "is_active",
         ]
         extra_kwargs = {
-            'route': {'required': False, 'allow_blank': True},
+            'route': {'required': False, 'allow_null': True},
             'flowspec_route': {'required': False, 'allow_null': True}
         }
 
