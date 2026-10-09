@@ -156,11 +156,18 @@ class GoBGP:
 
         if "protocol" in data:
             protocol = data["protocol"]
+            protocol_type = type(protocol)
 
-            if type(protocol) is str:
-                protocolId = socket.getprotobyname(protocol.lower())
-            elif type(protocol) is int:
-                socket.getprotobynumber(protocol) # Validate
+            if protocol_type is str:
+                try:
+                    protocolId = socket.getprotobyname(protocol.lower())
+                except OSError as e:
+                    raise ValueError(f"Invalid protocol name: {protocol}") from e
+            
+            elif protocol_type is int:
+                if not 0 <= protocol <= 255:
+                    raise ValueError("Protocol number must be between 0 and 255")
+
                 protocolId = protocol
             else:
                 raise ValueError("Invalid protocol value. Must be valid int or str: https://www.iana.org/assignments/protocol-numbers")
