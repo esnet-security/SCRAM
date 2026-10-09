@@ -7,7 +7,7 @@ import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
@@ -38,6 +38,14 @@ class Route(models.Model):
         """Ensure we use UUID on the API side instead."""
         return reverse("")
 
+class Protocol(models.IntegerChoices):
+    ICMP = 1
+    TCP = 6
+    UDP = 17
+    GRE = 47
+    ESP = 50
+    ICMPV6 = 58
+
 class FlowspecRoute(models.Model):
     """Define a flowspec route as a CIDR route and a UUID."""
 
@@ -45,7 +53,7 @@ class FlowspecRoute(models.Model):
     source_port = models.PositiveIntegerField()
     destination = CidrAddressField(unique=True)
     destination_port = models.PositiveIntegerField()
-    protocol = models.PositiveIntegerField() # At what point in the stack should we convert "TCP" to 6, "UDP" to 17, etc.? (Support is in gobgp.py but not in models.py) TODO: make enum
+    protocol = models.PositiveSmallIntegerField(validators=[MaxValueValidator(255)])
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
     def __str__(self):

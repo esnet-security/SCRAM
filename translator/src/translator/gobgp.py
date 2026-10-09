@@ -155,29 +155,12 @@ class GoBGP:
             ))
 
         if "protocol" in data:
-            protocol = data["protocol"]
-            protocol_type = type(protocol)
-
-            if protocol_type is str:
-                try:
-                    protocolId = socket.getprotobyname(protocol.lower())
-                except OSError as e:
-                    raise ValueError(f"Invalid protocol name: {protocol}") from e
-            
-            elif protocol_type is int:
-                if not 0 <= protocol <= 255:
-                    raise ValueError("Protocol number must be between 0 and 255")
-
-                protocolId = protocol
-            else:
-                raise ValueError("Invalid protocol value. Must be valid int or str: https://www.iana.org/assignments/protocol-numbers")
-
             rules.append(nlri_pb2.FlowSpecRule(
                 component=nlri_pb2.FlowSpecComponent(
                     type=3, # TYPE_PROTOCOL
                     items=[nlri_pb2.FlowSpecComponentItem(
                         op=_OP_END | _OP_EQ,
-                        value=protocolId,
+                        value=data["protocol"],
                     )],
                 )
             ))

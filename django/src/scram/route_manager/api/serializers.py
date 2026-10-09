@@ -9,7 +9,7 @@ from rest_framework.fields import CurrentUserDefault
 from rest_framework.validators import UniqueTogetherValidator
 from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Client, Entry, IgnoreEntry, Route, FlowspecRoute
+from ..models import ActionType, Client, Entry, IgnoreEntry, Route, FlowspecRoute, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,37 @@ class RouteSerializer(serializers.ModelSerializer):
             "route",
         ]
 
+@extend_schema_field(
+    field={
+        "oneOf": [
+            {"type": "integer", "minimum": 0, "maximum": 255},
+            {"type": "string", "enum": [p.name.lower() for p in Protocol]},
+        ]
+    }
+)
+class ProtocolField(serializers.Field):
+    """Accept an IP protocol as a name (e.g. "tcp") or a number 0-255; always store the number."""
+
+    def to_internal_value(self, value):
+        """Normalize a name or number to an int in 0-255."""
+        if isinstance(value, bool):
+            raise serializers.ValidationError("Invalid protocol")
+        if isinstance(value, str) and not value.strip().isdecimal():
+            try:
+                return Protocol[value.strip().upper()].value
+            except KeyError:
+                raise serializers.ValidationError(f"Unknown protocol {value!r}; use a name or 0-255") from None
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("Protocol must be a name or an integer 0-255") from None
+        if not 0 <= number <= 255:
+            raise serializers.ValidationError("Protocol must be 0-255")
+        return number
+
+    def to_representation(self, value):
+        """Return the stored number."""
+        return value
 
 class FlowspecRouteSerializer(serializers.ModelSerializer):
     """Maps to the FlowspecRoute model."""
@@ -50,7 +81,7 @@ class FlowspecRouteSerializer(serializers.ModelSerializer):
     source_port = serializers.IntegerField()
     destination = CustomCidrAddressField()
     destination_port = serializers.IntegerField()
-    protocol = serializers.IntegerField()
+    protocol = ProtocolField()
 
     class Meta:
         """Maps to the FlowspecRoute model, and specifies the fields exposed by the API."""
