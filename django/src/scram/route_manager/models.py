@@ -206,8 +206,9 @@ class Entry(models.Model):
 
     def __str__(self):
         """Summarize the most important fields to something easily readable."""
+        target = self.route or self.flowspec_route
         desc = (
-            f"{self.route} ({self.actiontype}) from: {self.originating_scram_instance}"
+            f"{target} ({self.actiontype}) from: {self.originating_scram_instance}"
         )
         if not self.is_active:
             desc += " (inactive)"
