@@ -206,6 +206,11 @@ class Entry(models.Model):
         default="",
     )
 
+    @property
+    def target(self):
+        """The Route or FlowspecRoute this entry applies to."""
+        return self.route if self.route_id else self.flowspec_route
+
     class Meta:
         """Ensure that multiple routes can be added as long as they have different action types."""
 
@@ -214,9 +219,8 @@ class Entry(models.Model):
 
     def __str__(self):
         """Summarize the most important fields to something easily readable."""
-        target = self.route or self.flowspec_route
         desc = (
-            f"{target} ({self.actiontype}) from: {self.originating_scram_instance}"
+            f"{self.target} ({self.actiontype}) from: {self.originating_scram_instance}"
         )
         if not self.is_active:
             desc += " (inactive)"
@@ -228,11 +232,11 @@ class Entry(models.Model):
             # We've already expired this route, don't send another message
             return
         # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-        logger.info("Deactivating %s", self.route)
+        logger.info("Deactivating %s", self.target)
         self.is_active = False
         self.save()
 
-        self.actiontype.send_to_translators("remove", self.route)
+        self.actiontype.send_to_translators("remove", self.target)
 
     def get_change_reason(self):
         """Traverse some complex relationships to determine the most recent change reason.
