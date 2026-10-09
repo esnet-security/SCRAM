@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import rest_framework.utils.serializer_helpers
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -21,14 +19,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, ListView
 
-from scram.route_manager.models import WebSocketSequenceElement
-
 from ..route_manager.api.views import EntryViewSet
 from ..shared.shared_code import make_random_password
 from ..users.models import User
 from .models import ActionType, Entry
 
-channel_layer = get_channel_layer()
 logger = logging.getLogger(__name__)
 
 
@@ -62,6 +57,11 @@ def home_page(request, prefilter=None):
     else:
         readwrite = False
     context: dict[str, Any] = {"entries": {}, "readwrite": readwrite}
+    if readwrite:
+        # Fetch unlinked action types for the context so we can warn WUI users about them
+        context["unlinked_actiontypes"] = ActionType.objects.filter(
+            available=True, translator_types__isnull=True
+        )
     for at in ActionType.objects.all():
         queryset_active = prefilter.filter(actiontype=at, is_active=True).order_by(
             "-pk"
@@ -220,7 +220,7 @@ def reprocess_entries(entries_to_process: list[Entry]) -> None:
 
     Effectively, this is a way to tell the translator "hey, do the stuff you need to do for this list of entries",
     whether that is to block or unblock them. This is used by `process_updates()`. In this, we take each entry
-    and send either a translator_add or translator_remove message, depending on the entry's is_active state, and
+    and send its actiontype's add or remove messages, depending on the entry's is_active state, and
     notify translators to Do the Thing.
 
     Args:
@@ -229,22 +229,10 @@ def reprocess_entries(entries_to_process: list[Entry]) -> None:
     logger.info("Reprocessing %d entries", len(entries_to_process))
 
     for entry in entries_to_process:
-        message_type = "translator_add" if entry.is_active else "translator_remove"
         logger.info("Processing entry %s (active=%s)", entry, entry.is_active)
-
-        translator_group = f"translator_{entry.actiontype}"
-        elements = (
-            WebSocketSequenceElement.objects.filter(action_type__name=entry.actiontype)
-            .order_by("order_num")
-            .select_related("websocketmessage")
+        entry.actiontype.send_to_translators(
+            "add" if entry.is_active else "remove", entry.route
         )
-
-        for element in elements:
-            msg = element.websocketmessage
-            msg.msg_data[msg.msg_data_route_field] = str(entry.route)
-
-            json_to_send = {"type": message_type, "message": msg.msg_data}
-            async_to_sync(channel_layer.group_send)(translator_group, json_to_send)
 
 
 def process_updates(request):

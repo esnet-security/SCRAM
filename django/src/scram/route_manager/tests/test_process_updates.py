@@ -9,33 +9,14 @@ from scram.route_manager.models import (
     ActionType,
     Entry,
     Route,
-    WebSocketMessage,
-    WebSocketSequenceElement,
 )
 from scram.route_manager.views import check_for_orphaned_history, get_entries_to_process
 
 
 @pytest.fixture
 def actiontype(db):
-    """Create a block actiontype for tests."""
-    return ActionType.objects.create(name="block")
-
-
-@pytest.fixture
-def websocket_config(actiontype):
-    """Create the WebSocket configuration needed for reprocess_entries."""
-    wsm = WebSocketMessage.objects.create(
-        msg_type="translator_add",
-        msg_data_route_field="route",
-        msg_data={"route": "placeholder"},
-    )
-    WebSocketSequenceElement.objects.create(
-        websocketmessage=wsm,
-        action_type=actiontype,
-        verb="A",
-        order_num=1,
-    )
-    return wsm
+    """Get the block actiontype for tests."""
+    return ActionType.objects.get_or_create(name="block")[0]
 
 
 @pytest.fixture
