@@ -165,17 +165,6 @@ class GoBGP:
                 )
             ))
 
-        if "source-port" in data:
-            rules.append(nlri_pb2.FlowSpecRule(
-                component=nlri_pb2.FlowSpecComponent(
-                    type=6, # TYPE_SRC_PORT
-                    items=[nlri_pb2.FlowSpecComponentItem(
-                        op=_OP_END | _OP_EQ,
-                        value=int(data["source-port"]),
-                    )],
-                )
-            ))
-
         if "destination-port" in data:
             rules.append(nlri_pb2.FlowSpecRule(
                 component=nlri_pb2.FlowSpecComponent(
@@ -183,6 +172,17 @@ class GoBGP:
                     items=[nlri_pb2.FlowSpecComponentItem(
                         op=_OP_END | _OP_EQ,
                         value=int(data["destination-port"]),
+                    )],
+                )
+            ))
+
+        if "source-port" in data:
+            rules.append(nlri_pb2.FlowSpecRule(
+                component=nlri_pb2.FlowSpecComponent(
+                    type=6, # TYPE_SRC_PORT
+                    items=[nlri_pb2.FlowSpecComponentItem(
+                        op=_OP_END | _OP_EQ,
+                        value=int(data["source-port"]),
                     )],
                 )
             ))
@@ -250,39 +250,38 @@ class GoBGP:
     def add_flowspec(self, source_ip, dest_ip, data: dict):
         """Adds a FlowSpec path to the GoBGP Rib."""
         path = self._build_flowspec_path(source_ip, dest_ip, data)
-        serialized_path = path.SerializeToString(deterministic=True)
 
-        response = self.stub.AddPath(
+        self.stub.AddPath(
             gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
             _TIMEOUT_SECONDS
         )
 
-        _active_rules.append(serialized_path)
-
-        return response.uuid.hex()
-
     def check_flowspec(self, source_ip, dest_ip, data: dict):
-        """Checks if a FlowSpec path is currently active in the GoBGP Rib."""
+        """Return True if GoBGP's RIB has a flowspec path with this NLRI."""
         path = self._build_flowspec_path(source_ip, dest_ip, data)
-        serialized_path = path.SerializeToString(deterministic=True)
 
-        return serialized_path in _active_rules
-
-    def del_flowspec(self, source_ip, dest_ip, data: dict):
-        """Deletes a FlowSpec path from the GoBGP Rib."""
-        path = self._build_flowspec_path(source_ip, dest_ip, data)
-        serialized_path = path.SerializeToString(deterministic=True)
-
-        if serialized_path not in _active_rules:
-            logger.warning("Attempted to delete a FlowSpec path that is not active: %s", serialized_path)
-            return None
-
-        response = self.stub.DeletePath(
-            gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
-            _TIMEOUT_SECONDS
+        result = self.stub.ListPath(
+            gobgp_pb2.ListPathRequest(
+                table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
+                family=path.family,
+            ),
+            _TIMEOUT_SECONDS,
         )
 
-        _active_rules.remove(serialized_path)
+        return any(p.nlri == path.nlri for dest in result for p in dest.destination.paths)
+
+    def del_flowspec(self, source_ip, dest_ip, data: dict):
+        """Remove a FlowSpec path from the GoBGP RIB if it's there."""
+        path = self._build_flowspec_path(source_ip, dest_ip, data)
+
+        if not self.check_flowspec(source_ip, dest_ip, data):
+            logger.warning("Attempted to delete a FlowSpec path that is not in the RIB: %s", path.nlri)
+            return
+
+        self.stub.DeletePath(
+            gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
+            _TIMEOUT_SECONDS,
+        )
 
     def del_all_paths(self):
         """Remove all routes from being announced."""

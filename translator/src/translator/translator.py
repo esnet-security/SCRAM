@@ -88,7 +88,9 @@ async def process(message, websocket, g):
             elif event_type == "translator_filter_remove":
                 g.del_flowspec(source_ip, dest_ip, event_data)
             elif event_type == "translator_filter_check":
-                g.check_flowspec(source_ip, dest_ip, event_data)
+                json_message["type"] = "translator_check_resp"
+                json_message["message"]["is_blocked"] = g.check_flowspec(source_ip, dest_ip, event_data)
+                await websocket.send(json.dumps(json_message))
 
         except ValueError:
             logger.exception("Error parsing Flowspec IPs in message: %s", message)
