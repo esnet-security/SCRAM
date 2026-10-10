@@ -9,8 +9,6 @@ from .exceptions import ASNError
 from .settings import settings
 from .shared import asn_is_valid
 
-import socket
-
 _TIMEOUT_SECONDS = 1000
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
@@ -18,9 +16,6 @@ IPV4 = 4
 IPV6 = 6
 
 logger = logging.getLogger(__name__)
-
-# Temporary list to keep track of active flowspec rules.
-_active_rules = []
 
 
 class GoBGP:
