@@ -178,7 +178,7 @@ class ActionType(models.Model):
     def send_active_entries(self, verb, translator_types) -> None:
         """Send every active entry's message for a verb to the given translator types."""
         for entry in self.entry_set.filter(is_active=True).select_related("route"):
-            self.send_to_translators(verb, entry.route, translator_types)
+            self.send_to_translators(verb, entry.target, translator_types)
 
 
 class Entry(models.Model):
