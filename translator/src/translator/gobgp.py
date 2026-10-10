@@ -18,6 +18,10 @@ IPV6 = 6
 
 logger = logging.getLogger(__name__)
 
+def _now_ts() -> Timestamp:
+    ts = Timestamp()
+    ts.GetCurrentTime()
+    return ts
 
 def _now_ts() -> Timestamp:
     ts = Timestamp()
@@ -246,6 +250,7 @@ class GoBGP:
             nlri=nlri,
             pattrs=attributes,
             family=family,
+            age=_now_ts(),
         )
 
         return path
