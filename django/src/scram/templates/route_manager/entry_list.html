@@ -93,7 +93,7 @@
     {% for entry in entry_data.objs %}
       <li class="list-group-item list-group-item-light text-center">
         <a class="link" href="{% url 'route_manager:detail' entry.id %}">
-          {{ entry.route|default_if_none:entry.flowspec_route }} - Expires: {{ entry.expiration }}</a>
+          {{ entry.target }} - Expires: {{ entry.expiration }}</a>
         <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i>
         {% if entry.flowspec_route %}
           {% with f=entry.flowspec_route %}
