@@ -49,6 +49,13 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
+def check_min_prefix(network):
+    """Ensure the network is not larger than the minimum prefix allowed in the settings."""
+    min_prefix = getattr(settings, f"V{network.version}_MINPREFIX", 0)
+    if network.prefixlen < min_prefix:
+        raise PrefixTooLarge
+
+
 @extend_schema(
     description="API endpoint for actiontypes.",
     responses={
@@ -337,22 +344,21 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         comment = serializer.validated_data["comment"]
 
-        #min_prefix = getattr(settings, f"V{route.version}_MINPREFIX", 0)
-        #if route.prefixlen < min_prefix:
-        #    raise PrefixTooLarge
-
         self.check_client_authorization(actiontype)
 
         if serializer.validated_data.get("route"):
             flowspec_instance = None
             route = serializer.validated_data["route"]
+            check_min_prefix(route)
             route_instance, _ = Route.objects.get_or_create(route=route)
-            # we uhhh currently can only check based on "route" so fixing this is a TODO
             self.check_ignore_list(route_instance)
             target_instance = route_instance
         else:
             route_instance = None
             f_data = serializer.validated_data["flowspec_route"]
+            # We could check source, but it's left deliberately wide
+            check_min_prefix(f_data["destination"])
+            self.check_ignore_list(f_data["destination"])
             flowspec_instance, _ = FlowspecRoute.objects.get_or_create(
                 source=f_data["source"],
                 source_port=f_data["source_port"],
@@ -419,13 +425,11 @@ class EntryViewSet(viewsets.ModelViewSet):
         try:
             pk = int(arg)
             query = Q(pk=pk)
-        except ValueError as exc:
+        except ValueError:
             # Maybe a CIDR? We want the ValueError at this point, if not.
             cidr = ipaddress.ip_network(arg, strict=False)
 
-            min_prefix = getattr(settings, f"V{cidr.version}_MINPREFIX", 0)
-            if cidr.prefixlen < min_prefix:
-                raise PrefixTooLarge from exc
+            check_min_prefix(cidr)
 
             query = Q(route__route__net_overlaps=cidr)
 
