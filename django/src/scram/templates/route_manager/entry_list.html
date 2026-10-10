@@ -55,8 +55,8 @@
     }
 
     {# Send status request message #}
-    function getStatus(actiontype, route, pk) {
-      let data = {"type": "wui_check_req", "message": {"route": route, "row": pk}};
+    function getStatus(actiontype, route, pk, extra = {}) {
+      let data = {"type": "wui_check_req", "message": {...extra, "route": route, "row": pk}};
       sendMessage(getSocket(actiontype), JSON.stringify(data))
     }
 
@@ -93,9 +93,19 @@
     {% for entry in entry_data.objs %}
       <li class="list-group-item list-group-item-light text-center">
         <a class="link" href="{% url 'route_manager:detail' entry.id %}">
-          {{ entry.route }} - Expires: {{ entry.expiration }}</a>
+          {{ entry.route|default_if_none:entry.flowspec_route }} - Expires: {{ entry.expiration }}</a>
         <i class="fa fa-question-circle" title="Current status unknown" id="entry_status_{{ entry.pk }}"></i>
-        <script>getStatus("{{ actiontype.name }}", "{{ entry.route }}", "{{ entry.pk }}");</script>
+        {% if entry.flowspec_route %}
+          {% with f=entry.flowspec_route %}
+          <script>getStatus("{{ actiontype.name }}", "flowspec", "{{ entry.pk }}", {
+            "source": "{{ f.source }}", "destination": "{{ f.destination }}",
+            "source-port": {{ f.source_port }}, "destination-port": {{ f.destination_port }},
+            "protocol": {{ f.protocol }}, "action": "discard"
+          });</script>
+          {% endwith %}
+        {% else %}
+          <script>getStatus("{{ actiontype.name }}", "{{ entry.route }}", "{{ entry.pk }}");</script>
+        {% endif %}
       </li>
     {% endfor %}
 
