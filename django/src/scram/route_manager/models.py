@@ -49,12 +49,20 @@ class Protocol(models.IntegerChoices):
 class FlowspecRoute(models.Model):
     """Define a flowspec route as a CIDR route and a UUID."""
 
-    source = CidrAddressField(unique=True)
+    source = CidrAddressField()
     source_port = models.PositiveIntegerField()
-    destination = CidrAddressField(unique=True)
+    destination = CidrAddressField()
     destination_port = models.PositiveIntegerField()
     protocol = models.PositiveSmallIntegerField(validators=[MaxValueValidator(255)])
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source", "source_port", "destination", "destination_port", "protocol"],
+                name="unique_flowspec_rule",
+            ),
+        ]
 
     def __str__(self):
         return f"src {self.source}:{self.source_port} -> dst {self.destination}:{self.destination_port} (proto {self.protocol})"
