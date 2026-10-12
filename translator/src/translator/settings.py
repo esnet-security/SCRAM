@@ -38,7 +38,7 @@ class Settings(BaseSettings):
 
     # SCRAM Connection Specifics
     scram_hostname: str = "scram_hostname_not_set"
-    scram_events_url: str = "ws://django:8000/ws/route_manager/translator_block/"
+    scram_events_url: str = "ws://django:8000/ws/route_manager/translator_gobgp/"
 
     # GoBGP ASpath defaults (fallback values when event_data doesn't provide them)
     default_asn: int = 65400

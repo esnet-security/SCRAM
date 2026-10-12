@@ -8,8 +8,6 @@ from scram.route_manager.models import (
     Entry,
     HistoricalEntry,
     Route,
-    WebSocketMessage,
-    WebSocketSequenceElement,
 )
 from scram.route_manager.models import (
     Client as DjangoClient,
@@ -29,8 +27,6 @@ def before_feature(context, feature):
     Entry.objects.all().delete()
     Route.objects.all().delete()
     HistoricalEntry.objects.all().delete()
-    WebSocketSequenceElement.objects.all().delete()
-    WebSocketMessage.objects.all().delete()
 
     # Create test user
     user, _ = user_model.objects.get_or_create(
@@ -57,5 +53,3 @@ def after_feature(context, feature):
     Entry.objects.all().delete()
     Route.objects.all().delete()
     HistoricalEntry.objects.all().delete()
-    WebSocketSequenceElement.objects.all().delete()
-    WebSocketMessage.objects.all().delete()

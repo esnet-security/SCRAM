@@ -4,6 +4,7 @@ import logging
 
 import grpc
 from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
+from google.protobuf.timestamp_pb2 import Timestamp
 
 from .exceptions import ASNError
 from .settings import settings
@@ -16,6 +17,12 @@ IPV4 = 4
 IPV6 = 6
 
 logger = logging.getLogger(__name__)
+
+
+def _now_ts() -> Timestamp:
+    ts = Timestamp()
+    ts.GetCurrentTime()
+    return ts
 
 
 class GoBGP:
@@ -109,6 +116,7 @@ class GoBGP:
             nlri=nlri,
             pattrs=attributes,
             family=family,
+            age=_now_ts(),
         )
 
     def add_path(self, ip, event_data):
@@ -176,7 +184,7 @@ class GoBGP:
                     _TIMEOUT_SECONDS,
                 )
             )
-            logger.info("GoBGP returned %d routes for IPv%s", len(result), ip_version)
+            logger.debug("GoBGP returned %d routes for IPv%s", len(result), ip_version)
             return len(result)
         except Exception:
             logger.exception("Failed to get route count for IPv%s", ip_version)
