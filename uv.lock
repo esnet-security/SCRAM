@@ -3370,7 +3370,7 @@ docs = [
 
 [[package]]
 name = "scram-django"
-version = "1.5.1"
+version = "2.1.0"
 source = { editable = "django" }
 dependencies = [
     { name = "argon2-cffi" },
