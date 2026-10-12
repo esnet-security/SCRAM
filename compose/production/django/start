@@ -8,4 +8,4 @@ set -o nounset
 python /app/src/manage.py collectstatic --noinput
 
 
-/usr/local/bin/gunicorn config.asgi --bind 0.0.0.0:5000 --chdir=/app/src -k uvicorn.workers.UvicornWorker
+gunicorn config.asgi --bind 0.0.0.0:5000 --chdir=/app/src -k uvicorn.workers.UvicornWorker
