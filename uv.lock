@@ -3048,7 +3048,7 @@ requires-dist = [
 
 [[package]]
 name = "scram"
-version = "2.1.1"
+version = "2.1.2"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -3087,7 +3087,7 @@ docs = [
 
 [[package]]
 name = "scram-django"
-version = "2.1.1"
+version = "2.1.2"
 source = { editable = "django" }
 dependencies = [
     { name = "argon2-cffi" },
