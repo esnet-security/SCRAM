@@ -22,6 +22,9 @@ KNOWN_MESSAGES = {
     "translator_block_remove",
     "translator_block_check",
     "translator_remove_all",
+    "translator_filter_add",
+    "translator_filter_remove",
+    "translator_filter_check",
 }
 
 # Django closes with this code when no TranslatorType matches our SCRAM_EVENTS_URL; retrying can't fix it.
@@ -55,12 +58,47 @@ async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
     event_type = json_message.get("type")
+
     event_data = json_message.get("message")
     if event_type not in KNOWN_MESSAGES:
         logger.error("Unknown event type received: %s", event_type)
     # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         g.del_all_paths()
+        
+    # --- FLOWSPEC MESSAGE HANDLING ---
+    elif event_type in ("translator_filter_add", "translator_filter_remove", "translator_filter_check"):
+        try:
+            # Validate IPs if they are provided in the flowspec payload
+            try:
+                if event_data.get("destination"):
+                    dest_ip = ipaddress.ip_interface(event_data.pop("destination"))
+                if event_data.get("source"):
+                    source_ip = ipaddress.ip_interface(event_data.pop("source"))
+            except ValueError as e:
+                logger.exception("Error parsing Flowspec IPs in message: %s", message)
+                return
+            
+            # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
+            # Expected fields inside event_data: destination, source, source-port, 
+            # destination-port, protocol, action (e.g., "discard", "rate-limit")
+            if event_type == "translator_filter_add":
+                g.add_flowspec(source_ip, dest_ip, event_data)
+            elif event_type == "translator_filter_remove":
+                g.del_flowspec(source_ip, dest_ip, event_data)
+            elif event_type == "translator_filter_check":
+                json_message["type"] = "translator_check_resp"
+                json_message["message"]["is_blocked"] = g.check_flowspec(source_ip, dest_ip, event_data)
+                await websocket.send(json.dumps(json_message))
+
+        except ValueError:
+            logger.exception("Error parsing Flowspec IPs in message: %s", message)
+            return
+        except Exception:
+            logger.exception("Error processing flowspec message: %s", message)
+            return
+            
+    # --- STANDARD BGP ROUTE HANDLING ---
     else:
         try:
             ip = ipaddress.ip_interface(event_data["route"])
