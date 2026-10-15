@@ -10,8 +10,6 @@ from .models import (
     IgnoreEntry,
     Route,
     TranslatorType,
-    WebSocketMessage,
-    WebSocketSequenceElement,
     FlowspecRoute,
 )
 
@@ -144,6 +142,4 @@ class ClientAdmin(admin.ModelAdmin):
 
 admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
-admin.site.register(WebSocketMessage)
-admin.site.register(WebSocketSequenceElement)
 admin.site.register(FlowspecRoute)

@@ -30,7 +30,6 @@ from ..models import (
     IgnoreEntry,
     Route,
     TranslatorType,
-    WebSocketSequenceElement,
     FlowspecRoute,
 )
 from .exceptions import (
