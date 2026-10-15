@@ -7,7 +7,6 @@ import ipaddress
 import json
 import logging
 
-from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
 import websockets
 from grpc import RpcError
 

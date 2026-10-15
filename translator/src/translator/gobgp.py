@@ -23,11 +23,6 @@ def _now_ts() -> Timestamp:
     ts.GetCurrentTime()
     return ts
 
-def _now_ts() -> Timestamp:
-    ts = Timestamp()
-    ts.GetCurrentTime()
-    return ts
-
 
 class GoBGP:
     """Represents a GoBGP instance."""
