@@ -356,9 +356,10 @@ class EntryViewSet(viewsets.ModelViewSet):
         else:
             route_instance = None
             f_data = serializer.validated_data["flowspec_route"]
-            # We could check source, but it's left deliberately wide
             check_min_prefix(f_data["destination"])
+            check_min_prefix(f_data["source"])
             self.check_ignore_list(f_data["destination"])
+            self.check_ignore_list(f_data["source"])
             flowspec_instance, _ = FlowspecRoute.objects.get_or_create(
                 source=f_data["source"],
                 source_port=f_data["source_port"],
