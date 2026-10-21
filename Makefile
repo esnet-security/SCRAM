@@ -204,7 +204,7 @@ type-check: compose.override.yml
 .Phony: update-env-docs
 update-env-docs:
 ifeq ($(CHECK),true)
-	@uv run scripts/src/scripts/extract_env_vars.py --check
+	@uv run --locked --no-sync scripts/src/scripts/extract_env_vars.py --check
 else
-	@uv run scripts/src/scripts/extract_env_vars.py
+	@uv run --locked --no-sync scripts/src/scripts/extract_env_vars.py
 endif
