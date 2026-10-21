@@ -67,7 +67,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             ).select_related("actiontype", "route")
         )
         for entry in entries:
-            await self.send_json(entry.actiontype.message("add", entry.route))
+            await self.send_json(entry.actiontype.message("add", entry.target))
 
     async def disconnect(self, close_code) -> None:
         """Discard any remaining messages on disconnect."""
@@ -132,7 +132,6 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
             await self.send_json(message)
         else:
             await super().dispatch(message)
-
 
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Web UI."""
