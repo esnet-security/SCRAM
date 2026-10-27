@@ -3,7 +3,7 @@
 import logging
 
 import grpc
-from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2, extcom_pb2
+from api import attribute_pb2, common_pb2, extcom_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from .exceptions import ASNError
@@ -17,6 +17,7 @@ IPV4 = 4
 IPV6 = 6
 
 logger = logging.getLogger(__name__)
+
 
 def _now_ts() -> Timestamp:
     ts = Timestamp()
@@ -139,87 +140,91 @@ class GoBGP:
         _OP_END = 0x80
 
         if dest_ip is not None:
-            rules.append(nlri_pb2.FlowSpecRule(
-                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
-                    type=1, # TYPE_DST_PREFIX
-                    prefix_len=dest_ip.network.prefixlen,
-                    prefix=dest_ip.network.network_address.exploded,
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                        type=1,  # TYPE_DST_PREFIX
+                        prefix_len=dest_ip.network.prefixlen,
+                        prefix=dest_ip.network.network_address.exploded,
+                    )
                 )
-            ))
+            )
 
         if source_ip is not None:
-            rules.append(nlri_pb2.FlowSpecRule(
-                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
-                    type=2, # TYPE_SRC_PREFIX
-                    prefix_len=source_ip.network.prefixlen,
-                    prefix=source_ip.network.network_address.exploded,
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                        type=2,  # TYPE_SRC_PREFIX
+                        prefix_len=source_ip.network.prefixlen,
+                        prefix=source_ip.network.network_address.exploded,
+                    )
                 )
-            ))
+            )
 
         if "protocol" in data:
-            rules.append(nlri_pb2.FlowSpecRule(
-                component=nlri_pb2.FlowSpecComponent(
-                    type=3, # TYPE_PROTOCOL
-                    items=[nlri_pb2.FlowSpecComponentItem(
-                        op=_OP_END | _OP_EQ,
-                        value=data["protocol"],
-                    )],
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    component=nlri_pb2.FlowSpecComponent(
+                        type=3,  # TYPE_PROTOCOL
+                        items=[
+                            nlri_pb2.FlowSpecComponentItem(
+                                op=_OP_END | _OP_EQ,
+                                value=data["protocol"],
+                            )
+                        ],
+                    )
                 )
-            ))
+            )
 
         if "destination-port" in data:
-            rules.append(nlri_pb2.FlowSpecRule(
-                component=nlri_pb2.FlowSpecComponent(
-                    type=5, # TYPE_DST_PORT
-                    items=[nlri_pb2.FlowSpecComponentItem(
-                        op=_OP_END | _OP_EQ,
-                        value=int(data["destination-port"]),
-                    )],
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    component=nlri_pb2.FlowSpecComponent(
+                        type=5,  # TYPE_DST_PORT
+                        items=[
+                            nlri_pb2.FlowSpecComponentItem(
+                                op=_OP_END | _OP_EQ,
+                                value=int(data["destination-port"]),
+                            )
+                        ],
+                    )
                 )
-            ))
+            )
 
         if "source-port" in data:
-            rules.append(nlri_pb2.FlowSpecRule(
-                component=nlri_pb2.FlowSpecComponent(
-                    type=6, # TYPE_SRC_PORT
-                    items=[nlri_pb2.FlowSpecComponentItem(
-                        op=_OP_END | _OP_EQ,
-                        value=int(data["source-port"]),
-                    )],
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    component=nlri_pb2.FlowSpecComponent(
+                        type=6,  # TYPE_SRC_PORT
+                        items=[
+                            nlri_pb2.FlowSpecComponentItem(
+                                op=_OP_END | _OP_EQ,
+                                value=int(data["source-port"]),
+                            )
+                        ],
+                    )
                 )
-            ))
+            )
 
         # Build FlowSpec NLRI
-        nlri = nlri_pb2.NLRI(
-            flow_spec=nlri_pb2.FlowSpecNLRI(rules=rules)
-        )
+        nlri = nlri_pb2.NLRI(flow_spec=nlri_pb2.FlowSpecNLRI(rules=rules))
 
-        attributes = [
-            attribute_pb2.Attribute(
-                origin=attribute_pb2.OriginAttribute(origin=0)
-            )
-        ]
+        attributes = [attribute_pb2.Attribute(origin=attribute_pb2.OriginAttribute(origin=0))]
 
         # Build action
         action = data.get("action")
         action_community = None
 
         if action == "discard":
-            action_community = extcom_pb2.ExtendedCommunity(
-                traffic_rate=extcom_pb2.TrafficRateExtended(rate=0.0)
-            )
+            action_community = extcom_pb2.ExtendedCommunity(traffic_rate=extcom_pb2.TrafficRateExtended(rate=0.0))
         elif action == "rate-limit":
             rate = float(data.get("rate", 0.0))
-            action_community = extcom_pb2.ExtendedCommunity(
-                traffic_rate=extcom_pb2.TrafficRateExtended(rate=rate)
-            )
+            action_community = extcom_pb2.ExtendedCommunity(traffic_rate=extcom_pb2.TrafficRateExtended(rate=rate))
 
         if action_community is not None:
             attributes.append(
                 attribute_pb2.Attribute(
-                    extended_communities=attribute_pb2.ExtendedCommunitiesAttribute(
-                        communities=[action_community]
-                    )
+                    extended_communities=attribute_pb2.ExtendedCommunitiesAttribute(communities=[action_community])
                 )
             )
 
@@ -230,11 +235,7 @@ class GoBGP:
 
         # Append mandatory NextHop
         next_hop_ip = "0.0.0.0"
-        attributes.append(
-            attribute_pb2.Attribute(
-                next_hop=attribute_pb2.NextHopAttribute(next_hop=next_hop_ip)
-            )
-        )
+        attributes.append(attribute_pb2.Attribute(next_hop=attribute_pb2.NextHopAttribute(next_hop=next_hop_ip)))
 
         family = common_pb2.Family(
             afi=family_afi,
@@ -255,8 +256,7 @@ class GoBGP:
         path = self._build_flowspec_path(source_ip, dest_ip, data)
 
         self.stub.AddPath(
-            gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
-            _TIMEOUT_SECONDS
+            gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path), _TIMEOUT_SECONDS
         )
 
     def check_flowspec(self, source_ip, dest_ip, data: dict):

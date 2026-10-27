@@ -133,6 +133,7 @@ class TranslatorConsumer(AsyncJsonWebsocketConsumer):
         else:
             await super().dispatch(message)
 
+
 class WebUIConsumer(AsyncJsonWebsocketConsumer):
     """Handle messages from the Web UI."""
 

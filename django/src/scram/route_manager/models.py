@@ -38,6 +38,7 @@ class Route(models.Model):
         """Ensure we use UUID on the API side instead."""
         return reverse("")
 
+
 class Protocol(models.IntegerChoices):
     ICMP = 1
     TCP = 6
@@ -45,6 +46,7 @@ class Protocol(models.IntegerChoices):
     GRE = 47
     ESP = 50
     ICMPV6 = 58
+
 
 class FlowspecRoute(models.Model):
     """Define a flowspec route as a CIDR route and a UUID."""
@@ -59,7 +61,13 @@ class FlowspecRoute(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["source", "source_port", "destination", "destination_port", "protocol"],
+                fields=[
+                    "source",
+                    "source_port",
+                    "destination",
+                    "destination_port",
+                    "protocol",
+                ],
                 name="unique_flowspec_rule",
             ),
         ]
@@ -221,7 +229,9 @@ class Entry(models.Model):
     """An instance of an action taken on a route."""
 
     route = models.ForeignKey("Route", on_delete=models.PROTECT, blank=True, null=True)
-    flowspec_route = models.ForeignKey("FlowspecRoute", on_delete=models.PROTECT, blank=True, null=True)
+    flowspec_route = models.ForeignKey(
+        "FlowspecRoute", on_delete=models.PROTECT, blank=True, null=True
+    )
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
     comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
