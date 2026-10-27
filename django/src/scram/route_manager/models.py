@@ -7,7 +7,7 @@ import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
@@ -37,6 +37,76 @@ class Route(models.Model):
     def get_absolute_url():
         """Ensure we use UUID on the API side instead."""
         return reverse("")
+
+
+class Protocol(models.IntegerChoices):
+    ICMP = 1
+    TCP = 6
+    UDP = 17
+    GRE = 47
+    ESP = 50
+    ICMPV6 = 58
+
+
+class FlowspecRoute(models.Model):
+    """Define a flowspec route as a CIDR route and a UUID."""
+
+    source = CidrAddressField()
+    source_port = models.PositiveIntegerField()
+    destination = CidrAddressField()
+    destination_port = models.PositiveIntegerField()
+    protocol = models.PositiveSmallIntegerField(validators=[MaxValueValidator(255)])
+    uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "source",
+                    "source_port",
+                    "destination",
+                    "destination_port",
+                    "protocol",
+                ],
+                name="unique_flowspec_rule",
+            ),
+        ]
+
+    def __str__(self):
+        protocol = Protocol(self.protocol).label.upper()
+
+        return f"{self.source}:{self.source_port} -> {self.destination}:{self.destination_port} [{protocol}]"
+
+    @staticmethod
+    def get_absolute_url():
+        """Ensure we use UUID on the API side instead."""
+        return reverse("")
+
+
+class TranslatorType(models.Model):
+    """A type of translator (for example, gobgp). Each translator type has one websocket group."""
+
+    name = models.CharField(
+        help_text="One-word name, e.g. gobgp",
+        max_length=30,
+        unique=True,
+        validators=[word_only],
+    )
+    history = HistoricalRecords()
+
+    def __str__(self) -> str:
+        """Only display the name."""
+        return self.name
+
+    @property
+    def group(self) -> str:
+        """The channel layer group that translators of this type listen on."""
+        return f"translator_{self.name}"
+
+    @property
+    def url(self) -> str:
+        """The websocket path translators of this type connect to."""
+        return f"/ws/route_manager/{self.group}/"
 
 
 class TranslatorType(models.Model):
@@ -106,10 +176,23 @@ class ActionType(models.Model):
 
         We also make sure here that the route field is not ever overridden by the payload.
         """
+        if hasattr(route, "destination"):
+            msg_data = {
+                "source": str(route.source),
+                "destination": str(route.destination),
+                "source-port": route.source_port,
+                "destination-port": route.destination_port,
+                "protocol": route.protocol,
+                "action": "discard",
+            }
+        else:
+            msg_data = {
+                "route": str(route),
+            }
 
         return {
             "type": self.message_type(verb),
-            "message": {**self.payload, "route": str(route)},
+            "message": {**self.payload, **msg_data},
         }
 
     def send_to_translators(self, verb, route, translator_types=None) -> None:
@@ -139,13 +222,16 @@ class ActionType(models.Model):
     def send_active_entries(self, verb, translator_types) -> None:
         """Send every active entry's message for a verb to the given translator types."""
         for entry in self.entry_set.filter(is_active=True).select_related("route"):
-            self.send_to_translators(verb, entry.route, translator_types)
+            self.send_to_translators(verb, entry.target, translator_types)
 
 
 class Entry(models.Model):
     """An instance of an action taken on a route."""
 
-    route = models.ForeignKey("Route", on_delete=models.PROTECT)
+    route = models.ForeignKey("Route", on_delete=models.PROTECT, blank=True, null=True)
+    flowspec_route = models.ForeignKey(
+        "FlowspecRoute", on_delete=models.PROTECT, blank=True, null=True
+    )
     actiontype = models.ForeignKey("ActionType", on_delete=models.PROTECT)
     comment = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
@@ -166,6 +252,11 @@ class Entry(models.Model):
         default="",
     )
 
+    @property
+    def target(self):
+        """The Route or FlowspecRoute this entry applies to."""
+        return self.route if self.route_id else self.flowspec_route
+
     class Meta:
         """Ensure that multiple routes can be added as long as they have different action types."""
 
@@ -175,7 +266,7 @@ class Entry(models.Model):
     def __str__(self):
         """Summarize the most important fields to something easily readable."""
         desc = (
-            f"{self.route} ({self.actiontype}) from: {self.originating_scram_instance}"
+            f"{self.target} ({self.actiontype}) from: {self.originating_scram_instance}"
         )
         if not self.is_active:
             desc += " (inactive)"
@@ -187,11 +278,11 @@ class Entry(models.Model):
             # We've already expired this route, don't send another message
             return
         # We don't actually delete records; we set them to inactive and then tell the translator to remove them
-        logger.info("Deactivating %s", self.route)
+        logger.info("Deactivating %s", self.target)
         self.is_active = False
         self.save()
 
-        self.actiontype.send_to_translators("remove", self.route)
+        self.actiontype.send_to_translators("remove", self.target)
 
     def get_change_reason(self):
         """Traverse some complex relationships to determine the most recent change reason.
