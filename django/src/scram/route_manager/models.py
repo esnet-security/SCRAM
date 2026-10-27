@@ -65,7 +65,9 @@ class FlowspecRoute(models.Model):
         ]
 
     def __str__(self):
-        return f"src {self.source}:{self.source_port} -> dst {self.destination}:{self.destination_port} (proto {self.protocol})"
+        protocol = Protocol(self.protocol).label.upper()
+
+        return f"{self.source}:{self.source_port} -> {self.destination}:{self.destination_port} [{protocol}]"
 
     @staticmethod
     def get_absolute_url():
