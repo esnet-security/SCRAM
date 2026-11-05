@@ -13,7 +13,7 @@ To update, run `make update-env-docs`.
 | `GOBGP_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
 | `GOBGP_VERSION` | Compose | Common | v4.8.0 | [compose.yml](file://compose.yml) | - |
 | `HOSTNAME` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
-| `POSTGRES_ENABLED` | Compose | Common | 1 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.production.yml](file://compose.override.production.yml), [compose.override.yml](file://compose.override.yml), [compose.yml](file://compose.yml) | - |
+| `POSTGRES_ENABLED` | Compose | Common | 0 | [compose.override.local.yml](file://compose.override.local.yml), [compose.override.production.yml](file://compose.override.production.yml), [compose.override.yml](file://compose.override.yml), [compose.yml](file://compose.yml) | - |
 | `REDIS_REPLICAS` | Compose | Common | 1 | [compose.yml](file://compose.yml) | - |
 | `SCRAM_PEERING_IFACE` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
 | `SCRAM_V4_ADDRESS` | Compose | Production | - | [compose.override.production.yml](file://compose.override.production.yml) | - |
@@ -34,7 +34,7 @@ To update, run `make update-env-docs`.
 | `DJANGO_SECURE_HSTS_PRELOAD` | Django | Production | True | [django/src/config/settings/production.py](file://django/src/config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings secure-hsts-preload |
 | `DJANGO_SECURE_SSL_REDIRECT` | Django | Production | True | [django/src/config/settings/production.py](file://django/src/config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings secure-ssl-redirect |
 | `DJANGO_SERVER_EMAIL` | Django | Production | DEFAULT_FROM_EMAIL | [django/src/config/settings/production.py](file://django/src/config/settings/production.py) | https docs.djangoproject.com/en/dev/ref/settings server-email |
-| `DJANGO_SETTINGS_MODULE` | Django | Unknown | "config.settings.local" | [django/src/config/asgi.py](file://django/src/config/asgi.py), [django/src/config/wsgi.py](file://django/src/config/wsgi.py) | If DJANGO_SETTINGS_MODULE is unset, default to the local settings |
+| `DJANGO_SETTINGS_MODULE` | Django | Unknown | "config.settings.production" | [django/src/config/asgi.py](file://django/src/config/asgi.py), [django/src/config/wsgi.py](file://django/src/config/wsgi.py) | If DJANGO_SETTINGS_MODULE is unset, default to the local settings |
 | `OIDC_RP_CLIENT_ID` | Django | Common | - | [django/src/config/settings/base.py](file://django/src/config/settings/base.py) | - |
 | `OIDC_RP_CLIENT_SECRET` | Django | Common | - | [django/src/config/settings/base.py](file://django/src/config/settings/base.py) | - |
 | `POSTGRES_SSL` | Django | Production | True | [django/src/config/settings/production.py](file://django/src/config/settings/production.py) | - |
