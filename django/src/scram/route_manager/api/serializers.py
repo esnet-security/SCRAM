@@ -6,10 +6,17 @@ from drf_spectacular.utils import extend_schema_field
 from netfields import rest_framework
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
-from rest_framework.validators import UniqueTogetherValidator
 from simple_history.utils import update_change_reason
 
-from ..models import ActionType, Client, Entry, IgnoreEntry, Route, FlowspecRoute, Protocol
+from ..models import (
+    ActionType,
+    Client,
+    Entry,
+    IgnoreEntry,
+    Route,
+    FlowspecRoute,
+    Protocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +49,7 @@ class RouteSerializer(serializers.ModelSerializer):
             "route",
         ]
 
+
 @extend_schema_field(
     field={
         "oneOf": [
@@ -61,11 +69,15 @@ class ProtocolField(serializers.Field):
             try:
                 return Protocol[value.strip().upper()].value
             except KeyError:
-                raise serializers.ValidationError(f"Unknown protocol {value!r}; use a name or 0-255") from None
+                raise serializers.ValidationError(
+                    f"Unknown protocol {value!r}; use a name or 0-255"
+                ) from None
         try:
             number = int(value)
         except (TypeError, ValueError):
-            raise serializers.ValidationError("Protocol must be a name or an integer 0-255") from None
+            raise serializers.ValidationError(
+                "Protocol must be a name or an integer 0-255"
+            ) from None
         if not 0 <= number <= 255:
             raise serializers.ValidationError("Protocol must be 0-255")
         return number
@@ -73,6 +85,7 @@ class ProtocolField(serializers.Field):
     def to_representation(self, value):
         """Return the stored number."""
         return value
+
 
 class FlowspecRouteSerializer(serializers.ModelSerializer):
     """Maps to the FlowspecRoute model."""
@@ -168,7 +181,6 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
         ]
         # again, dealing with the unique together in models.py TODO
         validators = []
-
 
     # This needs to be an instance method since thats expected by DRF
     # ruff: noqa: PLR6301

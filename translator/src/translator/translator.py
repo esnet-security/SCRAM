@@ -65,7 +65,7 @@ async def process(message, websocket, g):
     # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         g.del_all_paths()
-        
+
     # --- FLOWSPEC MESSAGE HANDLING ---
     elif event_type in ("translator_filter_add", "translator_filter_remove", "translator_filter_check"):
         try:
@@ -75,12 +75,12 @@ async def process(message, websocket, g):
                     dest_ip = ipaddress.ip_interface(event_data.pop("destination"))
                 if event_data.get("source"):
                     source_ip = ipaddress.ip_interface(event_data.pop("source"))
-            except ValueError as e:
+            except ValueError:
                 logger.exception("Error parsing Flowspec IPs in message: %s", message)
                 return
-            
+
             # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
-            # Expected fields inside event_data: destination, source, source-port, 
+            # Expected fields inside event_data: destination, source, source-port,
             # destination-port, protocol, action (e.g., "discard", "rate-limit")
             if event_type == "translator_filter_add":
                 g.add_flowspec(source_ip, dest_ip, event_data)
@@ -97,7 +97,7 @@ async def process(message, websocket, g):
         except Exception:
             logger.exception("Error processing flowspec message: %s", message)
             return
-            
+
     # --- STANDARD BGP ROUTE HANDLING ---
     else:
         try:
