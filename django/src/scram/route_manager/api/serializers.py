@@ -78,9 +78,9 @@ class FlowspecRouteSerializer(serializers.ModelSerializer):
     """Maps to the FlowspecRoute model."""
 
     source = CustomCidrAddressField()
-    source_port = serializers.IntegerField()
+    source_port = serializers.IntegerField(min_value=0, max_value=65535)
     destination = CustomCidrAddressField()
-    destination_port = serializers.IntegerField()
+    destination_port = serializers.IntegerField(min_value=0, max_value=65535)
     protocol = ProtocolField()
 
     class Meta:
@@ -94,20 +94,6 @@ class FlowspecRouteSerializer(serializers.ModelSerializer):
             "destination_port",
             "protocol",
         ]
-        # we set unique=True on these fields in the model. i was too lazy to create a migration right now
-        # thats probably the better fix as this will surely bite us at some point
-        extra_kwargs = {
-            "source": {"validators": []},
-            "destination": {"validators": []}
-        }
-
-    # This is very stupid and should not stick around but we cant use the DRF API viewer HTML form otherwise
-    # It passes emptry strings for fields without anything listed which breaks errythang
-    def get_value(self, dictionary):
-        value = super().get_value(dictionary)
-        if isinstance(value, dict) and not any(value.values()):
-            return serializers.empty
-        return value
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -213,6 +199,17 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             update_change_reason(entry, comment)
 
         return entry
+
+    def validate(self, attrs):
+        """Require exactly one target when creating an Entry."""
+        if self.instance is None:
+            route = attrs.get("route")
+            flowspec_route = attrs.get("flowspec_route")
+
+            if bool(route) == bool(flowspec_route):
+                raise serializers.ValidationError("Provide exactly one route or flowspec_route.")
+
+        return attrs
 
 
 class IgnoreEntrySerializer(serializers.ModelSerializer):
