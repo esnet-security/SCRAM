@@ -53,7 +53,7 @@ class FlowspecRoute(models.Model):
     source_port = models.PositiveIntegerField()
     destination = CidrAddressField()
     destination_port = models.PositiveIntegerField()
-    protocol = models.PositiveSmallIntegerField(validators=[MaxValueValidator(255)])
+    protocol = models.PositiveSmallIntegerField()
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
 
     class Meta:
@@ -65,12 +65,9 @@ class FlowspecRoute(models.Model):
         ]
 
     def __str__(self):
-        return f"src {self.source}:{self.source_port} -> dst {self.destination}:{self.destination_port} (proto {self.protocol})"
+        protocol = Protocol(self.protocol).label.upper() if self.protocol in Protocol.values else str(self.protocol)
 
-    @staticmethod
-    def get_absolute_url():
-        """Ensure we use UUID on the API side instead."""
-        return reverse("")
+        return f"{self.source}:{self.source_port} -> {self.destination}:{self.destination_port} [{protocol}]"
 
 
 class TranslatorType(models.Model):
