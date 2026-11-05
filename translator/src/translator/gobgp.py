@@ -204,14 +204,9 @@ class GoBGP:
         action = data.get("action")
         action_community = None
 
-        if action == "discard":
+        if action == "discard": # TODO: check if we can remove action
             action_community = extcom_pb2.ExtendedCommunity(
                 traffic_rate=extcom_pb2.TrafficRateExtended(rate=0.0)
-            )
-        elif action == "rate-limit":
-            rate = float(data.get("rate", 0.0))
-            action_community = extcom_pb2.ExtendedCommunity(
-                traffic_rate=extcom_pb2.TrafficRateExtended(rate=rate)
             )
 
         if action_community is not None:
@@ -250,6 +245,17 @@ class GoBGP:
 
         return path
 
+    def _check_flowspec_path_on_rib(self, path):
+        result = self.stub.ListPath(
+            gobgp_pb2.ListPathRequest(
+                table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
+                family=path.family,
+            ),
+            _TIMEOUT_SECONDS,
+        )
+
+        return any(p.nlri == path.nlri for dest in result for p in dest.destination.paths) # NOTE: Only checks nlri, see if we need more thorough check
+
     def add_flowspec(self, source_ip, dest_ip, data: dict):
         """Adds a FlowSpec path to the GoBGP Rib."""
         path = self._build_flowspec_path(source_ip, dest_ip, data)
@@ -263,21 +269,13 @@ class GoBGP:
         """Return True if GoBGP's RIB has a flowspec path with this NLRI."""
         path = self._build_flowspec_path(source_ip, dest_ip, data)
 
-        result = self.stub.ListPath(
-            gobgp_pb2.ListPathRequest(
-                table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
-                family=path.family,
-            ),
-            _TIMEOUT_SECONDS,
-        )
-
-        return any(p.nlri == path.nlri for dest in result for p in dest.destination.paths)
+        return self._check_flowspec_path_on_rib(path)
 
     def del_flowspec(self, source_ip, dest_ip, data: dict):
         """Remove a FlowSpec path from the GoBGP RIB if it's there."""
         path = self._build_flowspec_path(source_ip, dest_ip, data)
 
-        if not self.check_flowspec(source_ip, dest_ip, data):
+        if not self._check_flowspec_path_on_rib(path):
             logger.warning("Attempted to delete a FlowSpec path that is not in the RIB: %s", path.nlri)
             return
 
