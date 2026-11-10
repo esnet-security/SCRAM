@@ -180,7 +180,7 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             "is_active",
         ]
         # again, dealing with the unique together in models.py TODO
-        validators = []
+        validators: list[None] = []
 
     # This needs to be an instance method since thats expected by DRF
     # ruff: noqa: PLR6301

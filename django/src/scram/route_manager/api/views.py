@@ -348,6 +348,8 @@ class EntryViewSet(viewsets.ModelViewSet):
 
         self.check_client_authorization(actiontype)
 
+        target_instance: Route | FlowspecRoute | None = None
+
         if serializer.validated_data.get("route"):
             flowspec_instance = None
             route = serializer.validated_data["route"]
