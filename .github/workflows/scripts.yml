@@ -41,6 +41,7 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           file: ./scripts/coverage.xml
+          base-path: scripts/src
           fail-on-error: false
 
       - name: Display Scripts Coverage Metrics

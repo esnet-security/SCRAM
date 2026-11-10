@@ -88,6 +88,8 @@ jobs:
         if: ${{ !env.ACT }}
         uses: coverallsapp/github-action@v2
         with:
+          file: ./django/coverage.xml
+          base-path: django
           fail-on-error: false
 
       - name: Upload Coverage to GitHub

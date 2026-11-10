@@ -41,6 +41,7 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           file: ./scheduler/coverage.xml
+          base-path: scheduler/src
 
       - name: Display Scheduler Coverage Metrics
         if: ${{ !env.ACT }}
