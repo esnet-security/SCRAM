@@ -10,6 +10,7 @@ from .models import (
     IgnoreEntry,
     Route,
     TranslatorType,
+    FlowspecRoute,
 )
 
 
@@ -141,3 +142,4 @@ class ClientAdmin(admin.ModelAdmin):
 
 admin.site.register(IgnoreEntry, SimpleHistoryAdmin)
 admin.site.register(Route)
+admin.site.register(FlowspecRoute)
