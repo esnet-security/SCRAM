@@ -17,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
   checks: write
@@ -43,6 +44,10 @@ jobs:
           file: ./scripts/coverage.xml
           base-path: scripts/src
           fail-on-error: false
+          parallel: true
+          flag-name: scripts
+          # Shared across all test workflows so Coveralls merges them into one build which is closed by the coveralls-finish workflow.
+          build-number: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Display Scripts Coverage Metrics
         if: ${{ !env.ACT }}
@@ -51,3 +56,9 @@ jobs:
           report_name: "Scripts Coverage"
           path: ./scripts/coverage.xml
           minimum_coverage: "50"
+
+  coveralls-finish:
+    name: Close Coveralls Build
+    needs: scripts
+    if: ${{ always() }}
+    uses: ./.github/workflows/coveralls-finish.yml

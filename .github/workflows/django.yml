@@ -17,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
   checks: write
@@ -91,6 +92,10 @@ jobs:
           file: ./django/coverage.xml
           base-path: django
           fail-on-error: false
+          parallel: true
+          flag-name: django
+          # Shared across all test workflows so Coveralls merges them into one build which is closed by the coveralls-finish workflow.
+          build-number: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Upload Coverage to GitHub
         if: ${{ !env.ACT }}
@@ -110,3 +115,9 @@ jobs:
       - name: Check Docker state (post-test)
         if: always()
         run: docker ps
+
+  coveralls-finish:
+    name: Close Coveralls Build
+    needs: django
+    if: ${{ always() }}
+    uses: ./.github/workflows/coveralls-finish.yml

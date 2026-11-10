@@ -1,0 +1,54 @@
+---
+name: Close Coveralls Build
+
+# This workflow is to be called at the end of each test workflow. All of them upload to one Coveralls parallel build
+# per commit and this closes it only after every test job has finished.
+#
+# NOTE: This is fragile because this is all harder than it should be, but each test workflow calling this one MUST
+# Name the calling job "Close Coveralls Build" and list every other job in the workflow under `needs`, otherwise the
+# build may never be closed.
+
+on:
+  workflow_call:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  finish:
+    name: Close Coveralls Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        if: ${{ !env.ACT }}
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .ci-scripts
+            .github/workflows
+
+      - name: Check all test jobs have completed
+        id: check
+        if: ${{ !env.ACT }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # wait for a sec to let github catch up...
+          sleep 15
+          # make sure all other test jobs have completed before closing the Coveralls build
+          if ./.ci-scripts/coveralls_tests_done.sh "$SHA" "$GITHUB_EVENT_NAME"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Close Coveralls parallel build
+        if: ${{ steps.check.outputs.ready == 'true' }}
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          build-number: ${{ github.event.pull_request.head.sha || github.sha }}
+          carryforward: django,scheduler,scripts,translator
+          fail-on-error: false

@@ -17,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
   checks: write
@@ -42,6 +43,11 @@ jobs:
         with:
           file: ./scheduler/coverage.xml
           base-path: scheduler/src
+          fail-on-error: false
+          parallel: true
+          flag-name: scheduler
+          # Shared across all test workflows so Coveralls merges them into one build which is closed by the coveralls-finish workflow.
+          build-number: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Display Scheduler Coverage Metrics
         if: ${{ !env.ACT }}
@@ -50,3 +56,9 @@ jobs:
           report_name: "Scheduler Coverage"
           path: ./scheduler/coverage.xml
           minimum_coverage: "80"
+
+  coveralls-finish:
+    name: Close Coveralls Build
+    needs: scheduler
+    if: ${{ always() }}
+    uses: ./.github/workflows/coveralls-finish.yml
