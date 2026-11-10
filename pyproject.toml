@@ -40,9 +40,6 @@ include = ["scram/*", "config/*", "translator/*"]
 omit = ["**/migrations/*", "scram/contrib/*", "*/tests/*"]
 plugins = ["django_coverage_plugin"]
 
-[tool.coverage.paths]
-source = ["django/", "app/" ]
-
 [tool.coverage.report]
 exclude_also = [
   "if debug:",
