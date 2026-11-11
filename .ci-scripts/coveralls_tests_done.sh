@@ -31,6 +31,7 @@ for file in .github/workflows/*.yml; do
         echo "$wf: waiting on $pending"
         exit 1
     fi
-    # finally, if we've got to this point, we know all the workflows are done, yay!
+    # finally, if we've got to this point, we know that this workflow is done
     echo "$wf: done"
+# And if we've made it here, we know that all of the workflows that use coveralls are complete and we can finally exit 0.
 done
