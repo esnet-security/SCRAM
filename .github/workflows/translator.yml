@@ -17,6 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
   checks: write
@@ -69,7 +70,12 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           file: ./translator/coverage.xml
+          base-path: translator/src
           fail-on-error: false
+          parallel: true
+          flag-name: translator
+          # Shared across all test workflows so Coveralls merges them into one build which is closed by the coveralls-finish workflow.
+          build-number: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Display Translator Coverage Metrics
         if: ${{ !env.ACT }}
@@ -82,3 +88,9 @@ jobs:
       - name: Check Docker state (post-test)
         if: always()
         run: docker ps
+
+  coveralls-finish:
+    name: Close Coveralls Build
+    needs: translator
+    if: ${{ always() }}
+    uses: ./.github/workflows/coveralls-finish.yml

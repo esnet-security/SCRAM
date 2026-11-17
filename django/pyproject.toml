@@ -10,7 +10,7 @@ dependencies = [
   "whitenoise",
   "psycopg2-binary",
   "argon2-cffi",
-  "autobahn<25.10.1",
+  "autobahn<26.7.2",
   "python-slugify",
   "websockets",
   "flower",
