@@ -3,18 +3,21 @@
 import logging
 
 import grpc
-from api import attribute_pb2, common_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
+from api import attribute_pb2, common_pb2, extcom_pb2, gobgp_pb2, gobgp_pb2_grpc, nlri_pb2
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from .exceptions import ASNError
 from .settings import settings
-from .shared import asn_is_valid
+from .shared import IPVersionMismatchError, asn_is_valid
 
 _TIMEOUT_SECONDS = 1000
 MAX_SMALL_ASN = 2**16
 MAX_SMALL_COMM = 2**16
 IPV4 = 4
 IPV6 = 6
+
+OP_EQ = 0x01
+OP_END = 0x80
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +134,144 @@ class GoBGP:
             )
         except ASNError as e:
             logger.warning("ASN assertion failed with error: %s", e)
+
+    @staticmethod
+    def _append_component_rule(rules, data, key, component_type):
+        if key in data:
+            rules.append(
+                nlri_pb2.FlowSpecRule(
+                    component=nlri_pb2.FlowSpecComponent(
+                        type=component_type,
+                        items=[
+                            nlri_pb2.FlowSpecComponentItem(
+                                op=OP_END | OP_EQ,
+                                value=int(data[key]),
+                            )
+                        ],
+                    )
+                )
+            )
+
+    @staticmethod
+    def _append_prefix_rule(rules, prefix, component_type):
+        """Add a source or destination prefix rule when the prefix is present."""
+        if prefix is None:
+            return
+
+        rules.append(
+            nlri_pb2.FlowSpecRule(
+                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                    type=component_type,
+                    prefix_len=prefix.network.prefixlen,
+                    prefix=str(prefix.network.network_address),
+                )
+            )
+        )
+
+    @staticmethod
+    def _validate_ip_families(source_ip, dest_ip):
+        versions = {ip.version for ip in (source_ip, dest_ip) if ip is not None}
+
+        if len(versions) > 1:
+            raise IPVersionMismatchError
+
+        version = versions.pop() if versions else IPV4
+        return common_pb2.Family.AFI_IP6 if version == IPV6 else common_pb2.Family.AFI_IP
+
+    def _build_flowspec_path(self, data: dict):
+        """Constructs a Flowspec path based on dictionary matches and returns it.
+
+        Returns:
+            Path: The constructed Flowspec path.
+        """
+        source_ip = data.get("source")
+        destination_ip = data.get("destination")
+
+        rules = []
+
+        # Appends all present rules
+        self._append_prefix_rule(rules, destination_ip, 1)
+        self._append_prefix_rule(rules, source_ip, 2)
+        self._append_component_rule(rules, data, "protocol", 3)
+        self._append_component_rule(rules, data, "destination-port", 5)
+        self._append_component_rule(rules, data, "source-port", 6)
+
+        # Build FlowSpec NLRI
+        nlri = nlri_pb2.NLRI(flow_spec=nlri_pb2.FlowSpecNLRI(rules=rules))
+
+        attributes = [attribute_pb2.Attribute(origin=attribute_pb2.OriginAttribute(origin=0))]
+
+        # Build action
+        action = data.get("action")
+        action_community = None
+
+        if action == "discard":  # TODO: check if we can remove action
+            action_community = extcom_pb2.ExtendedCommunity(traffic_rate=extcom_pb2.TrafficRateExtended(rate=0.0))
+
+        if action_community is not None:
+            attributes.append(
+                attribute_pb2.Attribute(
+                    extended_communities=attribute_pb2.ExtendedCommunitiesAttribute(communities=[action_community])
+                )
+            )
+
+        source_family_afi = self._validate_ip_families(source_ip, destination_ip)
+
+        # Append mandatory NextHop
+        next_hop_ip = "0.0.0.0"  # noqa: S104 (GoBGP requires a next hop, but it is not used for flowspec)
+        attributes.append(attribute_pb2.Attribute(next_hop=attribute_pb2.NextHopAttribute(next_hop=next_hop_ip)))
+
+        family = common_pb2.Family(
+            afi=source_family_afi,
+            safi=common_pb2.Family.SAFI_FLOW_SPEC_UNICAST,
+        )
+
+        return gobgp_pb2.Path(
+            nlri=nlri,
+            pattrs=attributes,
+            family=family,
+            age=_now_ts(),
+        )
+
+    def _check_flowspec_path_on_rib(self, path):
+        result = self.stub.ListPath(
+            gobgp_pb2.ListPathRequest(
+                table_type=gobgp_pb2.TABLE_TYPE_GLOBAL,
+                family=path.family,
+            ),
+            _TIMEOUT_SECONDS,
+        )
+
+        return any(
+            p.nlri == path.nlri for dest in result for p in dest.destination.paths
+        )  # NOTE: Only checks nlri, see if we need more thorough check
+
+    def add_flowspec(self, data: dict):
+        """Adds a FlowSpec path to the GoBGP Rib."""
+        path = self._build_flowspec_path(data)
+
+        self.stub.AddPath(
+            gobgp_pb2.AddPathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path), _TIMEOUT_SECONDS
+        )
+
+    def check_flowspec(self, data: dict):
+        """Return True if GoBGP's RIB has a flowspec path with this NLRI."""
+        path = self._build_flowspec_path(data)
+
+        return self._check_flowspec_path_on_rib(path)
+
+    def del_flowspec(self, data: dict):
+        """Remove a FlowSpec path from the GoBGP RIB if it's there."""
+        path = self._build_flowspec_path(data)
+
+        if not self._check_flowspec_path_on_rib(path):
+            logger.warning("Attempted to delete a FlowSpec path that is not in the RIB: %s", path.nlri)
+            return
+
+        self.stub.DeletePath(
+            gobgp_pb2.DeletePathRequest(table_type=gobgp_pb2.TABLE_TYPE_GLOBAL, path=path),
+            _TIMEOUT_SECONDS,
+        )
 
     def del_all_paths(self):
         """Remove all routes from being announced."""

@@ -231,7 +231,7 @@ def reprocess_entries(entries_to_process: list[Entry]) -> None:
     for entry in entries_to_process:
         logger.info("Processing entry %s (active=%s)", entry, entry.is_active)
         entry.actiontype.send_to_translators(
-            "add" if entry.is_active else "remove", entry.route
+            "add" if entry.is_active else "remove", entry.target
         )
 
 
@@ -257,7 +257,7 @@ def process_updates(request):
     # Grab all of the other entries that need processing and... process them!
     cutoff_time = current_time - timedelta(minutes=2)
     entries_to_process = get_entries_to_process(cutoff_time=cutoff_time)
-    entries_reprocessed_list = [str(entry.route) for entry in entries_to_process]
+    entries_reprocessed_list = [str(entry.target) for entry in entries_to_process]
 
     if entries_to_process:
         reprocess_entries(entries_to_process)

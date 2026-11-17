@@ -27,3 +27,7 @@ def asn_is_valid(asn: int) -> bool:
         raise ASNError(msg)
 
     return True
+
+
+class IPVersionMismatchError(Exception):
+    """Raised when the source and destination IP versions do not match."""

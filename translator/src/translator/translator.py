@@ -22,6 +22,9 @@ KNOWN_MESSAGES = {
     "translator_block_remove",
     "translator_block_check",
     "translator_remove_all",
+    "translator_filter_add",
+    "translator_filter_remove",
+    "translator_filter_check",
 }
 
 # Django closes with this code when no TranslatorType matches our SCRAM_EVENTS_URL; retrying can't fix it.
@@ -51,31 +54,71 @@ if settings.debug:
             logger.info("Debugger listening on port 56781.")
 
 
+def validate_flowspec_ips(event_data):
+    """Parse optional source and destination IP interfaces."""
+    for field in ("destination", "source"):
+        if event_data.get(field):
+            event_data[field] = ipaddress.ip_interface(event_data[field])
+
+
+async def process_flowspec_message(event_data, event_type, json_message, websocket, g):
+    """Handle flowspec messages from the websocket."""
+    try:
+        flowspec_data = event_data.copy()
+        validate_flowspec_ips(flowspec_data)
+
+        # Pass the parsed flowspec_data dictionary to the underlying GoBGP wrapper.
+        # Expected fields inside flowspec_data: destination, source, source-port,
+        # destination-port, protocol, action (e.g., "discard", "rate-limit")
+        if event_type == "translator_filter_add":
+            g.add_flowspec(flowspec_data)
+        elif event_type == "translator_filter_remove":
+            g.del_flowspec(flowspec_data)
+        elif event_type == "translator_filter_check":
+            json_message["type"] = "translator_check_resp"
+            json_message["message"]["is_blocked"] = g.check_flowspec(flowspec_data)
+            await websocket.send(json.dumps(json_message))
+
+    except ValueError:
+        logger.exception("Error parsing Flowspec IPs in message: %s", json_message)
+        return
+    except Exception:
+        logger.exception("Error processing flowspec message: %s", json_message)
+        return
+
+
+async def process_bgp_message(event_data, event_type, json_message, websocket, g):
+    """Handle BGP messages from the websocket."""
+    try:
+        ip = ipaddress.ip_interface(event_data["route"])
+    except (ValueError, KeyError):
+        logger.exception("Error parsing message: %s", json_message)
+        return
+
+    if event_type == "translator_block_add":
+        g.add_path(ip, event_data)
+    elif event_type == "translator_block_remove":
+        g.del_path(ip, event_data)
+    elif event_type == "translator_block_check":
+        json_message["type"] = "translator_check_resp"
+        json_message["message"]["is_blocked"] = g.is_blocked(ip)
+        await websocket.send(json.dumps(json_message))
+
+
 async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
     event_type = json_message.get("type")
     event_data = json_message.get("message")
+
     if event_type not in KNOWN_MESSAGES:
-        logger.error("Unknown event type received: %s", event_type)
-    # TODO: Maybe only allow this in testing?
+        logger.error("Unknown event type received: %s", event_type)  # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         g.del_all_paths()
+    elif event_type in {"translator_filter_add", "translator_filter_remove", "translator_filter_check"}:
+        await process_flowspec_message(event_data, event_type, json_message, websocket, g)
     else:
-        try:
-            ip = ipaddress.ip_interface(event_data["route"])
-        except (ValueError, KeyError):
-            logger.exception("Error parsing message: %s", message)
-            return
-
-        if event_type == "translator_block_add":
-            g.add_path(ip, event_data)
-        elif event_type == "translator_block_remove":
-            g.del_path(ip, event_data)
-        elif event_type == "translator_block_check":
-            json_message["type"] = "translator_check_resp"
-            json_message["message"]["is_blocked"] = g.is_blocked(ip)
-            await websocket.send(json.dumps(json_message))
+        await process_bgp_message(event_data, event_type, json_message, websocket, g)
 
 
 async def heartbeat(websocket, g):
