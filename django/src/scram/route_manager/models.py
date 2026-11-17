@@ -7,7 +7,7 @@ import uuid as uuid_lib
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.core.validators import RegexValidator, MaxValueValidator
+from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 from netfields import CidrAddressField
@@ -73,7 +73,11 @@ class FlowspecRoute(models.Model):
         ]
 
     def __str__(self):
-        protocol = Protocol(self.protocol).label.upper() if self.protocol in Protocol.values else str(self.protocol)
+        protocol = (
+            Protocol(self.protocol).label.upper()
+            if self.protocol in Protocol.values
+            else str(self.protocol)
+        )
 
         return f"{self.source}:{self.source_port} -> {self.destination}:{self.destination_port} [{protocol}]"
 

@@ -219,7 +219,9 @@ class EntrySerializer(serializers.HyperlinkedModelSerializer):
             flowspec_route = attrs.get("flowspec_route")
 
             if bool(route) == bool(flowspec_route):
-                raise serializers.ValidationError("Provide exactly one route or flowspec_route.")
+                raise serializers.ValidationError(
+                    "Provide exactly one route or flowspec_route."
+                )
 
         return attrs
 

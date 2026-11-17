@@ -9,6 +9,7 @@ import logging
 
 import websockets
 from grpc import RpcError
+from pymupdf import message
 
 from .gobgp import IPV4, IPV6, GoBGP
 from .settings import DebuggerTypes, settings
@@ -54,66 +55,71 @@ if settings.debug:
             logger.info("Debugger listening on port 56781.")
 
 
+def validate_flowspec_ips(event_data):
+    """Parse optional source and destination IP interfaces."""
+    for field in ("destination", "source"):
+        if event_data.get(field):
+            event_data[field] = ipaddress.ip_interface(event_data[field])
+
+
+async def process_flowspec_message(event_data, event_type, json_message, websocket, g):
+    """Handle flowspec messages from the websocket."""
+    try:
+        # Validate and convert IPs if they are provided in the flowspec payload
+        validate_flowspec_ips(event_data)
+
+        # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
+        # Expected fields inside event_data: destination, source, source-port,
+        # destination-port, protocol, action (e.g., "discard", "rate-limit")
+        if event_type == "translator_filter_add":
+            g.add_flowspec(event_data)
+        elif event_type == "translator_filter_remove":
+            g.del_flowspec(event_data)
+        elif event_type == "translator_filter_check":
+            json_message["type"] = "translator_check_resp"
+            json_message["message"]["is_blocked"] = g.check_flowspec(event_data)
+            await websocket.send(json.dumps(json_message))
+
+    except ValueError:
+        logger.exception("Error parsing Flowspec IPs in message: %s", message)
+        return
+    except Exception:
+        logger.exception("Error processing flowspec message: %s", message)
+        return
+
+
+async def process_bgp_message(event_data, event_type, json_message, websocket, g):
+    """Handle BGP messages from the websocket."""
+    try:
+        ip = ipaddress.ip_interface(event_data["route"])
+    except (ValueError, KeyError):
+        logger.exception("Error parsing message: %s", message)
+        return
+
+    if event_type == "translator_block_add":
+        g.add_path(ip, event_data)
+    elif event_type == "translator_block_remove":
+        g.del_path(ip, event_data)
+    elif event_type == "translator_block_check":
+        json_message["type"] = "translator_check_resp"
+        json_message["message"]["is_blocked"] = g.is_blocked(ip)
+        await websocket.send(json.dumps(json_message))
+
+
 async def process(message, websocket, g):
     """Take a single message form the websocket and hand it off to the appropriate function."""
     json_message = json.loads(message)
     event_type = json_message.get("type")
-
     event_data = json_message.get("message")
+
     if event_type not in KNOWN_MESSAGES:
-        logger.error("Unknown event type received: %s", event_type)
-    # TODO: Maybe only allow this in testing?
+        logger.error("Unknown event type received: %s", event_type)  # TODO: Maybe only allow this in testing?
     elif event_type == "translator_remove_all":
         g.del_all_paths()
-
-    # --- FLOWSPEC MESSAGE HANDLING ---
-    elif event_type in ("translator_filter_add", "translator_filter_remove", "translator_filter_check"):
-        try:
-            # Validate IPs if they are provided in the flowspec payload
-            try:
-                if event_data.get("destination"):
-                    dest_ip = ipaddress.ip_interface(event_data.pop("destination"))
-                if event_data.get("source"):
-                    source_ip = ipaddress.ip_interface(event_data.pop("source"))
-            except ValueError:
-                logger.exception("Error parsing Flowspec IPs in message: %s", message)
-                return
-
-            # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
-            # Expected fields inside event_data: destination, source, source-port,
-            # destination-port, protocol, action (e.g., "discard", "rate-limit")
-            if event_type == "translator_filter_add":
-                g.add_flowspec(source_ip, dest_ip, event_data)
-            elif event_type == "translator_filter_remove":
-                g.del_flowspec(source_ip, dest_ip, event_data)
-            elif event_type == "translator_filter_check":
-                json_message["type"] = "translator_check_resp"
-                json_message["message"]["is_blocked"] = g.check_flowspec(source_ip, dest_ip, event_data)
-                await websocket.send(json.dumps(json_message))
-
-        except ValueError:
-            logger.exception("Error parsing Flowspec IPs in message: %s", message)
-            return
-        except Exception:
-            logger.exception("Error processing flowspec message: %s", message)
-            return
-
-    # --- STANDARD BGP ROUTE HANDLING ---
+    elif event_type in {"translator_filter_add", "translator_filter_remove", "translator_filter_check"}:
+        await process_flowspec_message(event_data, event_type, json_message, websocket, g)
     else:
-        try:
-            ip = ipaddress.ip_interface(event_data["route"])
-        except (ValueError, KeyError):
-            logger.exception("Error parsing message: %s", message)
-            return
-
-        if event_type == "translator_block_add":
-            g.add_path(ip, event_data)
-        elif event_type == "translator_block_remove":
-            g.del_path(ip, event_data)
-        elif event_type == "translator_block_check":
-            json_message["type"] = "translator_check_resp"
-            json_message["message"]["is_blocked"] = g.is_blocked(ip)
-            await websocket.send(json.dumps(json_message))
+        await process_bgp_message(event_data, event_type, json_message, websocket, g)
 
 
 async def heartbeat(websocket, g):
