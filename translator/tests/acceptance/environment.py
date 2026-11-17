@@ -34,7 +34,7 @@ def after_scenario(context, scenario):
     """
     for source, destination, data in context.flowspec_rules:
         try:
-            context.gobgp.del_flowspec(source, destination, data)
+            context.gobgp.del_flowspec({"source": source, "destination": destination, **data})
         except Exception:  # cleanup must never mask the scenario's own result
             logger.exception("FlowSpec cleanup failed for rule: %s", data)
     context.flowspec_rules = []

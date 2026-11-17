@@ -85,6 +85,11 @@ def _rule_from_row(row):
     return source, destination, data
 
 
+def _flowspec_data(source, destination, data):
+    """Combine parsed prefixes and rule data into the dict the GoBGP wrapper expects."""
+    return {"source": source, "destination": destination, **data}
+
+
 def _wellformed_message(event_type, **changes):
     """Build a well-formed v4 filter message; a change value of None removes that key entirely."""
     message = {
@@ -161,57 +166,34 @@ def add_flowspec_rule(context):
     source, destination, data = _rule_from_row(context.table.rows[0])
     context.flowspec_rule = (source, destination, data)
     context.flowspec_baseline = _flowspec_counts(context)
-    context.gobgp.add_flowspec(source, destination, data)
+    context.gobgp.add_flowspec(_flowspec_data(source, destination, data))
     context.flowspec_after_add = _flowspec_counts(context)
     _track_rule(context, source, destination, data)
-
-
-@when("a flowspec rule is added but the wrapper raises")
-def add_flowspec_expect_type_error(context):
-    """Pin that a string protocol crashes add_flowspec instead of being coerced.
-
-    _build_flowspec_path int() casts the port fields (gobgp.py lines 187 and 202) but hands the
-    protocol value to protobuf raw (line 172), so a string protocol raises TypeError from deep
-    inside protobuf. In production translator.process()'s broad except swallows that error.
-    """
-    source, destination, data = _rule_from_row(context.table.rows[0])
-    context.flowspec_baseline = _flowspec_counts(context)
-    try:
-        context.gobgp.add_flowspec(source, destination, data)
-    except TypeError as exc:
-        assert "'str' object cannot be interpreted as an integer" in str(exc)
-    else:
-        failure = "add_flowspec accepted a string protocol without raising TypeError"
-        raise AssertionError(failure) from None
 
 
 @then("the flowspec check finds the rule")
 def check_finds_rule(context):
     """The NLRI comparison in _check_flowspec_path_on_rib matches what the add stored."""
-    source, destination, data = context.flowspec_rule
-    assert context.gobgp.check_flowspec(source, destination, data)
+    assert context.gobgp.check_flowspec(_flowspec_data(*context.flowspec_rule))
 
 
 @then("the flowspec check does not find the rule")
 def check_misses_rule(context):
-    """Pin: the rebuilt NLRI never matches the stored one, so check_flowspec is always False."""
-    source, destination, data = context.flowspec_rule
-    assert not context.gobgp.check_flowspec(source, destination, data)
+    """Pin: a port above 255 is encoded differently, so the rebuilt NLRI cannot match the stored one."""
+    assert not context.gobgp.check_flowspec(_flowspec_data(*context.flowspec_rule))
 
 
 @then("deleting the rule removes it cleanly")
 def delete_removes_rule(context):
     """del_flowspec matches the stored rule and withdraws it, restoring the RIB counts."""
-    source, destination, data = context.flowspec_rule
-    context.gobgp.del_flowspec(source, destination, data)
+    context.gobgp.del_flowspec(_flowspec_data(*context.flowspec_rule))
     assert _flowspec_counts(context) == context.flowspec_baseline
 
 
 @then("deleting the rule warns and leaves it in the RIB")
 def delete_warns_and_leaks(context):
-    """Pin: when the NLRI comparison fails, del_flowspec skips DeletePath and the rule leaks."""
-    source, destination, data = context.flowspec_rule
-    context.gobgp.del_flowspec(source, destination, data)
+    """Pin: when the NLRI comparison fails (port above 255), del_flowspec skips DeletePath and the rule leaks."""
+    context.gobgp.del_flowspec(_flowspec_data(*context.flowspec_rule))
     assert context.log_capture.find_event(_DELETE_WARNING)
     assert context.flowspec_after_add != context.flowspec_baseline
     assert _flowspec_counts(context) == context.flowspec_after_add
@@ -257,8 +239,9 @@ def translator_sends_nothing(context):
 def check_response_reports(context, blocked):
     """Pin the translator_check_resp message.
 
-    process() rewrites type to translator_check_resp, pops destination and source out of the
-    message payload while validating them, and adds is_blocked; channel and row survive untouched.
+    process() rewrites type to translator_check_resp, keeps destination and source in the
+    message payload while validating a copy for GoBGP, and adds is_blocked; channel and row
+    survive untouched.
     """
     assert len(context.ws.sent) == 1
     response = json.loads(context.ws.sent[0])
@@ -266,8 +249,8 @@ def check_response_reports(context, blocked):
     message = response["message"]
     assert message["is_blocked"] is (blocked == "true")
     assert message["channel"] == 1 and message["row"] == 99
-    assert "source" not in message
-    assert "destination" not in message
+    assert "source" in message
+    assert "destination" in message
 
 
 @when("a flowspec message is received")
