@@ -152,14 +152,31 @@ class GoBGP:
                 )
             )
 
-    def _validate_ip_families(self, source_ip, dest_ip):
-        source_family = self._family(source_ip)
-        dest_family = self._family(dest_ip)
+    @staticmethod
+    def _append_prefix_rule(rules, prefix, component_type):
+        """Add a source or destination prefix rule when the prefix is present."""
+        if prefix is None:
+            return
 
-        if source_family != dest_family:
+        rules.append(
+            nlri_pb2.FlowSpecRule(
+                ip_prefix=nlri_pb2.FlowSpecIPPrefix(
+                    type=component_type,
+                    prefix_len=prefix.network.prefixlen,
+                    prefix=str(prefix.network.network_address),
+                )
+            )
+        )
+
+    @staticmethod
+    def _validate_ip_families(source_ip, dest_ip):
+        versions = {ip.version for ip in (source_ip, dest_ip) if ip is not None}
+
+        if len(versions) > 1:
             raise IPVersionMismatchError
 
-        return source_family
+        version = versions.pop() if versions else IPV4
+        return common_pb2.Family.AFI_IP6 if version == IPV6 else common_pb2.Family.AFI_IP
 
     def _build_flowspec_path(self, data: dict):
         """Constructs a Flowspec path based on dictionary matches and returns it.
@@ -167,16 +184,17 @@ class GoBGP:
         Returns:
             Path: The constructed Flowspec path.
         """
+        source_ip = data.get("source")
+        destination_ip = data.get("destination")
+
         rules = []
 
-        for key, component_type in (
-            ("source-ip", 1),  # TYPE_SRC_PREFIX
-            ("destination-ip", 2),  # TYPE_DST_PREFIX
-            ("protocol", 3),  # TYPE_PROTOCOL
-            ("destination-port", 5),  # TYPE_DST_PORT
-            ("source-port", 6),  # TYPE_SRC_PORT
-        ):
-            self._append_component_rule(rules, data, key, component_type)
+        # Appends all present rules
+        self._append_prefix_rule(rules, destination_ip, 1)
+        self._append_prefix_rule(rules, source_ip, 2)
+        self._append_component_rule(rules, data, "protocol", 3)
+        self._append_component_rule(rules, data, "destination-port", 5)
+        self._append_component_rule(rules, data, "source-port", 6)
 
         # Build FlowSpec NLRI
         nlri = nlri_pb2.NLRI(flow_spec=nlri_pb2.FlowSpecNLRI(rules=rules))
@@ -197,7 +215,7 @@ class GoBGP:
                 )
             )
 
-        source_family_afi = self._validate_ip_families(data["source-ip"], data["destination-ip"])
+        source_family_afi = self._validate_ip_families(source_ip, destination_ip)
 
         # Append mandatory NextHop
         next_hop_ip = "0.0.0.0"  # noqa: S104 (GoBGP requires a next hop, but it is not used for flowspec)

@@ -9,7 +9,6 @@ import logging
 
 import websockets
 from grpc import RpcError
-from pymupdf import message
 
 from .gobgp import IPV4, IPV6, GoBGP
 from .settings import DebuggerTypes, settings
@@ -65,26 +64,26 @@ def validate_flowspec_ips(event_data):
 async def process_flowspec_message(event_data, event_type, json_message, websocket, g):
     """Handle flowspec messages from the websocket."""
     try:
-        # Validate and convert IPs if they are provided in the flowspec payload
-        validate_flowspec_ips(event_data)
+        flowspec_data = event_data.copy()
+        validate_flowspec_ips(flowspec_data)
 
-        # Pass the parsed event_data dictionary to the underlying GoBGP wrapper.
-        # Expected fields inside event_data: destination, source, source-port,
+        # Pass the parsed flowspec_data dictionary to the underlying GoBGP wrapper.
+        # Expected fields inside flowspec_data: destination, source, source-port,
         # destination-port, protocol, action (e.g., "discard", "rate-limit")
         if event_type == "translator_filter_add":
-            g.add_flowspec(event_data)
+            g.add_flowspec(flowspec_data)
         elif event_type == "translator_filter_remove":
-            g.del_flowspec(event_data)
+            g.del_flowspec(flowspec_data)
         elif event_type == "translator_filter_check":
             json_message["type"] = "translator_check_resp"
-            json_message["message"]["is_blocked"] = g.check_flowspec(event_data)
+            json_message["message"]["is_blocked"] = g.check_flowspec(flowspec_data)
             await websocket.send(json.dumps(json_message))
 
     except ValueError:
-        logger.exception("Error parsing Flowspec IPs in message: %s", message)
+        logger.exception("Error parsing Flowspec IPs in message: %s", json_message)
         return
     except Exception:
-        logger.exception("Error processing flowspec message: %s", message)
+        logger.exception("Error processing flowspec message: %s", json_message)
         return
 
 
@@ -93,7 +92,7 @@ async def process_bgp_message(event_data, event_type, json_message, websocket, g
     try:
         ip = ipaddress.ip_interface(event_data["route"])
     except (ValueError, KeyError):
-        logger.exception("Error parsing message: %s", message)
+        logger.exception("Error parsing message: %s", json_message)
         return
 
     if event_type == "translator_block_add":
