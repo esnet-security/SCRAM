@@ -1,0 +1,69 @@
+# Single-router RTBH vs flowspec demo, peered to SCRAM's gobgp. See README.md.
+name: flowspec
+
+mgmt:
+  network: scram_default
+  ipv4-subnet: 192.168.107.0/24
+  ipv6-subnet: 200:c0:ff:ee::/64
+
+topology:
+  defaults:
+    image: nicolaka/netshoot
+  nodes:
+    pe1:
+      kind: nokia_srsim
+      image: wharf.es.net/rover/vendor-provided/srsim:25.7.R1
+      license: license_sros_srsim.txt
+      type: sr-1
+      startup-config: pe1.partial.cfg
+      mgmt-ipv4: 192.168.107.200
+      mgmt-ipv6: 200:c0:ff:ee::200
+
+    attacker:
+      kind: linux
+      mgmt-ipv4: 192.168.107.201
+      exec:
+        - ip -6 addr add 2001:db8:a::bad/64 dev eth1
+        - ip -6 route add 2001:db8::/32 via 2001:db8:a::1
+        - ip -6 route del default dev eth0 # Keeps lab traffic off the management network since when blocking things, eth1 can appear down and then traffic takes the default route.
+
+    innocent: #shows that legitimate traffic can still reach the victim machien
+      kind: linux
+      mgmt-ipv4: 192.168.107.202
+      exec:
+        - ip -6 addr add 2001:db8:b::fab/64 dev eth1
+        - ip -6 route add 2001:db8::/32 via 2001:db8:b::1
+        - ip -6 route del default dev eth0
+
+    victim:
+      kind: linux
+      mgmt-ipv4: 192.168.107.203
+      cmd: python3 /victim.py
+      binds:
+        - victim.py:/victim.py:ro
+        - captures:/captures
+      ports:
+        - 127.0.0.1:8080:8080
+      exec:
+        - ip -6 addr add 2001:db8:100::100/64 dev eth1
+        - ip -6 route add 2001:db8::/32 via 2001:db8:100::1
+        - ip -6 route del default dev eth0
+
+    # lets us link clab into SCRAM's peering network.
+    scram-gobgp-1:
+      kind: ext-container
+
+    # because gobgp has no shell, we have to add a sidecar container that has access to its network namespace
+    # to configure the SCRAM to containerlab link with a v6 address.
+    gobgp-sidecar:
+      kind: linux
+      network-mode: container:scram-gobgp-1
+      cmd: sleep infinity
+      exec:
+        - ip -6 addr add 2001:db8:ff::2/64 dev eth9
+
+  links:
+    - endpoints: ["pe1:1/1/c1/1", "attacker:eth1"]
+    - endpoints: ["pe1:1/1/c2/1", "innocent:eth1"]
+    - endpoints: ["pe1:1/1/c3/1", "victim:eth1"]
+    - endpoints: ["pe1:1/1/c4/1", "scram-gobgp-1:eth9"]

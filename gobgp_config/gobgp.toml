@@ -1,3 +1,22 @@
 [global.config]
     as = 1234
     router-id = "1.1.1.1"
+
+# flowspec-lab demo router (virtlab-proto-no-ocd/flowspec-lab, pe1 SR-SIM).
+# Reached over a containerlab link (eth9) that flowspec-lab/lab-up.sh attaches;
+# without the lab the session just stays in Active.
+[[neighbors]]
+  [neighbors.config]
+    neighbor-address = "2001:db8:ff::1"
+    peer-as = 1234
+  [neighbors.timers.config]
+    connect-retry = 5
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv6-unicast"
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv6-flowspec"
+  [[neighbors.afi-safis]]
+    [neighbors.afi-safis.config]
+      afi-safi-name = "ipv4-flowspec"
